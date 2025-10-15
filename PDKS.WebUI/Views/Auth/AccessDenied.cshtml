@@ -1,8 +1,9 @@
 ﻿@* ============================================ *@
-@* Shared/Error.cshtml *@
+@* Auth/AccessDenied.cshtml *@
 
 @{
-    ViewData["Title"] = "Hata";
+    ViewData["Title"] = "Erişim Engellendi";
+    Layout = null;
 }
 
 <!DOCTYPE html>
@@ -22,7 +23,7 @@
             justify-content: center;
         }
 
-        .error-container {
+        .access-denied-container {
             background: white;
             border-radius: 20px;
             padding: 60px;
@@ -31,7 +32,7 @@
             max-width: 600px;
         }
 
-        .error-icon {
+        .access-icon {
             font-size: 100px;
             color: #dc3545;
             margin-bottom: 30px;
@@ -39,12 +40,17 @@
     </style>
 </head>
 <body>
-    <div class="error-container">
-        <i class="fas fa-exclamation-triangle error-icon"></i>
-        <h1 class="display-4 mb-4">Bir Hata Oluştu</h1>
+    <div class="access-denied-container">
+        <i class="fas fa-ban access-icon"></i>
+        <h1 class="display-4 mb-4">Erişim Engellendi</h1>
         <p class="lead text-muted mb-4">
-            Üzgünüz, bir şeyler yanlış gitti. Lütfen tekrar deneyin veya yöneticinizle iletişime geçin.
+            Bu sayfaya erişim yetkiniz bulunmamaktadır.
+            Lütfen yöneticinizle iletişime geçin.
         </p>
+        <div class="alert alert-warning">
+            <i class="fas fa-exclamation-triangle me-2"></i>
+            Bu işlem için gerekli yetkiye sahip değilsiniz.
+        </div>
         <div class="d-grid gap-2 d-md-block">
             <a href="javascript:history.back()" class="btn btn-secondary btn-lg">
                 <i class="fas fa-arrow-left"></i> Geri Dön

@@ -1,0 +1,176 @@
+﻿@* ============================================ *@
+@* Rapor/GenelMaasBordrosu.cshtml *@
+
+@model IEnumerable<PDKS.Business.DTOs.MaasBordrosuDTO>
+@{
+    ViewData["Title"] = "Genel Maaş Bordrosu";
+    var filtre = ViewBag.Filtre as PDKS.Business.DTOs.RaporFiltreDTO;
+}
+
+<div class="row mb-3">
+    <div class="col-md-8">
+        <form method="post" asp-action="GenelMaasBordrosu" class="row g-3">
+            <div class="col-md-5">
+                <label class="form-label">Yıl</label>
+                <select name="Yil" class="form-select" asp-items="ViewBag.Yillar">
+                    <option value="">Yıl Seçiniz</option>
+                </select>
+            </div>
+            <div class="col-md-5">
+                <label class="form-label">Ay</label>
+                <select name="Ay" class="form-select" asp-items="ViewBag.Aylar">
+                    <option value="">Ay Seçiniz</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">&nbsp;</label>
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="fas fa-filter"></i> Görüntüle
+                </button>
+            </div>
+        </form>
+    </div>
+    <div class="col-md-4 text-end">
+        <a asp-action="Index" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Raporlar
+        </a>
+    </div>
+</div>
+
+@if (Model != null && Model.Any())
+{
+    <div class="card">
+        <div class="card-header bg-success text-white">
+            <i class="fas fa-file-invoice-dollar me-2"></i> Genel Maaş Bordrosu
+            <span class="badge bg-light text-dark ms-2">@filtre?.Donem</span>
+        </div>
+        <div class="card-body">
+            <!-- Summary Stats -->
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="card bg-primary text-white">
+                        <div class="card-body text-center">
+                            <h4>@Model.Count()</h4>
+                            <small>Personel Sayısı</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-success text-white">
+                        <div class="card-body text-center">
+                            <h4>@Model.Sum(m => m.ToplamBrut).ToString("N0") ₺</h4>
+                            <small>Toplam Brüt</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-warning text-white">
+                        <div class="card-body text-center">
+                            <h4>@Model.Sum(m => m.SGKKesintisi + m.GelirVergisi).ToString("N0") ₺</h4>
+                            <small>Toplam Kesintiler</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-info text-white">
+                        <div class="card-body text-center">
+                            <h4>@Model.Sum(m => m.NetMaas).ToString("N0") ₺</h4>
+                            <small>Toplam Net</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-hover table-sm">
+                    <thead>
+                        <tr>
+                            <th>Personel</th>
+                            <th>Sicil</th>
+                            <th>Departman</th>
+                            <th class="text-end">Brüt Maaş</th>
+                            <th class="text-end">F.Mesai</th>
+                            <th class="text-end">Prim</th>
+                            <th class="text-end">Toplam Brüt</th>
+                            <th class="text-end">SGK</th>
+                            <th class="text-end">Vergi</th>
+                            <th class="text-end">Avans</th>
+                            <th class="text-end">Net Maaş</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model.OrderBy(m => m.PersonelAdi))
+                        {
+                            <tr>
+                                <td>
+                                    <i class="fas fa-user-circle text-primary me-1"></i>
+                                    @item.PersonelAdi
+                                </td>
+                                <td><small>@item.SicilNo</small></td>
+                                <td><small>@item.Departman</small></td>
+                                <td class="text-end">@item.BrutMaas.ToString("N2")</td>
+                                <td class="text-end">
+                                    @if (item.FazlaMesaiUcreti > 0)
+                                    {
+                                        <span class="text-success">+@item.FazlaMesaiUcreti.ToString("N2")</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">-</span>
+                                    }
+                                </td>
+                                <td class="text-end">
+                                    @if (item.Primler > 0)
+                                    {
+                                        <span class="text-primary">+@item.Primler.ToString("N2")</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">-</span>
+                                    }
+                                </td>
+                                <td class="text-end fw-bold">@item.ToplamBrut.ToString("N2")</td>
+                                <td class="text-end text-danger">-@item.SGKKesintisi.ToString("N2")</td>
+                                <td class="text-end text-danger">-@item.GelirVergisi.ToString("N2")</td>
+                                <td class="text-end text-warning">
+                                    @if (item.AvansKesintisi > 0)
+                                    {
+                                        <span>-@item.AvansKesintisi.ToString("N2")</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">-</span>
+                                    }
+                                </td>
+                                <td class="text-end fw-bold text-success">@item.NetMaas.ToString("N2") ₺</td>
+                            </tr>
+                        }
+                    </tbody>
+                    <tfoot class="table-secondary">
+                        <tr>
+                            <th colspan="3">TOPLAM</th>
+                            <th class="text-end">@Model.Sum(m => m.BrutMaas).ToString("N2")</th>
+                            <th class="text-end">@Model.Sum(m => m.FazlaMesaiUcreti).ToString("N2")</th>
+                            <th class="text-end">@Model.Sum(m => m.Primler).ToString("N2")</th>
+                            <th class="text-end">@Model.Sum(m => m.ToplamBrut).ToString("N2")</th>
+                            <th class="text-end">@Model.Sum(m => m.SGKKesintisi).ToString("N2")</th>
+                            <th class="text-end">@Model.Sum(m => m.GelirVergisi).ToString("N2")</th>
+                            <th class="text-end">@Model.Sum(m => m.AvansKesintisi).ToString("N2")</th>
+                            <th class="text-end">@Model.Sum(m => m.NetMaas).ToString("N2") ₺</th>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+    </div>
+}
+else
+{
+    <div class="card">
+        <div class="card-body text-center py-5">
+            <i class="fas fa-file-invoice-dollar fa-4x text-muted mb-3"></i>
+            <h5>Bordro Görüntüle</h5>
+            <p class="text-muted">Yıl ve ay seçerek maaş bordrosunu görüntüleyin.</p>
+        </div>
+    </div>
+}

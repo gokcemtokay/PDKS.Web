@@ -1,0 +1,112 @@
+﻿@* GirisCikis/Edit.cshtml *@
+@model PDKS.Business.DTOs.GirisCikisUpdateDTO
+@{
+    ViewData["Title"] = "Giriş-Çıkış Kaydı Düzenle";
+}
+
+<div class="row">
+    <div class="col-md-8 mx-auto">
+        <div class="card">
+            <div class="card-header">
+                <i class="fas fa-edit me-2"></i> Giriş-Çıkış Kaydı Düzenle
+            </div>
+            <div class="card-body">
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <strong>Dikkat:</strong> Bu kaydı düzenlemek devam hesaplamalarını etkileyecektir.
+                </div>
+
+                <form asp-action="Edit" method="post">
+                    <input type="hidden" asp-for="Id" />
+                    <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+
+                    <div class="mb-3">
+                        <label asp-for="PersonelId" class="form-label">Personel <span class="text-danger">*</span></label>
+                        <select asp-for="PersonelId" class="form-select" asp-items="ViewBag.Personeller" disabled>
+                            <option value="">Personel Seçiniz...</option>
+                        </select>
+                        <input type="hidden" asp-for="PersonelId" />
+                        <span asp-validation-for="PersonelId" class="text-danger"></span>
+                        <small class="form-text text-muted">Personel bilgisi değiştirilemez</small>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label asp-for="GirisZamani" class="form-label">Giriş Zamanı</label>
+                            <input asp-for="GirisZamani" type="datetime-local" class="form-control">
+                            <span asp-validation-for="GirisZamani" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="CikisZamani" class="form-label">Çıkış Zamanı</label>
+                            <input asp-for="CikisZamani" type="datetime-local" class="form-control">
+                            <span asp-validation-for="CikisZamani" class="text-danger"></span>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label asp-for="Kaynak" class="form-label">Kaynak</label>
+                            <input asp-for="Kaynak" class="form-control" placeholder="Örn: Manuel Giriş, İK">
+                            <span asp-validation-for="Kaynak" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="CihazId" class="form-label">Cihaz</label>
+                            <select asp-for="CihazId" class="form-select" asp-items="ViewBag.Cihazlar">
+                                <option value="">Seçiniz...</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Not" class="form-label">Not / Açıklama</label>
+                        <textarea asp-for="Not" class="form-control" rows="3"
+                                  placeholder="Gerekirse açıklama giriniz..."></textarea>
+                        <span asp-validation-for="Not" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input asp-for="ElleGiris" class="form-check-input" type="checkbox">
+                            <label asp-for="ElleGiris" class="form-check-label">
+                                Elle Giriş Olarak İşaretle
+                            </label>
+                        </div>
+                        <small class="form-text text-muted">Bu kayıt manuel olarak girildi veya düzenlendiyse işaretleyin</small>
+                    </div>
+
+                    <hr>
+
+                    <div class="d-flex justify-content-between">
+                        <a asp-action="Index" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i> İptal
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Kaydet
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        // Validate exit time is after entry time
+        $('form').submit(function(e) {
+            var giris = new Date($('#GirisZamani').val());
+            var cikis = new Date($('#CikisZamani').val());
+
+            if (giris && cikis && cikis < giris) {
+                e.preventDefault();
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Hata',
+                    text: 'Çıkış zamanı giriş zamanından önce olamaz!'
+                });
+                return false;
+            }
+        });
+    </script>
+}

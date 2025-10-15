@@ -1,0 +1,222 @@
+﻿@* Personel/Details.cshtml *@
+@model PDKS.Business.DTOs.PersonelDetailDTO
+@{
+    ViewData["Title"] = "Personel Detayı";
+}
+
+<div class="row">
+    <div class="col-md-8 mx-auto">
+        <div class="card">
+            <div class="card-header">
+                <i class="fas fa-user-circle me-2"></i> Personel Bilgileri
+            </div>
+            <div class="card-body">
+                <!-- Temel Bilgiler -->
+                <div class="row mb-4">
+                    <div class="col-md-8">
+                        <h4>@Model.AdSoyad</h4>
+                        <p class="text-muted">@Model.Gorev - @Model.Departman</p>
+                    </div>
+                    <div class="col-md-4 text-end">
+                        @if (Model.Durum)
+                        {
+                            <span class="badge bg-success fs-6">
+                                <i class="fas fa-check-circle"></i> Aktif
+                            </span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-danger fs-6">
+                                <i class="fas fa-times-circle"></i> Pasif
+                            </span>
+                        }
+                    </div>
+                </div>
+
+                <hr>
+
+                <!-- Detaylı Bilgiler -->
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label class="text-muted mb-1">Sicil No</label>
+                        <p class="fw-bold">@Model.SicilNo</p>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="text-muted mb-1">Email</label>
+                        <p><a href="mailto:@Model.Email">@Model.Email</a></p>
+                    </div>
+                </div>
+
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label class="text-muted mb-1">Telefon</label>
+                        <p>@Model.Telefon</p>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="text-muted mb-1">Vardiya</label>
+                        <p>
+                            @if (!string.IsNullOrEmpty(Model.VardiyaAdi))
+                            {
+                                <span class="badge bg-info">@Model.VardiyaAdi</span>
+                            }
+                            else
+                            {
+                                <span class="text-muted">Atanmamış</span>
+                            }
+                        </p>
+                    </div>
+                </div>
+
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label class="text-muted mb-1">İşe Giriş Tarihi</label>
+                        <p>@Model.GirisTarihi.ToString("dd MMMM yyyy")</p>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="text-muted mb-1">Çıkış Tarihi</label>
+                        <p>
+                            @if (Model.CikisTarihi.HasValue)
+                            {
+                                @Model.CikisTarihi.Value.ToString("dd MMMM yyyy")
+                            }
+                            else
+                            {
+                                <span class="text-muted">-</span>
+                            }
+                        </p>
+                    </div>
+                </div>
+
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label class="text-muted mb-1">Maaş</label>
+                        <p class="fw-bold text-success">@Model.Maas.ToString("N2") ₺</p>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="text-muted mb-1">Avans Limiti</label>
+                        <p class="fw-bold text-warning">@Model.AvansLimiti.ToString("N2") ₺</p>
+                    </div>
+                </div>
+
+                <hr>
+
+                <!-- İstatistikler -->
+                <h6 class="mb-3">İstatistikler</h6>
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="card bg-primary text-white">
+                            <div class="card-body text-center">
+                                <h3>@Model.ToplamGirisCikis</h3>
+                                <small>Giriş-Çıkış</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-success text-white">
+                            <div class="card-body text-center">
+                                <h3>@Model.ToplamIzin</h3>
+                                <small>Toplam İzin</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-warning text-white">
+                            <div class="card-body text-center">
+                                <h3>@Model.BekleyenIzin</h3>
+                                <small>Bekleyen İzin</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-info text-white">
+                            <div class="card-body text-center">
+                                <h3>@Model.ToplamAvans.ToString("N0") ₺</h3>
+                                <small>Toplam Avans</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <hr>
+
+                <!-- İşlem Butonları -->
+                <div class="d-flex justify-content-between">
+                    <a asp-action="Index" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> Geri
+                    </a>
+                    <div>
+                        <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-warning">
+                            <i class="fas fa-edit"></i> Düzenle
+                        </a>
+                        @if (Model.Durum)
+                        {
+                            <button onclick="confirmDelete(@Model.Id, '@Model.AdSoyad')" class="btn btn-danger">
+                                <i class="fas fa-ban"></i> Pasif Yap
+                            </button>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Links -->
+        <div class="row mt-3">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-body">
+                        <h6><i class="fas fa-fingerprint text-primary"></i> Giriş-Çıkış Kayıtları</h6>
+                        <p class="text-muted mb-2">Bu personelin tüm giriş-çıkış kayıtlarını görüntüleyin.</p>
+                        <a asp-controller="GirisCikis" asp-action="Index" asp-route-personelId="@Model.Id"
+                           class="btn btn-sm btn-primary">
+                            Kayıtları Görüntüle
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-body">
+                        <h6><i class="fas fa-calendar-check text-success"></i> İzin Kayıtları</h6>
+                        <p class="text-muted mb-2">Bu personelin izin taleplerini görüntüleyin.</p>
+                        <a asp-controller="Izin" asp-action="Index" asp-route-personelId="@Model.Id"
+                           class="btn btn-sm btn-success">
+                            İzinleri Görüntüle
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function confirmDelete(id, name) {
+            Swal.fire({
+                title: 'Emin misiniz?',
+                text: name + " pasif yapılacak!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#dc3545',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Evet, Pasif Yap',
+                cancelButtonText: 'İptal'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    var form = document.createElement('form');
+                    form.method = 'POST';
+                    form.action = '@Url.Action("Delete")/' + id;
+
+                    var token = document.createElement('input');
+                    token.type = 'hidden';
+                    token.name = '__RequestVerificationToken';
+                    token.value = $('input[name="__RequestVerificationToken"]').val();
+                    form.appendChild(token);
+
+                    document.body.appendChild(form);
+                    form.submit();
+                }
+            });
+        }
+    </script>
+}

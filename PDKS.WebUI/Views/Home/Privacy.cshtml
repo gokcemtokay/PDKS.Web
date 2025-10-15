@@ -1,0 +1,85 @@
+﻿@* ============================================ *@
+@* Home/Privacy.cshtml *@
+
+@{
+    ViewData["Title"] = "Gizlilik Politikası";
+}
+
+<div class="row">
+    <div class="col-md-10 mx-auto">
+        <div class="card">
+            <div class="card-header">
+                <i class="fas fa-shield-alt me-2"></i> Gizlilik Politikası
+            </div>
+            <div class="card-body">
+                <h4>PDKS - Personel Devam Kontrol Sistemi</h4>
+                <p class="text-muted">Son Güncelleme: @DateTime.Now.ToString("dd MMMM yyyy")</p>
+
+                <hr>
+
+                <h5>1. Genel Bilgiler</h5>
+                <p>
+                    Bu Personel Devam Kontrol Sistemi (PDKS), şirket çalışanlarının giriş-çıkış kayıtlarını,
+                    izin taleplerini ve devam durumlarını takip etmek amacıyla kullanılmaktadır.
+                </p>
+
+                <h5>2. Toplanan Veriler</h5>
+                <p>Sistem aşağıdaki verileri toplar ve işler:</p>
+                <ul>
+                    <li>Personel kimlik bilgileri (Ad-Soyad, Sicil No, Email, Telefon)</li>
+                    <li>Giriş-çıkış zamanları</li>
+                    <li>İzin talepleri ve onay durumları</li>
+                    <li>Maaş ve avans bilgileri</li>
+                    <li>Sistem kullanım logları</li>
+                </ul>
+
+                <h5>3. Verilerin Kullanımı</h5>
+                <p>Toplanan veriler şu amaçlarla kullanılır:</p>
+                <ul>
+                    <li>Personel devam takibi</li>
+                    <li>Bordro hesaplamaları</li>
+                    <li>İzin yönetimi</li>
+                    <li>Raporlama ve analiz</li>
+                    <li>Sistem güvenliği</li>
+                </ul>
+
+                <h5>4. Veri Güvenliği</h5>
+                <p>
+                    Tüm veriler güvenli PostgreSQL veritabanında saklanır. Şifreler SHA256 ile hashlenir.
+                    Sistem, yetkisiz erişimlere karşı rol bazlı yetkilendirme kullanır.
+                </p>
+
+                <h5>5. Veri Saklama</h5>
+                <p>
+                    Personel verileri, çalışan şirkette olduğu süre boyunca ve yasal saklama sürelerine
+                    uygun olarak saklanır.
+                </p>
+
+                <h5>6. Kullanıcı Hakları</h5>
+                <p>Kullanıcılar aşağıdaki haklara sahiptir:</p>
+                <ul>
+                    <li>Kendi verilerini görüntüleme</li>
+                    <li>Hatalı verilerin düzeltilmesini talep etme</li>
+                    <li>Kişisel verilerin silinmesini talep etme (yasal zorunluluklar hariç)</li>
+                </ul>
+
+                <h5>7. İletişim</h5>
+                <p>
+                    Gizlilik politikası hakkında sorularınız için İnsan Kaynakları departmanı ile
+                    iletişime geçebilirsiniz.
+                </p>
+                <p>
+                    <i class="fas fa-envelope me-2"></i> Email: ik@sirket.com<br>
+                    <i class="fas fa-phone me-2"></i> Telefon: 0850 XXX XX XX
+                </p>
+
+                <hr>
+
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    Bu sistem 6698 sayılı Kişisel Verilerin Korunması Kanunu (KVKK) kapsamında işlenmektedir.
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

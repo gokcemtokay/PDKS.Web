@@ -1,0 +1,94 @@
+﻿@* ============================================ *@
+@* Vardiya/Create.cshtml *@
+
+@model PDKS.Business.DTOs.VardiyaCreateDTO
+@{
+    ViewData["Title"] = "Yeni Vardiya Ekle";
+}
+
+<div class="row">
+    <div class="col-md-8 mx-auto">
+        <div class="card">
+            <div class="card-header">
+                <i class="fas fa-clock me-2"></i> Yeni Vardiya Tanımla
+            </div>
+            <div class="card-body">
+                <form asp-action="Create" method="post">
+                    <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+
+                    <div class="mb-3">
+                        <label asp-for="Ad" class="form-label">Vardiya Adı <span class="text-danger">*</span></label>
+                        <input asp-for="Ad" class="form-control" placeholder="Örn: Gündüz Vardiyası">
+                        <span asp-validation-for="Ad" class="text-danger"></span>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label asp-for="BaslangicSaati" class="form-label">Başlangıç Saati <span class="text-danger">*</span></label>
+                            <input asp-for="BaslangicSaati" type="time" class="form-control">
+                            <span asp-validation-for="BaslangicSaati" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="BitisSaati" class="form-label">Bitiş Saati <span class="text-danger">*</span></label>
+                            <input asp-for="BitisSaati" type="time" class="form-control">
+                            <span asp-validation-for="BitisSaati" class="text-danger"></span>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label asp-for="ToleransSuresiDakika" class="form-label">Tolerans Süresi (Dakika)</label>
+                            <input asp-for="ToleransSuresiDakika" type="number" class="form-control" min="0" max="120">
+                            <span asp-validation-for="ToleransSuresiDakika" class="text-danger"></span>
+                            <small class="form-text text-muted">Geç kalma tolerans süresi</small>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label d-block">Özellikler</label>
+                            <div class="form-check">
+                                <input asp-for="GeceVardiyasiMi" class="form-check-input" type="checkbox">
+                                <label asp-for="GeceVardiyasiMi" class="form-check-label">
+                                    <i class="fas fa-moon"></i> Gece Vardiyası
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input asp-for="EsnekVardiyaMi" class="form-check-input" type="checkbox">
+                                <label asp-for="EsnekVardiyaMi" class="form-check-label">
+                                    <i class="fas fa-random"></i> Esnek Vardiya
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Aciklama" class="form-label">Açıklama</label>
+                        <textarea asp-for="Aciklama" class="form-control" rows="3"
+                                  placeholder="Vardiya hakkında açıklama..."></textarea>
+                        <span asp-validation-for="Aciklama" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <div class="form-check form-switch">
+                            <input asp-for="Durum" class="form-check-input" type="checkbox" checked>
+                            <label asp-for="Durum" class="form-check-label">Aktif</label>
+                        </div>
+                    </div>
+
+                    <hr>
+
+                    <div class="d-flex justify-content-between">
+                        <a asp-action="Index" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i> Geri
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Kaydet
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

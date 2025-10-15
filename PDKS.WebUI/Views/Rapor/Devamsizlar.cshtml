@@ -1,0 +1,124 @@
+﻿@* Rapor/Devamsizlar.cshtml *@
+@model IEnumerable<PDKS.Business.DTOs.DevamsizlarRaporDTO>
+@{
+    ViewData["Title"] = "Devamsızlar Raporu";
+    var filtre = ViewBag.Filtre as PDKS.Business.DTOs.RaporFiltreDTO;
+}
+
+<div class="row mb-3">
+    <div class="col-md-8">
+        <form method="post" asp-action="Devamsizlar" class="row g-3">
+            <div class="col-md-4">
+                <label class="form-label">Başlangıç Tarihi</label>
+                <input type="date" name="BaslangicTarihi" class="form-control"
+                       value="@(filtre?.BaslangicTarihi.ToString("yyyy-MM-dd") ?? DateTime.Today.AddMonths(-1).ToString("yyyy-MM-dd"))">
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Bitiş Tarihi</label>
+                <input type="date" name="BitisTarihi" class="form-control"
+                       value="@(filtre?.BitisTarihi.ToString("yyyy-MM-dd") ?? DateTime.Today.ToString("yyyy-MM-dd"))">
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Departman</label>
+                <select name="Departman" class="form-select" asp-items="ViewBag.Departmanlar">
+                    <option value="">Tümü</option>
+                </select>
+            </div>
+            <div class="col-md-1">
+                <label class="form-label">&nbsp;</label>
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="fas fa-filter"></i>
+                </button>
+            </div>
+        </form>
+    </div>
+    <div class="col-md-4 text-end">
+        <a asp-action="Index" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Raporlar
+        </a>
+    </div>
+</div>
+
+@if (Model != null && Model.Any())
+{
+    <div class="card">
+        <div class="card-header bg-danger text-white">
+            <i class="fas fa-user-times me-2"></i> Devamsızlar Raporu
+            <span class="badge bg-light text-dark ms-2">@Model.Count() Personel</span>
+        </div>
+        <div class="card-body">
+            <!-- Summary -->
+            <div class="row mb-4">
+                <div class="col-md-4">
+                    <div class="card bg-danger text-white">
+                        <div class="card-body text-center">
+                            <h3>@Model.Count()</h3>
+                            <small>Devamsız Personel</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card bg-warning">
+                        <div class="card-body text-center">
+                            <h3>@Model.Sum(d => d.DevamsizGunSayisi)</h3>
+                            <small>Toplam Devamsız Gün</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card bg-info text-white">
+                        <div class="card-body text-center">
+                            <h3>@(Model.Any() ? Model.Average(d => d.DevamsizGunSayisi).ToString("N1") : "0")</h3>
+                            <small>Ortalama Devamsızlık</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Personel</th>
+                            <th>Sicil No</th>
+                            <th>Departman</th>
+                            <th>Devamsız Gün</th>
+                            <th>Devamsız Olduğu Günler</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model.OrderByDescending(d => d.DevamsizGunSayisi))
+                        {
+                            <tr>
+                                <td>
+                                    <i class="fas fa-user-circle text-danger me-2"></i>
+                                    @item.PersonelAdi
+                                </td>
+                                <td><strong>@item.SicilNo</strong></td>
+                                <td>@item.Departman</td>
+                                <td>
+                                    <span class="badge bg-danger fs-6">
+                                        @item.DevamsizGunSayisi Gün
+                                    </span>
+                                </td>
+                                <td>
+                                    <small class="text-muted">@item.DevamsizGunler</small>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+}
+else
+{
+    <div class="card">
+        <div class="card-body text-center py-5">
+            <i class="fas fa-check-circle fa-4x text-success mb-3"></i>
+            <h5>Harika!</h5>
+            <p class="text-muted">Seçilen tarih aralığında devamsız personel bulunmamaktadır.</p>
+        </div>
+    </div>
+}

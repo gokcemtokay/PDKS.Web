@@ -1,0 +1,178 @@
+﻿@* Izin/Create.cshtml *@
+@model PDKS.Business.DTOs.IzinCreateDTO
+@{
+    ViewData["Title"] = "Yeni İzin Talebi";
+}
+
+<div class="row">
+    <div class="col-md-8 mx-auto">
+        <div class="card">
+            <div class="card-header">
+                <i class="fas fa-calendar-plus me-2"></i> Yeni İzin Talebi Oluştur
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    <strong>Bilgi:</strong> İzin talebiniz yöneticiniz tarafından onaylandıktan sonra geçerli olacaktır.
+                </div>
+
+                <form asp-action="Create" method="post" id="izinForm">
+                    <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+
+                    @if (User.IsInRole("Admin") || User.IsInRole("IK"))
+                    {
+                        <div class="mb-3">
+                            <label asp-for="PersonelId" class="form-label">Personel <span class="text-danger">*</span></label>
+                            <select asp-for="PersonelId" class="form-select" asp-items="ViewBag.Personeller">
+                                <option value="">Personel Seçiniz...</option>
+                            </select>
+                            <span asp-validation-for="PersonelId" class="text-danger"></span>
+                        </div>
+                    }
+                    else
+                    {
+                        <input type="hidden" asp-for="PersonelId" />
+                    }
+
+                    <div class="mb-3">
+                        <label asp-for="IzinTipi" class="form-label">İzin Tipi <span class="text-danger">*</span></label>
+                        <select asp-for="IzinTipi" class="form-select" asp-items="ViewBag.IzinTipleri">
+                            <option value="">İzin Tipi Seçiniz...</option>
+                        </select>
+                        <span asp-validation-for="IzinTipi" class="text-danger"></span>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label asp-for="BaslangicTarihi" class="form-label">Başlangıç Tarihi <span class="text-danger">*</span></label>
+                            <input asp-for="BaslangicTarihi" type="date" class="form-control" id="baslangicTarihi">
+                            <span asp-validation-for="BaslangicTarihi" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="BitisTarihi" class="form-label">Bitiş Tarihi <span class="text-danger">*</span></label>
+                            <input asp-for="BitisTarihi" type="date" class="form-control" id="bitisTarihi">
+                            <span asp-validation-for="BitisTarihi" class="text-danger"></span>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <div class="alert alert-secondary" id="gunSayisiAlert">
+                            <strong>Toplam İzin Süresi:</strong> <span id="gunSayisi">0</span> gün
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Aciklama" class="form-label">Açıklama</label>
+                        <textarea asp-for="Aciklama" class="form-control" rows="4"
+                                  placeholder="İzin nedeninizi açıklayınız..."></textarea>
+                        <span asp-validation-for="Aciklama" class="text-danger"></span>
+                    </div>
+
+                    <hr>
+
+                    <div class="d-flex justify-content-between">
+                        <a asp-action="Index" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i> İptal
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-paper-plane"></i> Talep Gönder
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- İzin Tipi Açıklamaları -->
+        <div class="card mt-3">
+            <div class="card-header">
+                <i class="fas fa-question-circle me-2"></i> İzin Tipleri Hakkında
+            </div>
+            <div class="card-body">
+                <ul class="list-unstyled mb-0">
+                    <li class="mb-2">
+                        <strong><i class="fas fa-calendar text-primary"></i> Yıllık İzin:</strong>
+                        Yıllık izin hakkınızdan kullanılır
+                    </li>
+                    <li class="mb-2">
+                        <strong><i class="fas fa-notes-medical text-success"></i> Raporlu İzin:</strong>
+                        Sağlık raporu ile alınan izin (rapor eklemek gerekebilir)
+                    </li>
+                    <li class="mb-2">
+                        <strong><i class="fas fa-hand-holding-usd text-warning"></i> Ücretsiz İzin:</strong>
+                        Maaştan kesinti yapılarak alınan izin
+                    </li>
+                    <li class="mb-2">
+                        <strong><i class="fas fa-baby text-info"></i> Doğum İzni:</strong>
+                        Doğum için yasal izin hakkı
+                    </li>
+                    <li class="mb-2">
+                        <strong><i class="fas fa-heart text-danger"></i> Evlilik İzni:</strong>
+                        Evlilik için verilen özel izin
+                    </li>
+                    <li class="mb-2">
+                        <strong><i class="fas fa-cross text-dark"></i> Ölüm İzni:</strong>
+                        Yakın akraba vefatı için verilen izin
+                    </li>
+                    <li>
+                        <strong><i class="fas fa-clipboard text-secondary"></i> Mazeret İzni:</strong>
+                        Özel durumlar için verilen izin
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        // Calculate days
+        function calculateDays() {
+            var start = new Date($('#baslangicTarihi').val());
+            var end = new Date($('#bitisTarihi').val());
+
+            if (start && end && start <= end) {
+                var diffTime = Math.abs(end - start);
+                var diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+                $('#gunSayisi').text(diffDays);
+                $('#gunSayisiAlert').removeClass('alert-secondary').addClass('alert-success');
+            } else {
+                $('#gunSayisi').text('0');
+                $('#gunSayisiAlert').removeClass('alert-success').addClass('alert-secondary');
+            }
+        }
+
+        $('#baslangicTarihi, #bitisTarihi').change(calculateDays);
+
+        // Initial calculation
+        $(document).ready(function() {
+            calculateDays();
+        });
+
+        // Validate dates on submit
+        $('#izinForm').submit(function(e) {
+            var start = new Date($('#baslangicTarihi').val());
+            var end = new Date($('#bitisTarihi').val());
+
+            if (start > end) {
+                e.preventDefault();
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Hata',
+                    text: 'Bitiş tarihi başlangıç tarihinden önce olamaz!'
+                });
+                return false;
+            }
+
+            if (start < new Date().setHours(0, 0, 0, 0)) {
+                e.preventDefault();
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Hata',
+                    text: 'Geçmiş tarihli izin talebi oluşturamazsınız!'
+                });
+                return false;
+            }
+        });
+    </script>
+}

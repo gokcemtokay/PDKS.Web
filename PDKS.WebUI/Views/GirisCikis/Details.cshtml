@@ -1,0 +1,230 @@
+﻿@* ============================================ *@
+@* GirisCikis/Details.cshtml *@
+
+@model PDKS.Business.DTOs.GirisCikisListDTO
+@{
+    ViewData["Title"] = "Giriş-Çıkış Detayı";
+}
+
+<div class="row">
+    <div class="col-md-8 mx-auto">
+        <div class="card">
+            <div class="card-header">
+                <i class="fas fa-fingerprint me-2"></i> Giriş-Çıkış Kaydı Detayı
+            </div>
+            <div class="card-body">
+                <!-- Personel Bilgisi -->
+                <div class="mb-4 p-3 bg-light rounded">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <h5 class="mb-1">
+                                <i class="fas fa-user-circle text-primary me-2"></i>
+                                @Model.PersonelAdi
+                            </h5>
+                            <p class="text-muted mb-0">Sicil No: <strong>@Model.SicilNo</strong></p>
+                        </div>
+                        <div class="col-md-4 text-end">
+                            @if (Model.ElleGiris)
+                            {
+                                <span class="badge bg-dark fs-6">
+                                    <i class="fas fa-hand-paper"></i> Manuel Giriş
+                                </span>
+                            }
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tarih ve Zaman Bilgileri -->
+                <div class="row mb-3">
+                    <div class="col-md-4">
+                        <label class="text-muted mb-1">Tarih</label>
+                        <p class="fw-bold">@Model.GirisZamani?.ToString("dd MMMM yyyy, dddd")</p>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="text-muted mb-1">Giriş Zamanı</label>
+                        <p>
+                            @if (Model.GirisZamani.HasValue)
+                            {
+                                <span class="badge bg-success fs-6">
+                                    <i class="fas fa-sign-in-alt"></i> @Model.GirisZamani.Value.ToString("HH:mm:ss")
+                                </span>
+                            }
+                            else
+                            {
+                                <span class="text-muted">Kayıt Yok</span>
+                            }
+                        </p>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="text-muted mb-1">Çıkış Zamanı</label>
+                        <p>
+                            @if (Model.CikisZamani.HasValue)
+                            {
+                                <span class="badge bg-secondary fs-6">
+                                    <i class="fas fa-sign-out-alt"></i> @Model.CikisZamani.Value.ToString("HH:mm:ss")
+                                </span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-warning">Çıkış Yapılmadı</span>
+                            }
+                        </p>
+                    </div>
+                </div>
+
+                <hr>
+
+                <!-- Çalışma İstatistikleri -->
+                <h6 class="mb-3">Çalışma İstatistikleri</h6>
+                <div class="row mb-3">
+                    <div class="col-md-3">
+                        <div class="card bg-primary text-white">
+                            <div class="card-body text-center">
+                                <h4>@Model.CalismaSuresi</h4>
+                                <small>Toplam Çalışma</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card @(Model.GecKalmaSuresi > 0 ? "bg-warning" : "bg-light")">
+                            <div class="card-body text-center">
+                                <h4>@(Model.GecKalmaSuresi ?? 0) dk</h4>
+                                <small>Geç Kalma</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card @(Model.ErkenCikisSuresi > 0 ? "bg-info text-white" : "bg-light")">
+                            <div class="card-body text-center">
+                                <h4>@(Model.ErkenCikisSuresi ?? 0) dk</h4>
+                                <small>Erken Çıkış</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card @(Model.FazlaMesaiSuresi > 0 ? "bg-success text-white" : "bg-light")">
+                            <div class="card-body text-center">
+                                <h4>@(Model.FazlaMesaiSuresi ?? 0) dk</h4>
+                                <small>Fazla Mesai</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Durum ve Kaynak -->
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label class="text-muted mb-1">Durum</label>
+                        <p>
+                            @if (Model.Durum == "Normal")
+                            {
+                                <span class="badge bg-success fs-6">
+                                    <i class="fas fa-check-circle"></i> Normal
+                                </span>
+                            }
+                            else if (Model.Durum == "Geç Kalmış")
+                            {
+                                <span class="badge bg-warning fs-6">
+                                    <i class="fas fa-clock"></i> Geç Kalmış
+                                </span>
+                            }
+                            else if (Model.Durum == "Erken Çıkmış")
+                            {
+                                <span class="badge bg-info fs-6">
+                                    <i class="fas fa-door-open"></i> Erken Çıkmış
+                                </span>
+                            }
+                            else if (Model.Durum == "Fazla Mesai")
+                            {
+                                <span class="badge bg-primary fs-6">
+                                    <i class="fas fa-business-time"></i> Fazla Mesai
+                                </span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-secondary fs-6">@Model.Durum</span>
+                            }
+                        </p>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="text-muted mb-1">Kaynak</label>
+                        <p>
+                            @if (!string.IsNullOrEmpty(Model.Kaynak))
+                            {
+                                <span>@Model.Kaynak</span>
+                            }
+                            else
+                            {
+                                <span class="text-muted">Belirtilmemiş</span>
+                            }
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Not -->
+                @if (!string.IsNullOrEmpty(Model.Not))
+                {
+                    <div class="mb-3">
+                        <label class="text-muted mb-1">Not / Açıklama</label>
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i>
+                            @Model.Not
+                        </div>
+                    </div>
+                }
+
+                <hr>
+
+                <!-- İşlem Butonları -->
+                <div class="d-flex justify-content-between">
+                    <a asp-action="Index" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> Geri
+                    </a>
+                    @if (User.IsInRole("Admin") || User.IsInRole("IK"))
+                    {
+                        <div>
+                            <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-warning">
+                                <i class="fas fa-edit"></i> Düzenle
+                            </a>
+                            <button onclick="confirmDelete(@Model.Id)" class="btn btn-danger">
+                                <i class="fas fa-trash"></i> Sil
+                            </button>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function confirmDelete(id) {
+            Swal.fire({
+                title: 'Emin misiniz?',
+                text: "Bu kayıt silinecek!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#dc3545',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Evet, Sil',
+                cancelButtonText: 'İptal'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    var form = document.createElement('form');
+                    form.method = 'POST';
+                    form.action = '@Url.Action("Delete")/' + id;
+
+                    var token = document.createElement('input');
+                    token.type = 'hidden';
+                    token.name = '__RequestVerificationToken';
+                    token.value = $('input[name="__RequestVerificationToken"]').val();
+                    form.appendChild(token);
+
+                    document.body.appendChild(form);
+                    form.submit();
+                }
+            });
+        }
+    </script>
+}

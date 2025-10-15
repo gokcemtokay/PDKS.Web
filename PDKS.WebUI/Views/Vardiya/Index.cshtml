@@ -1,0 +1,117 @@
+﻿@* Vardiya/Index.cshtml *@
+@model IEnumerable<PDKS.Business.DTOs.VardiyaListDTO>
+@{
+    ViewData["Title"] = "Vardiya Yönetimi";
+}
+
+<div class="row mb-3">
+    <div class="col-md-8">
+        <h4>Vardiya Tanımları</h4>
+        <p class="text-muted">Çalışma vardiyalarını tanımlayın ve yönetin</p>
+    </div>
+    <div class="col-md-4 text-end">
+        <a asp-action="Create" class="btn btn-primary">
+            <i class="fas fa-plus"></i> Yeni Vardiya Ekle
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    @foreach (var vardiya in Model)
+    {
+        <div class="col-md-6 col-lg-4 mb-3">
+            <div class="card h-100 @(!vardiya.Durum ? "border-danger" : "")">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <h5 class="mb-0">
+                            <i class="fas fa-clock text-primary me-2"></i>
+                            @vardiya.Ad
+                        </h5>
+                        @if (vardiya.Durum)
+                        {
+                            <span class="badge bg-success">Aktif</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-danger">Pasif</span>
+                        }
+                    </div>
+
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between align-items-center p-2 bg-light rounded">
+                            <div>
+                                <small class="text-muted">Başlangıç</small>
+                                <p class="mb-0 fw-bold">@vardiya.BaslangicSaati.ToString(@"hh\:mm")</p>
+                            </div>
+                            <i class="fas fa-arrow-right text-muted"></i>
+                            <div>
+                                <small class="text-muted">Bitiş</small>
+                                <p class="mb-0 fw-bold">@vardiya.BitisSaati.ToString(@"hh\:mm")</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-2">
+                        @if (vardiya.GeceVardiyasiMi)
+                        {
+                            <span class="badge bg-dark">
+                                <i class="fas fa-moon"></i> Gece Vardiyası
+                            </span>
+                        }
+                        @if (vardiya.EsnekVardiyaMi)
+                        {
+                            <span class="badge bg-info">
+                                <i class="fas fa-random"></i> Esnek Vardiya
+                            </span>
+                        }
+                    </div>
+
+                    <p class="text-muted small mb-2">
+                        <i class="fas fa-stopwatch me-1"></i>
+                        Tolerans: @vardiya.ToleransSuresiDakika dakika
+                    </p>
+
+                    @if (!string.IsNullOrEmpty(vardiya.Aciklama))
+                    {
+                        <p class="text-muted small mb-3">@vardiya.Aciklama</p>
+                    }
+
+                    <div class="alert alert-secondary py-2 mb-3">
+                        <i class="fas fa-users me-2"></i>
+                        <strong>@vardiya.PersonelSayisi</strong> personel bu vardiyada
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <a asp-action="Edit" asp-route-id="@vardiya.Id"
+                           class="btn btn-sm btn-warning flex-fill">
+                            <i class="fas fa-edit"></i> Düzenle
+                        </a>
+                        @if (vardiya.PersonelSayisi == 0)
+                        {
+                            <form method="post" asp-action="Delete" asp-route-id="@vardiya.Id"
+                                  class="flex-fill" onsubmit="return confirm('Bu vardiyayı silmek istediğinizden emin misiniz?');">
+                                <button type="submit" class="btn btn-sm btn-danger w-100">
+                                    <i class="fas fa-trash"></i> Sil
+                                </button>
+                            </form>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@if (!Model.Any())
+{
+    <div class="card">
+        <div class="card-body text-center py-5">
+            <i class="fas fa-clock fa-4x text-muted mb-3"></i>
+            <h5>Henüz vardiya tanımlanmamış</h5>
+            <p class="text-muted">İlk vardiyayı ekleyerek başlayın</p>
+            <a asp-action="Create" class="btn btn-primary">
+                <i class="fas fa-plus"></i> İlk Vardiyayı Ekle
+            </a>
+        </div>
+    </div>
+}

@@ -1,0 +1,168 @@
+﻿@* ============================================ *@
+@* Izin/BekleyenIzinler.cshtml *@
+
+@model IEnumerable<PDKS.Business.DTOs.IzinListDTO>
+@{
+    ViewData["Title"] = "Bekleyen İzin Talepleri";
+}
+
+<div class="row mb-3">
+    <div class="col-md-8">
+        <h4>
+            <i class="fas fa-hourglass-half text-warning"></i> Onay Bekleyen İzin Talepleri
+        </h4>
+        <p class="text-muted">Aşağıdaki izin talepleri onayınızı bekliyor</p>
+    </div>
+    <div class="col-md-4 text-end">
+        <a asp-action="Index" class="btn btn-secondary">
+            <i class="fas fa-list"></i> Tüm İzinler
+        </a>
+    </div>
+</div>
+
+@if (Model.Any())
+{
+    <div class="row">
+        @foreach (var izin in Model)
+        {
+            <div class="col-md-6 mb-3">
+                <div class="card border-warning">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start mb-3">
+                            <div>
+                                <h5 class="mb-1">
+                                    <i class="fas fa-user-circle text-primary me-2"></i>
+                                    @izin.PersonelAdi
+                                </h5>
+                                <span class="badge bg-secondary">@izin.IzinTipi</span>
+                            </div>
+                            <span class="badge bg-warning">
+                                <i class="fas fa-clock"></i> Beklemede
+                            </span>
+                        </div>
+
+                        <div class="row mb-2">
+                            <div class="col-6">
+                                <small class="text-muted">Başlangıç</small>
+                                <p class="mb-0 fw-bold">@izin.BaslangicTarihi.ToString("dd.MM.yyyy")</p>
+                            </div>
+                            <div class="col-6">
+                                <small class="text-muted">Bitiş</small>
+                                <p class="mb-0 fw-bold">@izin.BitisTarihi.ToString("dd.MM.yyyy")</p>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <small class="text-muted">Toplam Süre</small>
+                            <p class="mb-0">
+                                <span class="badge bg-info">@izin.GunSayisi Gün</span>
+                            </p>
+                        </div>
+
+                        @if (!string.IsNullOrEmpty(izin.Aciklama))
+                        {
+                            <div class="mb-3">
+                                <small class="text-muted">Açıklama</small>
+                                <p class="mb-0 small">@izin.Aciklama</p>
+                            </div>
+                        }
+
+                        <small class="text-muted">Talep Tarihi: @izin.OlusturmaTarihi.ToString("dd.MM.yyyy HH:mm")</small>
+
+                        <hr>
+
+                        <div class="d-flex justify-content-between gap-2">
+                            <a asp-action="Details" asp-route-id="@izin.Id"
+                               class="btn btn-sm btn-info flex-fill">
+                                <i class="fas fa-eye"></i> Detaylar
+                            </a>
+                            <form method="post" asp-action="Onayla" asp-route-id="@izin.Id" class="flex-fill">
+                                <button type="submit" class="btn btn-sm btn-success w-100"
+                                        onclick="return confirm('Bu izin talebini onaylamak istediğinizden emin misiniz?');">
+                                    <i class="fas fa-check"></i> Onayla
+                                </button>
+                            </form>
+                            <button type="button" class="btn btn-sm btn-danger flex-fill"
+                                    data-bs-toggle="modal" data-bs-target="#redModal@(izin.Id)">
+                                <i class="fas fa-times"></i> Reddet
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Red Modal -->
+                <div class="modal fade" id="redModal@(izin.Id)" tabindex="-1">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <form method="post" asp-action="Reddet" asp-route-id="@izin.Id">
+                                <div class="modal-header">
+                                    <h5 class="modal-title">
+                                        <i class="fas fa-times-circle text-danger me-2"></i>
+                                        İzin Talebini Reddet
+                                    </h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <div class="alert alert-warning">
+                                        <strong>@izin.PersonelAdi</strong> adlı personelin
+                                        <strong>@izin.GunSayisi günlük</strong> izin talebini reddediyorsunuz.
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Red Nedeni <span class="text-danger">*</span></label>
+                                        <textarea name="redNedeni" class="form-control" rows="4"
+                                                  placeholder="Red nedenini açıklayın..." required></textarea>
+                                    </div>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                                        İptal
+                                    </button>
+                                    <button type="submit" class="btn btn-danger">
+                                        <i class="fas fa-times"></i> Reddet
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+
+    <!-- Statistics -->
+    <div class="row mt-3">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-md-4">
+                            <h3 class="text-warning">@Model.Count()</h3>
+                            <p class="text-muted mb-0">Bekleyen Talep</p>
+                        </div>
+                        <div class="col-md-4">
+                            <h3 class="text-info">@Model.Sum(i => i.GunSayisi)</h3>
+                            <p class="text-muted mb-0">Toplam Gün</p>
+                        </div>
+                        <div class="col-md-4">
+                            <h3 class="text-primary">@Model.Select(i => i.PersonelId).Distinct().Count()</h3>
+                            <p class="text-muted mb-0">Farklı Personel</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+else
+{
+    <div class="card">
+        <div class="card-body text-center py-5">
+            <i class="fas fa-check-circle fa-4x text-success mb-3"></i>
+            <h4>Harika!</h4>
+            <p class="text-muted">Onay bekleyen izin talebi bulunmamaktadır.</p>
+            <a asp-action="Index" class="btn btn-primary">
+                <i class="fas fa-list"></i> Tüm İzinleri Görüntüle
+            </a>
+        </div>
+    </div>
+}
