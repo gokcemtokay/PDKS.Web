@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.Reflection.Emit;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
@@ -35,12 +35,27 @@ namespace PDKS.Data.Context
                 v => DateTime.SpecifyKind(v, DateTimeKind.Utc)
             );
 
+            var dateTimeNullableConverter = new ValueConverter<DateTime?, DateTime?>(
+                v => v.HasValue
+                    ? (v.Value.Kind == DateTimeKind.Utc ? v : v.Value.ToUniversalTime())
+                    : v,
+                v => v.HasValue
+                    ? DateTime.SpecifyKind(v.Value, DateTimeKind.Utc)
+                    : v
+            );
+
             foreach (var entityType in modelBuilder.Model.GetEntityTypes())
             {
-                foreach (var property in entityType.GetProperties()
-                         .Where(p => p.ClrType == typeof(DateTime)))
+                foreach (var property in entityType.GetProperties())
                 {
-                    property.SetValueConverter(dateTimeConverter);
+                    if (property.ClrType == typeof(DateTime))
+                    {
+                        property.SetValueConverter(dateTimeConverter);
+                    }
+                    else if (property.ClrType == typeof(DateTime?))
+                    {
+                        property.SetValueConverter(dateTimeNullableConverter);
+                    }
                 }
             }
 
