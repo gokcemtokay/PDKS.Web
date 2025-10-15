@@ -27,20 +27,32 @@ namespace PDKS.Data.Context
         public DbSet<CihazLog> CihazLoglari { get; set; }
         public DbSet<Avans> Avanslar { get; set; }
         public DbSet<Prim> Primler { get; set; }
+        
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            // Bu ValueConverter hem DateTime hem de DateTime? tipleri için çalışacak.
             var dateTimeConverter = new ValueConverter<DateTime, DateTime>(
-                v => v.Kind == DateTimeKind.Utc ? v : v.ToUniversalTime(),
-                v => DateTime.SpecifyKind(v, DateTimeKind.Utc)
-            );
+                v => v.ToUniversalTime(), // Gelen değeri her zaman UTC'ye çevir
+                v => DateTime.SpecifyKind(v, DateTimeKind.Utc)); // Okunan değerin UTC olduğunu belirt
+
+            var nullableDateTimeConverter = new ValueConverter<DateTime?, DateTime?>(
+                v => v.HasValue ? v.Value.ToUniversalTime() : v, // Null değilse UTC'ye çevir
+                v => v.HasValue ? DateTime.SpecifyKind(v.Value, DateTimeKind.Utc) : v); // Null değilse UTC olduğunu belirt
 
             foreach (var entityType in modelBuilder.Model.GetEntityTypes())
             {
-                foreach (var property in entityType.GetProperties()
-                         .Where(p => p.ClrType == typeof(DateTime)))
+                foreach (var property in entityType.GetProperties())
                 {
-                    property.SetValueConverter(dateTimeConverter);
+                    // Hem DateTime hem de DateTime? property'lerini yakala
+                    if (property.ClrType == typeof(DateTime))
+                    {
+                        property.SetValueConverter(dateTimeConverter);
+                    }
+                    else if (property.ClrType == typeof(DateTime?))
+                    {
+                        property.SetValueConverter(nullableDateTimeConverter);
+                    }
                 }
             }
 
