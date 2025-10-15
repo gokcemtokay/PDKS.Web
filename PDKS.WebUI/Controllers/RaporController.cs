@@ -203,24 +203,32 @@ namespace PDKS.WebUI.Controllers
         public async Task<IActionResult> MesaiyeKalanlar()
         {
             await LoadViewBagData();
-            return View(new RaporFiltreDTO());
+            var viewModel = new MesaiyeKalanlarViewModel();
+            return View(viewModel);
         }
 
         [HttpPost]
         public async Task<IActionResult> MesaiyeKalanlar(RaporFiltreDTO filtre)
         {
-            var rapor = await _reportService.MesaiyeKalanlarRaporu(
-                filtre.BaslangicTarihi,
-                filtre.BitisTarihi);
+            //var rapor = await _reportService.MesaiyeKalanlarRaporu(
+            //    filtre.BaslangicTarihi,
+            //    filtre.BitisTarihi);
 
-            if (!string.IsNullOrEmpty(filtre.Departman))
+            //if (!string.IsNullOrEmpty(filtre.Departman))
+            //{
+            //    rapor = rapor.Where(r => r.Departman == filtre.Departman).ToList();
+            //}
+
+            var viewModel = new MesaiyeKalanlarViewModel
             {
-                rapor = rapor.Where(r => r.Departman == filtre.Departman).ToList();
-            }
+                Filtre = filtre, // Kullanıcının formda doldurduğu filtre
+                RaporSonuclari = await _reportService.MesaiyeKalanlarRaporu(filtre.BaslangicTarihi,
+                filtre.BitisTarihi)
+            };
 
-            ViewBag.Filtre = filtre;
-            await LoadViewBagData();
-            return View(rapor);
+            //ViewBag.Filtre = filtre;
+            //await LoadViewBagData();
+            return View(viewModel);
         }
 
         [HttpGet]
