@@ -1,0 +1,147 @@
+﻿@* ============================================ *@
+@* Izin/Details.cshtml *@
+
+@model PDKS.Business.DTOs.IzinListDTO
+@{
+    ViewData["Title"] = "İzin Detayı";
+}
+
+<div class="row">
+    <div class="col-md-8 mx-auto">
+        <div class="card">
+            <div class="card-header">
+                <i class="fas fa-calendar-check me-2"></i> İzin Talebi Detayı
+            </div>
+            <div class="card-body">
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label class="text-muted">Personel</label>
+                        <p><strong>@Model.PersonelAdi</strong></p>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="text-muted">İzin Tipi</label>
+                        <p><span class="badge bg-secondary">@Model.IzinTipi</span></p>
+                    </div>
+                </div>
+
+                <div class="row mb-3">
+                    <div class="col-md-4">
+                        <label class="text-muted">Başlangıç Tarihi</label>
+                        <p><strong>@Model.BaslangicTarihi.ToString("dd MMMM yyyy, dddd")</strong></p>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="text-muted">Bitiş Tarihi</label>
+                        <p><strong>@Model.BitisTarihi.ToString("dd MMMM yyyy, dddd")</strong></p>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="text-muted">Toplam Gün</label>
+                        <p><strong class="text-primary">@Model.GunSayisi Gün</strong></p>
+                    </div>
+                </div>
+
+                @if (!string.IsNullOrEmpty(Model.Aciklama))
+                {
+                    <div class="mb-3">
+                        <label class="text-muted">Açıklama</label>
+                        <p class="border p-3 rounded bg-light">@Model.Aciklama</p>
+                    </div>
+                }
+
+                <hr>
+
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label class="text-muted">Durum</label>
+                        <p>
+                            @if (Model.OnayDurumu == "Beklemede")
+                            {
+                                <span class="badge bg-warning fs-6">
+                                    <i class="fas fa-hourglass-half"></i> Onay Bekliyor
+                                </span>
+                            }
+                            else if (Model.OnayDurumu == "Onaylandı")
+                            {
+                                <span class="badge bg-success fs-6">
+                                    <i class="fas fa-check-circle"></i> Onaylandı
+                                </span>
+                            }
+                            else if (Model.OnayDurumu == "Reddedildi")
+                            {
+                                <span class="badge bg-danger fs-6">
+                                    <i class="fas fa-times-circle"></i> Reddedildi
+                                </span>
+                            }
+                        </p>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="text-muted">Talep Tarihi</label>
+                        <p>@Model.OlusturmaTarihi.ToString("dd.MM.yyyy HH:mm")</p>
+                    </div>
+                </div>
+
+                @if (!string.IsNullOrEmpty(Model.OnaylayanAdi))
+                {
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="text-muted">Onaylayan</label>
+                            <p><strong>@Model.OnaylayanAdi</strong></p>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="text-muted">Onay Tarihi</label>
+                            <p>@Model.OnayTarihi?.ToString("dd.MM.yyyy HH:mm")</p>
+                        </div>
+                    </div>
+                }
+
+                <hr>
+
+                <div class="d-flex justify-content-between">
+                    <a asp-action="Index" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> Geri
+                    </a>
+
+                    @if (Model.OnayDurumu == "Beklemede" && (User.IsInRole("Admin") || User.IsInRole("IK") || User.IsInRole("Yönetici")))
+                    {
+                        <div>
+                            <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#redModal">
+                                <i class="fas fa-times"></i> Reddet
+                            </button>
+                            <form method="post" asp-action="Onayla" asp-route-id="@Model.Id" style="display:inline;">
+                                <button type="submit" class="btn btn-success">
+                                    <i class="fas fa-check"></i> Onayla
+                                </button>
+                            </form>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Red Modal -->
+<div class="modal fade" id="redModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="post" asp-action="Reddet" asp-route-id="@Model.Id">
+                <div class="modal-header">
+                    <h5 class="modal-title">İzin Talebini Reddet</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Red Nedeni <span class="text-danger">*</span></label>
+                        <textarea name="redNedeni" class="form-control" rows="4"
+                                  placeholder="Red nedenini açıklayın..." required></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-times"></i> Reddet
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

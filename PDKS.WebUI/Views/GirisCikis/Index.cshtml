@@ -1,0 +1,151 @@
+﻿@* GirisCikis/Index.cshtml *@
+@model IEnumerable<PDKS.Business.DTOs.GirisCikisListDTO>
+@{
+    ViewData["Title"] = "Giriş-Çıkış Kayıtları";
+}
+
+<div class="row mb-3">
+    <div class="col-md-8">
+        <form method="get" asp-action="Index" class="row g-3">
+            <div class="col-md-5">
+                <label class="form-label">Başlangıç Tarihi</label>
+                <input type="date" name="baslangic" class="form-control" value="@ViewBag.BaslangicTarihi">
+            </div>
+            <div class="col-md-5">
+                <label class="form-label">Bitiş Tarihi</label>
+                <input type="date" name="bitis" class="form-control" value="@ViewBag.BitisTarihi">
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">&nbsp;</label>
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="fas fa-filter"></i> Filtrele
+                </button>
+            </div>
+        </form>
+    </div>
+    @if (User.IsInRole("Admin") || User.IsInRole("IK"))
+    {
+        <div class="col-md-4 text-end">
+            <label class="form-label">&nbsp;</label>
+            <a asp-action="Create" class="btn btn-success d-block">
+                <i class="fas fa-plus"></i> Manuel Kayıt Ekle
+            </a>
+        </div>
+    }
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <i class="fas fa-fingerprint me-2"></i> Giriş-Çıkış Kayıtları
+        <span class="badge bg-light text-dark ms-2">@Model.Count() Kayıt</span>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Tarih</th>
+                        <th>Personel</th>
+                        <th>Sicil No</th>
+                        <th>Giriş</th>
+                        <th>Çıkış</th>
+                        <th>Çalışma Süresi</th>
+                        <th>Durum</th>
+                        <th>İşlemler</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model)
+                    {
+                        <tr>
+                            <td>@item.GirisZamani?.ToString("dd.MM.yyyy")</td>
+                            <td>
+                                <i class="fas fa-user-circle text-primary me-2"></i>
+                                @item.PersonelAdi
+                            </td>
+                            <td><strong>@item.SicilNo</strong></td>
+                            <td>
+                                @if (item.GirisZamani.HasValue)
+                                {
+                                    <span class="badge bg-success">
+                                        <i class="fas fa-sign-in-alt"></i> @item.GirisZamani.Value.ToString("HH:mm")
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">-</span>
+                                }
+                            </td>
+                            <td>
+                                @if (item.CikisZamani.HasValue)
+                                {
+                                    <span class="badge bg-secondary">
+                                        <i class="fas fa-sign-out-alt"></i> @item.CikisZamani.Value.ToString("HH:mm")
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-warning">Çıkış Yok</span>
+                                }
+                            </td>
+                            <td>@item.CalismaSuresi</td>
+                            <td>
+                                @if (item.Durum == "Normal")
+                                {
+                                    <span class="badge bg-success">Normal</span>
+                                }
+                                else if (item.Durum == "Geç Kalmış")
+                                {
+                                    <span class="badge bg-warning">
+                                        <i class="fas fa-clock"></i> Geç (@item.GecKalmaSuresi dk)
+                                    </span>
+                                }
+                                else if (item.Durum == "Erken Çıkmış")
+                                {
+                                    <span class="badge bg-info">Erken Çıkış</span>
+                                }
+                                else if (item.Durum == "Fazla Mesai")
+                                {
+                                    <span class="badge bg-primary">
+                                        <i class="fas fa-business-time"></i> Fazla Mesai
+                                    </span>
+                                }
+                                @if (item.ElleGiris)
+                                {
+                                    <br />
+
+                                    <span class="badge bg-dark mt-1">
+                                        <i class="fas fa-hand-paper"></i> Manuel
+                                    </span>
+                                }
+                            </td>
+                            <td>
+                                <div class="btn-group btn-group-sm">
+                                    <a asp-action="Details" asp-route-id="@item.Id"
+                                       class="btn btn-info" title="Detaylar">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    @if (User.IsInRole("Admin") || User.IsInRole("IK"))
+                                    {
+                                        <a asp-action="Edit" asp-route-id="@item.Id"
+                                           class="btn btn-warning" title="Düzenle">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                    }
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        @if (!Model.Any())
+        {
+            <div class="text-center py-5 text-muted">
+                <i class="fas fa-fingerprint fa-4x mb-3"></i>
+                <p>Seçilen tarih aralığında kayıt bulunmamaktadır.</p>
+            </div>
+        }
+    </div>
+</div>

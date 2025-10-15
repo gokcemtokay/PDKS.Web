@@ -1,0 +1,95 @@
+﻿@* ============================================ *@
+@* GirisCikis/Create.cshtml *@
+
+@model PDKS.Business.DTOs.GirisCikisCreateDTO
+@{
+    ViewData["Title"] = "Manuel Giriş-Çıkış Kaydı";
+}
+
+<div class="row">
+    <div class="col-md-8 mx-auto">
+        <div class="card">
+            <div class="card-header">
+                <i class="fas fa-hand-paper me-2"></i> Manuel Giriş-Çıkış Kaydı Ekle
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    <strong>Not:</strong> Bu form ile personel adına manuel giriş-çıkış kaydı ekleyebilirsiniz.
+                    Kayıt "Elle Giriş" olarak işaretlenecektir.
+                </div>
+
+                <form asp-action="Create" method="post">
+                    <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+
+                    <div class="mb-3">
+                        <label asp-for="PersonelId" class="form-label">Personel <span class="text-danger">*</span></label>
+                        <select asp-for="PersonelId" class="form-select" asp-items="ViewBag.Personeller">
+                            <option value="">Personel Seçiniz...</option>
+                        </select>
+                        <span asp-validation-for="PersonelId" class="text-danger"></span>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label asp-for="GirisZamani" class="form-label">Giriş Zamanı</label>
+                            <input asp-for="GirisZamani" type="datetime-local" class="form-control">
+                            <span asp-validation-for="GirisZamani" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="CikisZamani" class="form-label">Çıkış Zamanı</label>
+                            <input asp-for="CikisZamani" type="datetime-local" class="form-control">
+                            <span asp-validation-for="CikisZamani" class="text-danger"></span>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label asp-for="Kaynak" class="form-label">Kaynak</label>
+                            <input asp-for="Kaynak" class="form-control" placeholder="Örn: Manuel Giriş, İK">
+                            <span asp-validation-for="Kaynak" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="CihazId" class="form-label">Cihaz (Opsiyonel)</label>
+                            <select asp-for="CihazId" class="form-select" asp-items="ViewBag.Cihazlar">
+                                <option value="">Seçiniz...</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Not" class="form-label">Not / Açıklama</label>
+                        <textarea asp-for="Not" class="form-control" rows="3"
+                                  placeholder="Gerekirse açıklama giriniz..."></textarea>
+                        <span asp-validation-for="Not" class="text-danger"></span>
+                    </div>
+
+                    <hr>
+
+                    <div class="d-flex justify-content-between">
+                        <a asp-action="Index" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i> Geri
+                        </a>
+                        <button type="submit" class="btn btn-success">
+                            <i class="fas fa-save"></i> Kaydet
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        // Auto-fill current date/time
+        $(document).ready(function() {
+            var now = new Date();
+            var dateString = now.toISOString().slice(0, 16);
+            if (!$('#GirisZamani').val()) {
+                $('#GirisZamani').val(dateString);
+            }
+        });
+    </script>
+}

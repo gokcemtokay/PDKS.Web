@@ -1,0 +1,167 @@
+﻿@model IEnumerable<PDKS.Business.DTOs.PersonelListDTO>
+@{
+    ViewData["Title"] = "Personel Yönetimi";
+}
+
+<div class="row mb-3">
+    <div class="col-md-8">
+        <div class="input-group">
+            <input type="text" id="searchInput" class="form-control" placeholder="Personel ara... (Ad, Sicil No, Email, Departman)">
+            <button class="btn btn-outline-secondary" type="button" onclick="searchPersonel()">
+                <i class="fas fa-search"></i> Ara
+            </button>
+        </div>
+    </div>
+    <div class="col-md-4 text-end">
+        <a asp-action="Create" class="btn btn-primary">
+            <i class="fas fa-plus"></i> Yeni Personel Ekle
+        </a>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <i class="fas fa-users me-2"></i> Personel Listesi
+        <span class="badge bg-light text-dark ms-2">@Model.Count() Kayıt</span>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover" id="personelTable">
+                <thead>
+                    <tr>
+                        <th>Sicil No</th>
+                        <th>Ad Soyad</th>
+                        <th>Departman</th>
+                        <th>Görev</th>
+                        <th>Email</th>
+                        <th>Telefon</th>
+                        <th>Vardiya</th>
+                        <th>Durum</th>
+                        <th style="width: 150px;">İşlemler</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model)
+                    {
+                        <tr>
+                            <td><strong>@item.SicilNo</strong></td>
+                            <td>
+                                <i class="fas fa-user-circle text-primary me-2"></i>
+                                @item.AdSoyad
+                            </td>
+                            <td>@item.Departman</td>
+                            <td>@item.Gorev</td>
+                            <td>
+                                <a href="mailto:@item.Email">@item.Email</a>
+                            </td>
+                            <td>@item.Telefon</td>
+                            <td>
+                                @if (!string.IsNullOrEmpty(item.VardiyaAdi))
+                                {
+                                    <span class="badge bg-info">@item.VardiyaAdi</span>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">-</span>
+                                }
+                            </td>
+                            <td>
+                                @if (item.Durum)
+                                {
+                                    <span class="badge bg-success">
+                                        <i class="fas fa-check"></i> Aktif
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-danger">
+                                        <i class="fas fa-times"></i> Pasif
+                                    </span>
+                                }
+                            </td>
+                            <td>
+                                <div class="btn-group btn-group-sm">
+                                    <a asp-action="Details" asp-route-id="@item.Id"
+                                       class="btn btn-info" title="Detaylar">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    <a asp-action="Edit" asp-route-id="@item.Id"
+                                       class="btn btn-warning" title="Düzenle">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    @if (item.Durum)
+                                    {
+                                        <button onclick="confirmDelete(@item.Id, '@item.AdSoyad')"
+                                                class="btn btn-danger" title="Pasif Yap">
+                                            <i class="fas fa-ban"></i>
+                                        </button>
+                                    }
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        @if (!Model.Any())
+        {
+            <div class="text-center py-5 text-muted">
+                <i class="fas fa-users fa-4x mb-3"></i>
+                <p>Henüz personel kaydı bulunmamaktadır.</p>
+                <a asp-action="Create" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> İlk Personeli Ekle
+                </a>
+            </div>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function searchPersonel() {
+            var searchValue = $('#searchInput').val();
+            if (searchValue) {
+                window.location.href = '@Url.Action("Search")?searchTerm=' + encodeURIComponent(searchValue);
+            } else {
+                window.location.href = '@Url.Action("Index")';
+            }
+        }
+
+        $('#searchInput').on('keypress', function(e) {
+            if (e.which === 13) {
+                searchPersonel();
+            }
+        });
+
+        function confirmDelete(id, name) {
+            Swal.fire({
+                title: 'Emin misiniz?',
+                text: name + " pasif yapılacak!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#dc3545',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Evet, Pasif Yap',
+                cancelButtonText: 'İptal'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $.ajax({
+                        url: '@Url.Action("Delete")/' + id,
+                        type: 'POST',
+                        headers: {
+                            'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
+                        },
+                        success: function() {
+                            Swal.fire('Başarılı!', 'Personel pasif yapıldı.', 'success')
+                                .then(() => location.reload());
+                        },
+                        error: function() {
+                            Swal.fire('Hata!', 'İşlem sırasında bir hata oluştu.', 'error');
+                        }
+                    });
+                }
+            });
+        }
+    </script>
+}

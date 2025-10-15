@@ -1,0 +1,321 @@
+﻿@model PDKS.Business.DTOs.DashboardDTO
+@{
+    ViewData["Title"] = "Ana Sayfa";
+}
+
+<!-- Statistics Cards -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card stat-card border-primary">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-muted mb-2">Aktif Personel</h6>
+                        <h2 class="mb-0">@Model.AktifPersonelSayisi</h2>
+                    </div>
+                    <div class="text-primary" style="font-size: 50px;">
+                        <i class="fas fa-users"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card stat-card border-danger">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-muted mb-2">Bugün Gelmeyenler</h6>
+                        <h2 class="mb-0 text-danger">@Model.BugunGelmeyenler</h2>
+                    </div>
+                    <div class="text-danger" style="font-size: 50px;">
+                        <i class="fas fa-user-times"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card stat-card border-warning">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-muted mb-2">Geç Gelenler</h6>
+                        <h2 class="mb-0 text-warning">@Model.GecGelenler</h2>
+                    </div>
+                    <div class="text-warning" style="font-size: 50px;">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card stat-card border-success">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-muted mb-2">İzinli Personel</h6>
+                        <h2 class="mb-0 text-success">@Model.IzinliPersonel</h2>
+                    </div>
+                    <div class="text-success" style="font-size: 50px;">
+                        <i class="fas fa-calendar-check"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Second Row Statistics -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card stat-card border-info">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-muted mb-2">Erken Çıkanlar</h6>
+                        <h2 class="mb-0 text-info">@Model.ErkenCikanlar</h2>
+                    </div>
+                    <div class="text-info" style="font-size: 50px;">
+                        <i class="fas fa-door-open"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card stat-card border-secondary">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-muted mb-2">Mesaiye Kalanlar</h6>
+                        <h2 class="mb-0">@Model.MesaiyeKalanlar</h2>
+                    </div>
+                    <div class="text-secondary" style="font-size: 50px;">
+                        <i class="fas fa-business-time"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card stat-card border-primary">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-muted mb-2">Bekleyen İzinler</h6>
+                        <h2 class="mb-0">@Model.BekleyenIzinTalepleri</h2>
+                    </div>
+                    <div class="text-primary" style="font-size: 50px;">
+                        <i class="fas fa-hourglass-half"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card stat-card border-success">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-muted mb-2">Aktif Cihazlar</h6>
+                        <h2 class="mb-0 text-success">@Model.AktifCihazSayisi</h2>
+                    </div>
+                    <div class="text-success" style="font-size: 50px;">
+                        <i class="fas fa-tablet-alt"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Son Giriş-Çıkışlar -->
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <i class="fas fa-history me-2"></i> Son Giriş-Çıkış Kayıtları (Bugün)
+            </div>
+            <div class="card-body">
+                @if (Model.SonGirisCikislar != null && Model.SonGirisCikislar.Any())
+                {
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Personel</th>
+                                    <th>Sicil No</th>
+                                    <th>Giriş</th>
+                                    <th>Çıkış</th>
+                                    <th>Durum</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var item in Model.SonGirisCikislar)
+                                {
+                                    <tr>
+                                        <td>@item.PersonelAdi</td>
+                                        <td>@item.SicilNo</td>
+                                        <td>
+                                            @if (item.GirisZamani.HasValue)
+                                            {
+                                                <span class="badge bg-success">
+                                                    <i class="fas fa-sign-in-alt"></i> @item.GirisZamani.Value.ToString("HH:mm")
+                                                </span>
+                                            }
+                                            else
+                                            {
+                                                <span class="text-muted">-</span>
+                                            }
+                                        </td>
+                                        <td>
+                                            @if (item.CikisZamani.HasValue)
+                                            {
+                                                <span class="badge bg-secondary">
+                                                    <i class="fas fa-sign-out-alt"></i> @item.CikisZamani.Value.ToString("HH:mm")
+                                                </span>
+                                            }
+                                            else
+                                            {
+                                                <span class="text-muted">-</span>
+                                            }
+                                        </td>
+                                        <td>
+                                            @if (item.Durum == "Normal")
+                                            {
+                                                <span class="badge bg-success">Normal</span>
+                                            }
+                                            else if (item.Durum == "Geç Kalmış")
+                                            {
+                                                <span class="badge bg-warning">Geç Kalmış (@item.GecKalmaSuresi dk)</span>
+                                            }
+                                            else if (item.Durum == "Erken Çıkmış")
+                                            {
+                                                <span class="badge bg-info">Erken Çıkmış</span>
+                                            }
+                                            else if (item.Durum == "Fazla Mesai")
+                                            {
+                                                <span class="badge bg-primary">Fazla Mesai (@item.FazlaMesaiSuresi dk)</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge bg-secondary">@item.Durum</span>
+                                            }
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+                else
+                {
+                    <div class="text-center py-4 text-muted">
+                        <i class="fas fa-info-circle fa-3x mb-3"></i>
+                        <p>Bugün henüz giriş-çıkış kaydı bulunmamaktadır.</p>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+
+    <!-- Bekleyen İzinler -->
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header">
+                <i class="fas fa-hourglass-half me-2"></i> Bekleyen İzin Talepleri
+            </div>
+            <div class="card-body">
+                @if (Model.BekleyenIzinler != null && Model.BekleyenIzinler.Any())
+                {
+                    <div class="list-group list-group-flush">
+                        @foreach (var izin in Model.BekleyenIzinler)
+                        {
+                            <div class="list-group-item px-0">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <h6 class="mb-1">@izin.PersonelAdi</h6>
+                                        <small class="text-muted">
+                                            <i class="far fa-calendar"></i>
+                                            @izin.BaslangicTarihi.ToString("dd.MM.yyyy") -
+                                            @izin.BitisTarihi.ToString("dd.MM.yyyy")
+                                        </small>
+                                        <br />
+                                        <span class="badge bg-info mt-1">@izin.IzinTipi</span>
+                                    </div>
+                                    <div>
+                                        @if (User.IsInRole("Admin") || User.IsInRole("IK") || User.IsInRole("Yönetici"))
+                                        {
+                                            <a asp-controller="Izin" asp-action="Details" asp-route-id="@izin.Id"
+                                               class="btn btn-sm btn-outline-primary">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                    <div class="text-center mt-3">
+                        <a asp-controller="Izin" asp-action="Index" class="btn btn-sm btn-primary">
+                            Tüm İzinleri Gör <i class="fas fa-arrow-right"></i>
+                        </a>
+                    </div>
+                }
+                else
+                {
+                    <div class="text-center py-4 text-muted">
+                        <i class="fas fa-check-circle fa-3x mb-3"></i>
+                        <p>Bekleyen izin talebi bulunmamaktadır.</p>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="card mt-3">
+            <div class="card-header">
+                <i class="fas fa-bolt me-2"></i> Hızlı İşlemler
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    @if (User.IsInRole("Admin") || User.IsInRole("IK"))
+                    {
+                        <a asp-controller="Personel" asp-action="Create" class="btn btn-outline-primary">
+                            <i class="fas fa-user-plus"></i> Yeni Personel Ekle
+                        </a>
+                    }
+                    <a asp-controller="GirisCikis" asp-action="Create" class="btn btn-outline-success">
+                        <i class="fas fa-fingerprint"></i> Manuel Giriş Kaydı
+                    </a>
+                    <a asp-controller="Izin" asp-action="Create" class="btn btn-outline-info">
+                        <i class="fas fa-calendar-plus"></i> İzin Talebi Oluştur
+                    </a>
+                    @if (User.IsInRole("Admin") || User.IsInRole("IK") || User.IsInRole("Yönetici"))
+                    {
+                        <a asp-controller="Rapor" asp-action="Index" class="btn btn-outline-secondary">
+                            <i class="fas fa-chart-bar"></i> Raporları Görüntüle
+                        </a>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Auto refresh page every 5 minutes
+        setTimeout(function() {
+            location.reload();
+        }, 300000);
+    </script>
+}

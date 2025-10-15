@@ -1,0 +1,183 @@
+﻿@* Rapor/Index.cshtml - Main Report Menu *@
+@{
+    ViewData["Title"] = "Raporlar";
+}
+
+<div class="row">
+    <div class="col-12">
+        <h2 class="mb-4">
+            <i class="fas fa-chart-bar"></i> Rapor Merkezi
+        </h2>
+    </div>
+</div>
+
+<!-- Giriş-Çıkış Raporları -->
+<div class="row mb-4">
+    <div class="col-12">
+        <h5 class="text-primary mb-3">
+            <i class="fas fa-fingerprint"></i> Giriş-Çıkış Raporları
+        </h5>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="card h-100">
+            <div class="card-body text-center">
+                <i class="fas fa-user fa-3x text-primary mb-3"></i>
+                <h6>Kişi Bazında Giriş-Çıkış</h6>
+                <p class="text-muted small">Personel bazlı detaylı giriş-çıkış raporu</p>
+                <a asp-action="KisiBazindaGirisCikis" class="btn btn-primary btn-sm">
+                    <i class="fas fa-file-alt"></i> Raporu Görüntüle
+                </a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="card h-100">
+            <div class="card-body text-center">
+                <i class="fas fa-users fa-3x text-success mb-3"></i>
+                <h6>Genel Giriş-Çıkış</h6>
+                <p class="text-muted small">Tüm personelin giriş-çıkış raporu</p>
+                <a asp-action="GenelGirisCikis" class="btn btn-success btn-sm">
+                    <i class="fas fa-file-alt"></i> Raporu Görüntüle
+                </a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="card h-100">
+            <div class="card-body text-center">
+                <i class="fas fa-clock fa-3x text-warning mb-3"></i>
+                <h6>Geç Kalanlar</h6>
+                <p class="text-muted small">Geç gelen personel raporu</p>
+                <a asp-action="GenelGecKalanlar" class="btn btn-warning btn-sm">
+                    <i class="fas fa-file-alt"></i> Raporu Görüntüle
+                </a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="card h-100">
+            <div class="card-body text-center">
+                <i class="fas fa-door-open fa-3x text-info mb-3"></i>
+                <h6>Erken Çıkanlar</h6>
+                <p class="text-muted small">Erken çıkan personel raporu</p>
+                <a asp-action="GenelErkenCikanlar" class="btn btn-info btn-sm">
+                    <i class="fas fa-file-alt"></i> Raporu Görüntüle
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Özel Raporlar -->
+<div class="row mb-4">
+    <div class="col-12">
+        <h5 class="text-success mb-3">
+            <i class="fas fa-clipboard-list"></i> Özel Raporlar
+        </h5>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="card h-100">
+            <div class="card-body text-center">
+                <i class="fas fa-business-time fa-3x text-primary mb-3"></i>
+                <h6>Mesaiye Kalanlar</h6>
+                <p class="text-muted small">Fazla mesai yapan personel</p>
+                <a asp-action="MesaiyeKalanlar" class="btn btn-primary btn-sm">
+                    <i class="fas fa-file-alt"></i> Raporu Görüntüle
+                </a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="card h-100">
+            <div class="card-body text-center">
+                <i class="fas fa-user-times fa-3x text-danger mb-3"></i>
+                <h6>Devamsızlar</h6>
+                <p class="text-muted small">Devamsız personel raporu</p>
+                <a asp-action="Devamsizlar" class="btn btn-danger btn-sm">
+                    <i class="fas fa-file-alt"></i> Raporu Görüntüle
+                </a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="card h-100">
+            <div class="card-body text-center">
+                <i class="fas fa-calendar-check fa-3x text-success mb-3"></i>
+                <h6>İzinli Personeller</h6>
+                <p class="text-muted small">İzinde olan personel listesi</p>
+                <a asp-action="IzinliPersoneller" class="btn btn-success btn-sm">
+                    <i class="fas fa-file-alt"></i> Raporu Görüntüle
+                </a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="card h-100">
+            <div class="card-body text-center">
+                <i class="fas fa-id-card-alt fa-3x text-warning mb-3"></i>
+                <h6>Kart Unutanlar</h6>
+                <p class="text-muted small">Kartını kullanmayan personel</p>
+                <a asp-action="KartUnutanlar" class="btn btn-warning btn-sm">
+                    <i class="fas fa-file-alt"></i> Raporu Görüntüle
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Maaş ve Bordro Raporları -->
+<div class="row mb-4">
+    <div class="col-12">
+        <h5 class="text-danger mb-3">
+            <i class="fas fa-money-bill-wave"></i> Maaş ve Bordro Raporları
+        </h5>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="card h-100">
+            <div class="card-body text-center">
+                <i class="fas fa-file-invoice-dollar fa-3x text-success mb-3"></i>
+                <h6>Genel Maaş Bordrosu</h6>
+                <p class="text-muted small">Aylık maaş bordrosu</p>
+                <a asp-action="GenelMaasBordrosu" class="btn btn-success btn-sm">
+                    <i class="fas fa-file-alt"></i> Raporu Görüntüle
+                </a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="card h-100">
+            <div class="card-body text-center">
+                <i class="fas fa-hand-holding-usd fa-3x text-warning mb-3"></i>
+                <h6>Avans Listesi</h6>
+                <p class="text-muted small">Verilen avanslar</p>
+                <a asp-action="AvansListesi" class="btn btn-warning btn-sm">
+                    <i class="fas fa-file-alt"></i> Raporu Görüntüle
+                </a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="card h-100">
+            <div class="card-body text-center">
+                <i class="fas fa-certificate fa-3x text-primary mb-3"></i>
+                <h6>Prim Listesi</h6>
+                <p class="text-muted small">Ödenen primler</p>
+                <a asp-action="PrimListesi" class="btn btn-primary btn-sm">
+                    <i class="fas fa-file-alt"></i> Raporu Görüntüle
+                </a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="card h-100">
+            <div class="card-body text-center">
+                <i class="fas fa-calendar-alt fa-3x text-info mb-3"></i>
+                <h6>Aylık Devam Çizelgesi</h6>
+                <p class="text-muted small">Kişi bazında aylık devam</p>
+                <a asp-action="AylikDevamCizelgesi" class="btn btn-info btn-sm">
+                    <i class="fas fa-file-alt"></i> Raporu Görüntüle
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
