@@ -17,7 +17,7 @@ namespace PDKS.Data.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "8.0.0")
+                .HasAnnotation("ProductVersion", "9.0.10")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -26,95 +26,112 @@ namespace PDKS.Data.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
-                        .HasColumnName("id");
+                        .HasColumnType("integer");
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<string>("Aciklama")
-                        .IsRequired()
                         .HasMaxLength(500)
-                        .HasColumnType("character varying(500)")
-                        .HasColumnName("aciklama");
+                        .HasColumnType("character varying(500)");
 
                     b.Property<string>("Durum")
                         .IsRequired()
                         .HasMaxLength(50)
-                        .HasColumnType("character varying(50)")
-                        .HasColumnName("durum");
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<decimal?>("KalanBorc")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<DateTime>("KayitTarihi")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<DateTime?>("OdemeTarihi")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("odeme_tarihi");
+                        .HasColumnType("timestamp with time zone");
 
-                    b.Property<int?>("OnaylayanId")
-                        .HasColumnType("integer")
-                        .HasColumnName("onaylayan_id");
+                    b.Property<bool>("OdendiMi")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("OnayDurumu")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<DateTime?>("OnayTarihi")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("OnaylayanKullaniciId")
+                        .HasColumnType("integer");
 
                     b.Property<int>("PersonelId")
-                        .HasColumnType("integer")
-                        .HasColumnName("personel_id");
+                        .HasColumnType("integer");
+
+                    b.Property<string>("RedNedeni")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<int?>("TaksitSayisi")
+                        .HasColumnType("integer");
 
                     b.Property<DateTime>("TalepTarihi")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("talep_tarihi");
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("Tarih")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<decimal>("Tutar")
-                        .HasColumnType("numeric")
-                        .HasColumnName("tutar");
+                        .HasColumnType("decimal(18,2)");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("OnaylayanId");
+                    b.HasIndex("OnaylayanKullaniciId");
 
                     b.HasIndex("PersonelId");
 
-                    b.ToTable("avanslar");
+                    b.ToTable("Avanslar");
                 });
 
             modelBuilder.Entity("PDKS.Data.Entities.Bildirim", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
-                        .HasColumnName("id");
+                        .HasColumnType("integer");
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<string>("Baslik")
                         .IsRequired()
                         .HasMaxLength(200)
-                        .HasColumnType("character varying(200)")
-                        .HasColumnName("baslik");
+                        .HasColumnType("character varying(200)");
 
                     b.Property<int>("KullaniciId")
-                        .HasColumnType("integer")
-                        .HasColumnName("kullanici_id");
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Link")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
 
                     b.Property<string>("Mesaj")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("mesaj");
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
 
                     b.Property<bool>("Okundu")
-                        .HasColumnType("boolean")
-                        .HasColumnName("okundu");
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTime?>("OkunmaTarihi")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<DateTime>("OlusturmaTarihi")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("olusturma_tarihi");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Tip")
-                        .IsRequired()
                         .HasMaxLength(50)
-                        .HasColumnType("character varying(50)")
-                        .HasColumnName("tip");
+                        .HasColumnType("character varying(50)");
 
                     b.HasKey("Id");
 
                     b.HasIndex("KullaniciId");
 
-                    b.ToTable("bildirimler");
+                    b.ToTable("Bildirimler");
                 });
 
             modelBuilder.Entity("PDKS.Data.Entities.Cihaz", b =>
@@ -178,6 +195,9 @@ namespace PDKS.Data.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("cihaz_id");
 
+                    b.Property<int?>("CihazId1")
+                        .HasColumnType("integer");
+
                     b.Property<string>("Detay")
                         .IsRequired()
                         .HasColumnType("text")
@@ -197,7 +217,46 @@ namespace PDKS.Data.Migrations
 
                     b.HasIndex("CihazId");
 
+                    b.HasIndex("CihazId1");
+
                     b.ToTable("cihaz_loglari");
+                });
+
+            modelBuilder.Entity("PDKS.Data.Entities.Departman", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Aciklama")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("Ad")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<bool>("Durum")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTime>("KayitTarihi")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Kod")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<int?>("UstDepartmanId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UstDepartmanId");
+
+                    b.ToTable("Departmanlar");
                 });
 
             modelBuilder.Entity("PDKS.Data.Entities.GirisCikis", b =>
@@ -212,6 +271,9 @@ namespace PDKS.Data.Migrations
                     b.Property<int?>("CihazId")
                         .HasColumnType("integer")
                         .HasColumnName("cihaz_id");
+
+                    b.Property<int?>("CihazId1")
+                        .HasColumnType("integer");
 
                     b.Property<DateTime?>("CikisZamani")
                         .HasColumnType("timestamp with time zone")
@@ -266,6 +328,8 @@ namespace PDKS.Data.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("CihazId");
+
+                    b.HasIndex("CihazId1");
 
                     b.HasIndex("GirisZamani");
 
@@ -348,42 +412,49 @@ namespace PDKS.Data.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
-                        .HasColumnName("id");
+                        .HasColumnType("integer");
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<bool>("Aktif")
-                        .HasColumnType("boolean")
-                        .HasColumnName("aktif");
+                        .HasColumnType("boolean");
 
                     b.Property<string>("Email")
                         .IsRequired()
                         .HasMaxLength(100)
-                        .HasColumnType("character varying(100)")
-                        .HasColumnName("email");
+                        .HasColumnType("character varying(100)");
 
-                    b.Property<DateTime>("OlusturmaTarihi")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("olusturma_tarihi");
+                    b.Property<DateTime?>("GuncellemeTarihi")
+                        .HasColumnType("timestamp with time zone");
 
-                    b.Property<int>("PersonelId")
-                        .HasColumnType("integer")
-                        .HasColumnName("personel_id");
+                    b.Property<DateTime>("KayitTarihi")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("KullaniciAdi")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<DateTime?>("OlusturmaTarihi")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("PersonelId")
+                        .HasColumnType("integer");
 
                     b.Property<int>("RolId")
-                        .HasColumnType("integer")
-                        .HasColumnName("rol_id");
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Sifre")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)");
 
                     b.Property<string>("SifreHash")
-                        .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)")
-                        .HasColumnName("sifre_hash");
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)");
 
                     b.Property<DateTime?>("SonGirisTarihi")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("son_giris_tarihi");
+                        .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");
 
@@ -395,7 +466,7 @@ namespace PDKS.Data.Migrations
 
                     b.HasIndex("RolId");
 
-                    b.ToTable("kullanicilar");
+                    b.ToTable("Kullanicilar");
                 });
 
             modelBuilder.Entity("PDKS.Data.Entities.Log", b =>
@@ -445,68 +516,187 @@ namespace PDKS.Data.Migrations
                     b.ToTable("loglar");
                 });
 
-            modelBuilder.Entity("PDKS.Data.Entities.Parametre", b =>
+            modelBuilder.Entity("PDKS.Data.Entities.Mesai", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
-                        .HasColumnName("id");
+                        .HasColumnType("integer");
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<string>("Aciklama")
-                        .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
 
-                    b.Property<string>("Anahtar")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)")
-                        .HasColumnName("anahtar");
+                    b.Property<TimeSpan>("BaslangicSaati")
+                        .HasColumnType("interval");
 
-                    b.Property<string>("Deger")
+                    b.Property<TimeSpan>("BitisSaati")
+                        .HasColumnType("interval");
+
+                    b.Property<decimal>("FazlaMesaiSaati")
+                        .HasColumnType("numeric");
+
+                    b.Property<decimal>("HaftaSonuMesaiSaati")
+                        .HasColumnType("numeric");
+
+                    b.Property<DateTime>("KayitTarihi")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("MesaiTipi")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("OnayDurumu")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<DateTime?>("OnayTarihi")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("OnaylayanKullaniciId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("PersonelId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("RedNedeni")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<decimal>("ResmiTatilMesaiSaati")
+                        .HasColumnType("numeric");
+
+                    b.Property<DateTime>("Tarih")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<decimal>("ToplamSaat")
+                        .HasColumnType("numeric");
 
                     b.HasKey("Id");
 
-                    b.ToTable("parametreler");
+                    b.HasIndex("OnaylayanKullaniciId");
+
+                    b.HasIndex("PersonelId");
+
+                    b.ToTable("Mesailer");
+                });
+
+            modelBuilder.Entity("PDKS.Data.Entities.Parametre", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Aciklama")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("Ad")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("Birim")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("Deger")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<DateTime?>("GuncellemeTarihi")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Kategori")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<DateTime>("KayitTarihi")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Ad")
+                        .IsUnique();
+
+                    b.ToTable("Parametreler");
 
                     b.HasData(
                         new
                         {
                             Id = 1,
-                            Aciklama = "Fazla mesai ücret oranı",
-                            Anahtar = "FazlaMesaiOrani",
-                            Deger = "1.5"
+                            Aciklama = "Haftalık standart çalışma günü sayısı",
+                            Ad = "Haftalık Çalışma Günü",
+                            Birim = "gün",
+                            Deger = "5",
+                            Kategori = "Çalışma Saatleri",
+                            KayitTarihi = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
                         },
                         new
                         {
                             Id = 2,
-                            Aciklama = "Geç kalma tolerans süresi (dakika)",
-                            Anahtar = "GecKalmaToleransDakika",
-                            Deger = "15"
+                            Aciklama = "Günlük standart çalışma saati",
+                            Ad = "Günlük Çalışma Saati",
+                            Birim = "saat",
+                            Deger = "8",
+                            Kategori = "Çalışma Saatleri",
+                            KayitTarihi = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
                         },
                         new
                         {
                             Id = 3,
-                            Aciklama = "Erken çıkış tolerans süresi (dakika)",
-                            Anahtar = "ErkenCikisToLeransDakika",
-                            Deger = "15"
+                            Aciklama = "İşe geç kalma tolerans süresi",
+                            Ad = "Geç Kalma Toleransı",
+                            Birim = "dakika",
+                            Deger = "15",
+                            Kategori = "Toleranslar",
+                            KayitTarihi = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
                         },
                         new
                         {
                             Id = 4,
-                            Aciklama = "Haftalık çalışma günü sayısı",
-                            Anahtar = "HaftalikcalismaGun",
-                            Deger = "5"
+                            Aciklama = "Erken çıkış tolerans süresi",
+                            Ad = "Erken Çıkış Toleransı",
+                            Birim = "dakika",
+                            Deger = "15",
+                            Kategori = "Toleranslar",
+                            KayitTarihi = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
                         },
                         new
                         {
                             Id = 5,
-                            Aciklama = "Günlük çalışma saati",
-                            Anahtar = "GunlukCalismaSaat",
-                            Deger = "8"
+                            Aciklama = "Fazla mesai ücreti çarpanı",
+                            Ad = "Fazla Mesai Çarpanı",
+                            Birim = "kat",
+                            Deger = "1.5",
+                            Kategori = "Mesai",
+                            KayitTarihi = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
+                        },
+                        new
+                        {
+                            Id = 6,
+                            Aciklama = "Hafta sonu mesai ücreti çarpanı",
+                            Ad = "Hafta Sonu Mesai Çarpanı",
+                            Birim = "kat",
+                            Deger = "2",
+                            Kategori = "Mesai",
+                            KayitTarihi = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
+                        },
+                        new
+                        {
+                            Id = 7,
+                            Aciklama = "Yıllık ücretli izin günü sayısı",
+                            Ad = "Yıllık İzin Günü",
+                            Birim = "gün",
+                            Deger = "14",
+                            Kategori = "İzin",
+                            KayitTarihi = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
                         });
                 });
 
@@ -514,80 +704,94 @@ namespace PDKS.Data.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
-                        .HasColumnName("id");
+                        .HasColumnType("integer");
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<string>("AdSoyad")
                         .IsRequired()
                         .HasMaxLength(100)
-                        .HasColumnType("character varying(100)")
-                        .HasColumnName("ad_soyad");
+                        .HasColumnType("character varying(100)");
 
-                    b.Property<decimal>("AvansLimiti")
-                        .HasColumnType("numeric")
-                        .HasColumnName("avans_limiti");
+                    b.Property<string>("Adres")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<decimal?>("AvansLimiti")
+                        .HasColumnType("decimal(18,2)");
 
                     b.Property<DateTime?>("CikisTarihi")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("cikis_tarihi");
+                        .HasColumnType("timestamp with time zone");
 
-                    b.Property<string>("Departman")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)")
-                        .HasColumnName("departman");
+                    b.Property<string>("Cinsiyet")
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
+
+                    b.Property<int?>("DepartmanId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("DogumTarihi")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<bool>("Durum")
-                        .HasColumnType("boolean")
-                        .HasColumnName("durum");
+                        .HasColumnType("boolean");
 
                     b.Property<string>("Email")
                         .IsRequired()
                         .HasMaxLength(100)
-                        .HasColumnType("character varying(100)")
-                        .HasColumnName("email");
+                        .HasColumnType("character varying(100)");
 
                     b.Property<DateTime>("GirisTarihi")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("giris_tarihi");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Gorev")
-                        .IsRequired()
                         .HasMaxLength(100)
-                        .HasColumnType("character varying(100)")
-                        .HasColumnName("gorev");
+                        .HasColumnType("character varying(100)");
 
                     b.Property<DateTime?>("GuncellemeTarihi")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("guncelleme_tarihi");
+                        .HasColumnType("timestamp with time zone");
 
-                    b.Property<decimal>("Maas")
-                        .HasColumnType("numeric")
-                        .HasColumnName("maas");
+                    b.Property<string>("KanGrubu")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
 
-                    b.Property<DateTime>("OlusturmaTarihi")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("olusturma_tarihi");
+                    b.Property<DateTime>("KayitTarihi")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<decimal?>("Maas")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("Notlar")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<DateTime?>("OlusturmaTarihi")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("SicilNo")
                         .IsRequired()
                         .HasMaxLength(20)
-                        .HasColumnType("character varying(20)")
-                        .HasColumnName("sicil_no");
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("TcKimlikNo")
+                        .IsRequired()
+                        .HasMaxLength(11)
+                        .HasColumnType("character varying(11)");
 
                     b.Property<string>("Telefon")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)")
-                        .HasColumnName("telefon");
+                        .HasMaxLength(15)
+                        .HasColumnType("character varying(15)");
+
+                    b.Property<string>("Unvan")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
 
                     b.Property<int?>("VardiyaId")
-                        .HasColumnType("integer")
-                        .HasColumnName("vardiya_id");
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("DepartmanId");
 
                     b.HasIndex("Email")
                         .IsUnique();
@@ -597,77 +801,97 @@ namespace PDKS.Data.Migrations
 
                     b.HasIndex("VardiyaId");
 
-                    b.ToTable("personeller");
+                    b.ToTable("Personeller");
                 });
 
             modelBuilder.Entity("PDKS.Data.Entities.Prim", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
-                        .HasColumnName("id");
+                        .HasColumnType("integer");
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<string>("Aciklama")
-                        .IsRequired()
                         .HasMaxLength(500)
-                        .HasColumnType("character varying(500)")
-                        .HasColumnName("aciklama");
+                        .HasColumnType("character varying(500)");
 
-                    b.Property<DateTime>("Donem")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("donem");
+                    b.Property<int>("Ay")
+                        .HasColumnType("integer");
 
-                    b.Property<DateTime>("OlusturmaTarihi")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("olusturma_tarihi");
+                    b.Property<string>("Donem")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<DateTime>("KayitTarihi")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("OdendiMi")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("OnayDurumu")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<DateTime?>("OnayTarihi")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("OnaylayanKullaniciId")
+                        .HasColumnType("integer");
 
                     b.Property<int>("PersonelId")
-                        .HasColumnType("integer")
-                        .HasColumnName("personel_id");
+                        .HasColumnType("integer");
+
+                    b.Property<string>("PrimAdi")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
 
                     b.Property<string>("PrimTipi")
                         .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)")
-                        .HasColumnName("prim_tipi");
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<DateTime>("Tarih")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<decimal>("Tutar")
-                        .HasColumnType("numeric")
-                        .HasColumnName("tutar");
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<int>("Yil")
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
+                    b.HasIndex("OnaylayanKullaniciId");
+
                     b.HasIndex("PersonelId");
 
-                    b.ToTable("primler");
+                    b.ToTable("Primler");
                 });
 
             modelBuilder.Entity("PDKS.Data.Entities.Rol", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
-                        .HasColumnName("id");
+                        .HasColumnType("integer");
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<string>("Aciklama")
-                        .IsRequired()
                         .HasMaxLength(500)
-                        .HasColumnType("character varying(500)")
-                        .HasColumnName("aciklama");
+                        .HasColumnType("character varying(500)");
 
                     b.Property<string>("RolAdi")
                         .IsRequired()
                         .HasMaxLength(50)
-                        .HasColumnType("character varying(50)")
-                        .HasColumnName("rol_adi");
+                        .HasColumnType("character varying(50)");
 
                     b.HasKey("Id");
 
-                    b.ToTable("roller");
+                    b.ToTable("Roller");
 
                     b.HasData(
                         new
@@ -727,6 +951,9 @@ namespace PDKS.Data.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("Tarih")
+                        .IsUnique();
+
                     b.ToTable("tatiller");
                 });
 
@@ -734,46 +961,36 @@ namespace PDKS.Data.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
-                        .HasColumnName("id");
+                        .HasColumnType("integer");
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<string>("Aciklama")
-                        .IsRequired()
                         .HasMaxLength(500)
-                        .HasColumnType("character varying(500)")
-                        .HasColumnName("aciklama");
+                        .HasColumnType("character varying(500)");
 
                     b.Property<string>("Ad")
                         .IsRequired()
                         .HasMaxLength(100)
-                        .HasColumnType("character varying(100)")
-                        .HasColumnName("ad");
+                        .HasColumnType("character varying(100)");
 
                     b.Property<TimeSpan>("BaslangicSaati")
-                        .HasColumnType("interval")
-                        .HasColumnName("baslangic_saati");
+                        .HasColumnType("interval");
 
                     b.Property<TimeSpan>("BitisSaati")
-                        .HasColumnType("interval")
-                        .HasColumnName("bitis_saati");
+                        .HasColumnType("interval");
 
                     b.Property<bool>("Durum")
-                        .HasColumnType("boolean")
-                        .HasColumnName("durum");
+                        .HasColumnType("boolean");
 
                     b.Property<bool>("EsnekVardiyaMi")
-                        .HasColumnType("boolean")
-                        .HasColumnName("esnek_vardiya_mi");
+                        .HasColumnType("boolean");
 
                     b.Property<bool>("GeceVardiyasiMi")
-                        .HasColumnType("boolean")
-                        .HasColumnName("gece_vardiyasi_mi");
+                        .HasColumnType("boolean");
 
                     b.Property<int>("ToleransSuresiDakika")
-                        .HasColumnType("integer")
-                        .HasColumnName("tolerans_suresi_dakika");
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
@@ -820,9 +1037,10 @@ namespace PDKS.Data.Migrations
 
             modelBuilder.Entity("PDKS.Data.Entities.Avans", b =>
                 {
-                    b.HasOne("PDKS.Data.Entities.Kullanici", "Onaylayan")
+                    b.HasOne("PDKS.Data.Entities.Kullanici", "OnaylayanKullanici")
                         .WithMany()
-                        .HasForeignKey("OnaylayanId");
+                        .HasForeignKey("OnaylayanKullaniciId")
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.HasOne("PDKS.Data.Entities.Personel", "Personel")
                         .WithMany("Avanslar")
@@ -830,7 +1048,7 @@ namespace PDKS.Data.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("Onaylayan");
+                    b.Navigation("OnaylayanKullanici");
 
                     b.Navigation("Personel");
                 });
@@ -838,7 +1056,7 @@ namespace PDKS.Data.Migrations
             modelBuilder.Entity("PDKS.Data.Entities.Bildirim", b =>
                 {
                     b.HasOne("PDKS.Data.Entities.Kullanici", "Kullanici")
-                        .WithMany()
+                        .WithMany("Bildirimler")
                         .HasForeignKey("KullaniciId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -849,19 +1067,38 @@ namespace PDKS.Data.Migrations
             modelBuilder.Entity("PDKS.Data.Entities.CihazLog", b =>
                 {
                     b.HasOne("PDKS.Data.Entities.Cihaz", "Cihaz")
-                        .WithMany("CihazLoglari")
+                        .WithMany()
                         .HasForeignKey("CihazId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("PDKS.Data.Entities.Cihaz", null)
+                        .WithMany("CihazLoglari")
+                        .HasForeignKey("CihazId1");
+
                     b.Navigation("Cihaz");
+                });
+
+            modelBuilder.Entity("PDKS.Data.Entities.Departman", b =>
+                {
+                    b.HasOne("PDKS.Data.Entities.Departman", "UstDepartman")
+                        .WithMany("AltDepartmanlar")
+                        .HasForeignKey("UstDepartmanId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("UstDepartman");
                 });
 
             modelBuilder.Entity("PDKS.Data.Entities.GirisCikis", b =>
                 {
                     b.HasOne("PDKS.Data.Entities.Cihaz", "Cihaz")
+                        .WithMany()
+                        .HasForeignKey("CihazId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("PDKS.Data.Entities.Cihaz", null)
                         .WithMany("GirisCikislar")
-                        .HasForeignKey("CihazId");
+                        .HasForeignKey("CihazId1");
 
                     b.HasOne("PDKS.Data.Entities.Personel", "Personel")
                         .WithMany("GirisCikislar")
@@ -876,9 +1113,10 @@ namespace PDKS.Data.Migrations
 
             modelBuilder.Entity("PDKS.Data.Entities.Izin", b =>
                 {
-                    b.HasOne("PDKS.Data.Entities.Kullanici", "Onaylayan")
+                    b.HasOne("PDKS.Data.Entities.Kullanici", "OnaylayanKullanici")
                         .WithMany()
-                        .HasForeignKey("OnaylayanId");
+                        .HasForeignKey("OnaylayanId")
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.HasOne("PDKS.Data.Entities.Personel", "Personel")
                         .WithMany("Izinler")
@@ -886,7 +1124,7 @@ namespace PDKS.Data.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("Onaylayan");
+                    b.Navigation("OnaylayanKullanici");
 
                     b.Navigation("Personel");
                 });
@@ -896,13 +1134,12 @@ namespace PDKS.Data.Migrations
                     b.HasOne("PDKS.Data.Entities.Personel", "Personel")
                         .WithOne("Kullanici")
                         .HasForeignKey("PDKS.Data.Entities.Kullanici", "PersonelId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.HasOne("PDKS.Data.Entities.Rol", "Rol")
                         .WithMany("Kullanicilar")
                         .HasForeignKey("RolId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("Personel");
@@ -914,27 +1151,61 @@ namespace PDKS.Data.Migrations
                 {
                     b.HasOne("PDKS.Data.Entities.Kullanici", "Kullanici")
                         .WithMany("Loglar")
-                        .HasForeignKey("KullaniciId");
+                        .HasForeignKey("KullaniciId")
+                        .OnDelete(DeleteBehavior.Cascade);
 
                     b.Navigation("Kullanici");
                 });
 
+            modelBuilder.Entity("PDKS.Data.Entities.Mesai", b =>
+                {
+                    b.HasOne("PDKS.Data.Entities.Kullanici", "OnaylayanKullanici")
+                        .WithMany()
+                        .HasForeignKey("OnaylayanKullaniciId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("PDKS.Data.Entities.Personel", "Personel")
+                        .WithMany("Mesailer")
+                        .HasForeignKey("PersonelId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("OnaylayanKullanici");
+
+                    b.Navigation("Personel");
+                });
+
             modelBuilder.Entity("PDKS.Data.Entities.Personel", b =>
                 {
+                    b.HasOne("PDKS.Data.Entities.Departman", "Departman")
+                        .WithMany("Personeller")
+                        .HasForeignKey("DepartmanId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("PDKS.Data.Entities.Vardiya", "Vardiya")
                         .WithMany("Personeller")
-                        .HasForeignKey("VardiyaId");
+                        .HasForeignKey("VardiyaId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("Departman");
 
                     b.Navigation("Vardiya");
                 });
 
             modelBuilder.Entity("PDKS.Data.Entities.Prim", b =>
                 {
-                    b.HasOne("PDKS.Data.Entities.Personel", "Personel")
+                    b.HasOne("PDKS.Data.Entities.Kullanici", "OnaylayanKullanici")
                         .WithMany()
+                        .HasForeignKey("OnaylayanKullaniciId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("PDKS.Data.Entities.Personel", "Personel")
+                        .WithMany("Primler")
                         .HasForeignKey("PersonelId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("OnaylayanKullanici");
 
                     b.Navigation("Personel");
                 });
@@ -946,8 +1217,17 @@ namespace PDKS.Data.Migrations
                     b.Navigation("GirisCikislar");
                 });
 
+            modelBuilder.Entity("PDKS.Data.Entities.Departman", b =>
+                {
+                    b.Navigation("AltDepartmanlar");
+
+                    b.Navigation("Personeller");
+                });
+
             modelBuilder.Entity("PDKS.Data.Entities.Kullanici", b =>
                 {
+                    b.Navigation("Bildirimler");
+
                     b.Navigation("Loglar");
                 });
 
@@ -959,8 +1239,11 @@ namespace PDKS.Data.Migrations
 
                     b.Navigation("Izinler");
 
-                    b.Navigation("Kullanici")
-                        .IsRequired();
+                    b.Navigation("Kullanici");
+
+                    b.Navigation("Mesailer");
+
+                    b.Navigation("Primler");
                 });
 
             modelBuilder.Entity("PDKS.Data.Entities.Rol", b =>

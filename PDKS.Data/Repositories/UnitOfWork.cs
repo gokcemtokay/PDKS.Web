@@ -25,6 +25,8 @@ namespace PDKS.Data.Repositories
             CihazLoglari = new GenericRepository<Entities.CihazLog>(_context);
             Avanslar = new GenericRepository<Entities.Avans>(_context);
             Primler = new GenericRepository<Entities.Prim>(_context);
+            Departmanlar = new GenericRepository<Entities.Departman>(_context);
+            Mesailer = new GenericRepository<Entities.Mesai>(_context);
         }
 
         public IRepository<Entities.Personel> Personeller { get; private set; }
@@ -41,6 +43,8 @@ namespace PDKS.Data.Repositories
         public IRepository<Entities.CihazLog> CihazLoglari { get; private set; }
         public IRepository<Entities.Avans> Avanslar { get; private set; }
         public IRepository<Entities.Prim> Primler { get; private set; }
+        public IRepository<Entities.Departman> Departmanlar { get; private set; }
+        public IRepository<Entities.Mesai> Mesailer { get; private set; }
 
         public async Task<int> SaveChangesAsync()
         {

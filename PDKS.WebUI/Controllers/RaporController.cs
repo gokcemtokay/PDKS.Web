@@ -606,15 +606,14 @@ namespace PDKS.WebUI.Controllers
 
         #endregion
 
-        // Helper method
         private async Task LoadViewBagData()
         {
             var personeller = await _unitOfWork.Personeller.FindAsync(p => p.Durum);
             ViewBag.Personeller = new SelectList(personeller, "Id", "AdSoyad");
 
-            var departmanlar = (await _unitOfWork.Personeller.GetAllAsync())
-                .Where(p => !string.IsNullOrEmpty(p.Departman))
-                .Select(p => p.Departman)
+            var departmanlar = (await _unitOfWork.Departmanlar.GetAllAsync())
+                .Where(d => !string.IsNullOrEmpty(d.Ad)) 
+                .Select(d => d.Ad)
                 .Distinct()
                 .OrderBy(d => d)
                 .ToList();

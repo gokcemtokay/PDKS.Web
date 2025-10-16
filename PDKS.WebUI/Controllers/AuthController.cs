@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using PDKS.Business.Services;
+using PDKS.Data.Entities;
 using PDKS.Data.Repositories;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 
@@ -33,7 +34,7 @@ namespace PDKS.WebUI.Controllers
         [HttpPost]
         public async Task<IActionResult> Login(string email, string password, string returnUrl = null)
         {
-            if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(password))
+            if (string.IsNullOrEmpty(email) || string.IsNullOrEmpty(password))
             {
                 TempData["Error"] = "Email ve şifre alanları zorunludur";
                 return View();
@@ -48,20 +49,22 @@ namespace PDKS.WebUI.Controllers
             }
 
             // Load user details with relations
-            var kullanici = await _unitOfWork.Kullanicilar.FirstOrDefaultAsync(k => k.Id == user.Id);
-            var personel = await _unitOfWork.Personeller.GetByIdAsync(kullanici.PersonelId);
+            var kullanici = await _unitOfWork.Kullanicilar.GetByIdAsync(user.Id);
+            var personel = kullanici?.PersonelId.HasValue == true
+                ? await _unitOfWork.Personeller.GetByIdAsync(kullanici.PersonelId.Value)
+                : null;
             var rol = await _unitOfWork.Roller.GetByIdAsync(kullanici.RolId);
 
             // Create claims
-            var claims = new[]
-            {
-                new Claim(ClaimTypes.NameIdentifier, kullanici.Id.ToString()),
-                new Claim(ClaimTypes.Name, personel.AdSoyad),
-                new Claim(ClaimTypes.Email, kullanici.Email),
-                new Claim(ClaimTypes.Role, rol.RolAdi),
-                new Claim("PersonelId", personel.Id.ToString()),
-                new Claim("Departman", personel.Departman ?? "")
-            };
+            var claims = new List<Claim>
+    {
+        new Claim(ClaimTypes.NameIdentifier, kullanici.Id.ToString()),
+        new Claim(ClaimTypes.Name, personel?.AdSoyad ?? kullanici.KullaniciAdi),
+        new Claim(ClaimTypes.Email, kullanici.Email),
+        new Claim(ClaimTypes.Role, rol.RolAdi),
+        new Claim("PersonelId", personel?.Id.ToString() ?? "0"),
+        new Claim("Departman", personel?.Departman?.Ad ?? "")
+    };
 
             var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
             var authProperties = new AuthenticationProperties
@@ -76,19 +79,21 @@ namespace PDKS.WebUI.Controllers
                 authProperties);
 
             // Log the login
-            await _unitOfWork.Loglar.AddAsync(new Data.Entities.Log
+            await _unitOfWork.Loglar.AddAsync(new Log
             {
                 KullaniciId = kullanici.Id,
                 Islem = "Giriş",
                 Modul = "Auth",
-                Detay = $"{personel.AdSoyad} sisteme giriş yaptı",
+                Detay = $"{kullanici.KullaniciAdi} sisteme giriş yaptı",
                 IpAdres = HttpContext.Connection.RemoteIpAddress?.ToString(),
                 Tarih = DateTime.UtcNow
             });
             await _unitOfWork.SaveChangesAsync();
 
             if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
+            {
                 return Redirect(returnUrl);
+            }
 
             return RedirectToAction("Index", "Home");
         }

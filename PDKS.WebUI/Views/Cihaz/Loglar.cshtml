@@ -1,5 +1,127 @@
-﻿@*
-    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
-*@
+﻿@model IEnumerable<PDKS.Data.Entities.CihazLog>
 @{
+    ViewData["Title"] = "Cihaz Logları";
+    var cihazAdi = ViewBag.CihazAdi as string;
+}
+
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col">
+            <div class="d-flex justify-content-between align-items-center">
+                <h2>
+                    <i class="fas fa-list me-2"></i>Cihaz Logları: <span class="text-primary">@cihazAdi</span>
+                </h2>
+                <a asp-action="Index" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>Geri Dön
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle" id="logTable">
+                    <thead class="table-light">
+                        <tr>
+                            <th style="width: 180px;">Tarih</th>
+                            <th style="width: 150px;">İşlem</th>
+                            <th style="width: 100px;" class="text-center">Durum</th>
+                            <th>Detay</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model != null && Model.Any())
+                        {
+                            @foreach (var log in Model)
+                            {
+                                <tr>
+                                    <td>
+                                        <small class="text-muted">
+                                            <i class="far fa-clock me-1"></i>
+                                            @log.Tarih.ToLocalTime().ToString("dd.MM.yyyy HH:mm:ss")
+                                        </small>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-secondary">@log.Islem</span>
+                                    </td>
+                                    <td class="text-center">
+                                        @if (log.Basarili)
+                                        {
+                                            <span class="badge bg-success">
+                                                <i class="fas fa-check me-1"></i>Başarılı
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-danger">
+                                                <i class="fas fa-times me-1"></i>Başarısız
+                                            </span>
+                                        }
+                                    </td>
+                                    <td>
+                                        <small>@log.Detay</small>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="4" class="text-center text-muted py-4">
+                                    <i class="fas fa-inbox fa-3x mb-3 d-block"></i>
+                                    Henüz log kaydı bulunmamaktadır.
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    @if (Model != null && Model.Any())
+    {
+        <!-- İstatistikler -->
+        <div class="row mt-4">
+            <div class="col-md-4">
+                <div class="card bg-success text-white">
+                    <div class="card-body">
+                        <h5 class="card-title">Başarılı İşlemler</h5>
+                        <h2>@Model.Count(l => l.Basarili)</h2>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card bg-danger text-white">
+                    <div class="card-body">
+                        <h5 class="card-title">Başarısız İşlemler</h5>
+                        <h2>@Model.Count(l => !l.Basarili)</h2>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card bg-primary text-white">
+                    <div class="card-body">
+                        <h5 class="card-title">Toplam Log</h5>
+                        <h2>@Model.Count()</h2>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            $('#logTable').DataTable({
+                language: {
+                    url: '//cdn.datatables.net/plug-ins/1.13.7/i18n/tr.json'
+                },
+                order: [[0, 'desc']],
+                pageLength: 50
+            });
+        });
+    </script>
 }

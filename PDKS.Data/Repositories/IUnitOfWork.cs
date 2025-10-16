@@ -17,6 +17,8 @@
         IRepository<Entities.CihazLog> CihazLoglari { get; }
         IRepository<Entities.Avans> Avanslar { get; }
         IRepository<Entities.Prim> Primler { get; }
+        IRepository<Entities.Departman> Departmanlar { get; }
+        IRepository<Entities.Mesai> Mesailer { get; }
 
         Task<int> SaveChangesAsync();
         Task BeginTransactionAsync();

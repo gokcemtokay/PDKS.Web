@@ -22,7 +22,7 @@ namespace PDKS.Business.Services
                 Id = p.Id,
                 AdSoyad = p.AdSoyad,
                 SicilNo = p.SicilNo,
-                Departman = p.Departman,
+                Departman = p.Departman?.Ad ?? string.Empty,
                 Gorev = p.Gorev,
                 Email = p.Email,
                 Telefon = p.Telefon,
@@ -41,7 +41,7 @@ namespace PDKS.Business.Services
                 Id = p.Id,
                 AdSoyad = p.AdSoyad,
                 SicilNo = p.SicilNo,
-                Departman = p.Departman,
+                Departman = p.Departman?.Ad ?? string.Empty,
                 Gorev = p.Gorev,
                 Email = p.Email,
                 Telefon = p.Telefon,
@@ -54,34 +54,49 @@ namespace PDKS.Business.Services
         public async Task<PersonelDetailDTO> GetByIdAsync(int id)
         {
             var personel = await _unitOfWork.Personeller.GetByIdAsync(id);
-            if (personel == null) return null;
+            if (personel == null)
+                throw new Exception("Personel bulunamadı");
 
-            var toplamGirisCikis = await _unitOfWork.GirisCikislar.CountAsync(g => g.PersonelId == id);
-            var toplamIzin = await _unitOfWork.Izinler.CountAsync(i => i.PersonelId == id);
-            var bekleyenIzin = await _unitOfWork.Izinler.CountAsync(i => i.PersonelId == id && i.OnayDurumu == "Beklemede");
-            var avanslar = await _unitOfWork.Avanslar.FindAsync(a => a.PersonelId == id && a.Durum == "Ödendi");
-            var toplamAvans = avanslar.Sum(a => a.Tutar);
+            var departman = personel.DepartmanId.HasValue
+                ? await _unitOfWork.Departmanlar.GetByIdAsync(personel.DepartmanId.Value)
+                : null;
+
+            var vardiya = personel.VardiyaId.HasValue
+                ? await _unitOfWork.Vardiyalar.GetByIdAsync(personel.VardiyaId.Value)
+                : null;
+
+            var avanslar = await _unitOfWork.Avanslar.FindAsync(a => a.PersonelId == id);
+            var primler = await _unitOfWork.Primler.FindAsync(p => p.PersonelId == id);
 
             return new PersonelDetailDTO
             {
                 Id = personel.Id,
                 AdSoyad = personel.AdSoyad,
                 SicilNo = personel.SicilNo,
-                Departman = personel.Departman,
-                Gorev = personel.Gorev,
+                TcKimlikNo = personel.TcKimlikNo,
                 Email = personel.Email,
                 Telefon = personel.Telefon,
-                Durum = personel.Durum,
+                Adres = personel.Adres,
+                DogumTarihi = personel.DogumTarihi,
+                Cinsiyet = personel.Cinsiyet,
+                KanGrubu = personel.KanGrubu,
                 GirisTarihi = personel.GirisTarihi,
                 CikisTarihi = personel.CikisTarihi,
-                Maas = personel.Maas,
-                AvansLimiti = personel.AvansLimiti,
+                Maas = personel.Maas ?? 0m,
+                Unvan = personel.Unvan,
+                Gorev = personel.Gorev,
+                AvansLimiti = personel.AvansLimiti ?? 0m,
+                DepartmanId = personel.DepartmanId,
+                DepartmanAdi = departman?.Ad,
+                Departman = departman?.Ad ?? "Belirtilmemiş",  // Geriye dönük uyumluluk
                 VardiyaId = personel.VardiyaId,
-                VardiyaAdi = personel.Vardiya?.Ad,
-                ToplamGirisCikis = toplamGirisCikis,
-                ToplamIzin = toplamIzin,
-                BekleyenIzin = bekleyenIzin,
-                ToplamAvans = toplamAvans
+                VardiyaAdi = vardiya?.Ad,
+                Durum = personel.Durum,
+                Notlar = personel.Notlar,
+                KayitTarihi = personel.KayitTarihi,
+                AktifAvansSayisi = avanslar.Count(a => a.Durum == "Aktif"),
+                ToplamAvans = avanslar.Sum(a => (decimal?)a.Tutar) ?? 0m,
+                ToplamPrim = primler.Sum(p => (decimal?)p.Tutar) ?? 0m
             };
         }
 
@@ -100,16 +115,23 @@ namespace PDKS.Business.Services
             {
                 AdSoyad = dto.AdSoyad,
                 SicilNo = dto.SicilNo,
-                Departman = dto.Departman,
+                TcKimlikNo = dto.TcKimlikNo,
+                DepartmanId = dto.DepartmanId,  // ✅ DÜZELTILDI
                 Gorev = dto.Gorev,
                 Email = dto.Email,
                 Telefon = dto.Telefon,
+                Adres = dto.Adres,
+                DogumTarihi = dto.DogumTarihi,
+                Cinsiyet = dto.Cinsiyet,
+                KanGrubu = dto.KanGrubu,
                 Durum = dto.Durum,
                 GirisTarihi = dto.GirisTarihi,
                 CikisTarihi = dto.CikisTarihi,
                 VardiyaId = dto.VardiyaId,
                 Maas = dto.Maas,
+                Unvan = dto.Unvan,
                 AvansLimiti = dto.AvansLimiti,
+                Notlar = dto.Notlar,
                 OlusturmaTarihi = DateTime.UtcNow
             };
 
@@ -137,16 +159,23 @@ namespace PDKS.Business.Services
 
             personel.AdSoyad = dto.AdSoyad;
             personel.SicilNo = dto.SicilNo;
-            personel.Departman = dto.Departman;
+            personel.TcKimlikNo = dto.TcKimlikNo;
+            personel.DepartmanId = dto.DepartmanId;  // ✅ DÜZELTILDI
             personel.Gorev = dto.Gorev;
             personel.Email = dto.Email;
             personel.Telefon = dto.Telefon;
+            personel.Adres = dto.Adres;
+            personel.DogumTarihi = dto.DogumTarihi;
+            personel.Cinsiyet = dto.Cinsiyet;
+            personel.KanGrubu = dto.KanGrubu;
             personel.Durum = dto.Durum;
             personel.GirisTarihi = dto.GirisTarihi;
             personel.CikisTarihi = dto.CikisTarihi;
             personel.VardiyaId = dto.VardiyaId;
             personel.Maas = dto.Maas;
+            personel.Unvan = dto.Unvan;
             personel.AvansLimiti = dto.AvansLimiti;
+            personel.Notlar = dto.Notlar;
             personel.GuncellemeTarihi = DateTime.UtcNow;
 
             _unitOfWork.Personeller.Update(personel);
@@ -176,7 +205,7 @@ namespace PDKS.Business.Services
             var personeller = await _unitOfWork.Personeller.FindAsync(p =>
                 p.AdSoyad.Contains(searchTerm) ||
                 p.SicilNo.Contains(searchTerm) ||
-                p.Departman.Contains(searchTerm) ||
+                (p.Departman != null && p.Departman.Ad.Contains(searchTerm)) ||  // ✅ DÜZELTILDI
                 p.Email.Contains(searchTerm));
 
             return personeller.Select(p => new PersonelListDTO
@@ -184,7 +213,7 @@ namespace PDKS.Business.Services
                 Id = p.Id,
                 AdSoyad = p.AdSoyad,
                 SicilNo = p.SicilNo,
-                Departman = p.Departman,
+                Departman = p.Departman?.Ad ?? string.Empty,  // ✅ DÜZELTILDI
                 Gorev = p.Gorev,
                 Email = p.Email,
                 Telefon = p.Telefon,
@@ -196,13 +225,17 @@ namespace PDKS.Business.Services
 
         public async Task<IEnumerable<PersonelListDTO>> GetByDepartmentAsync(string departman)
         {
-            var personeller = await _unitOfWork.Personeller.FindAsync(p => p.Departman == departman && p.Durum);
+            var personeller = await _unitOfWork.Personeller.FindAsync(p =>
+                p.Departman != null &&
+                p.Departman.Ad == departman &&
+                p.Durum);
+
             return personeller.Select(p => new PersonelListDTO
             {
                 Id = p.Id,
                 AdSoyad = p.AdSoyad,
                 SicilNo = p.SicilNo,
-                Departman = p.Departman,
+                Departman = p.Departman?.Ad ?? string.Empty,
                 Gorev = p.Gorev,
                 Email = p.Email,
                 Telefon = p.Telefon,

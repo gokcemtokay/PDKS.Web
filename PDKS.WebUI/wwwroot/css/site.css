@@ -1,22 +1,355 @@
-html {
-  font-size: 14px;
+/* ==================== GLOBAL STYLES ==================== */
+:root {
+    --sidebar-width: 260px;
+    --sidebar-bg: #2c3e50;
+    --sidebar-hover: #34495e;
+    --primary-color: #3498db;
+    --transition-speed: 0.3s;
 }
 
-@media (min-width: 768px) {
-  html {
-    font-size: 16px;
-  }
-}
-
-.btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
-  box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
-}
-
-html {
-  position: relative;
-  min-height: 100%;
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
 }
 
 body {
-  margin-bottom: 60px;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f8f9fa;
+}
+
+/* ==================== SIDEBAR STYLES ==================== */
+.sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    width: var(--sidebar-width);
+    background: var(--sidebar-bg);
+    padding: 0;
+    transition: all var(--transition-speed) ease;
+    z-index: 1050;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+/* Sidebar Header */
+.sidebar-header {
+    padding: 20px;
+    background: rgba(0, 0, 0, 0.1);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+    .sidebar-header h3 {
+        color: white;
+        margin: 0;
+        font-size: 1.5rem;
+        font-weight: 600;
+    }
+
+#sidebarCollapseBtn {
+    display: none;
+}
+
+/* Sidebar Profile */
+.sidebar-profile {
+    padding: 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    color: white;
+}
+
+/* Sidebar Menu */
+.sidebar ul.components {
+    padding: 10px 0;
+}
+
+.sidebar ul li {
+    padding: 0;
+}
+
+    .sidebar ul li a {
+        padding: 12px 20px;
+        display: flex;
+        align-items: center;
+        color: rgba(255, 255, 255, 0.8);
+        text-decoration: none;
+        transition: all 0.3s;
+        border-left: 3px solid transparent;
+    }
+
+        .sidebar ul li a:hover,
+        .sidebar ul li.active > a {
+            color: white;
+            background: var(--sidebar-hover);
+            border-left-color: var(--primary-color);
+        }
+
+        .sidebar ul li a i {
+            width: 25px;
+            text-align: center;
+        }
+
+        .sidebar ul li a .badge {
+            margin-left: auto;
+        }
+
+/* Submenu Styles */
+.sidebar ul ul a {
+    padding-left: 50px;
+    font-size: 0.9rem;
+    background: rgba(0, 0, 0, 0.1);
+}
+
+.sidebar ul ul li.active a {
+    background: rgba(52, 152, 219, 0.2);
+}
+
+/* Sidebar Footer */
+.sidebar-footer {
+    padding: 15px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    position: sticky;
+    bottom: 0;
+    background: var(--sidebar-bg);
+}
+
+/* Sidebar Overlay for Mobile */
+.sidebar-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 1040;
+    display: none;
+    opacity: 0;
+    transition: opacity var(--transition-speed);
+}
+
+    .sidebar-overlay.active {
+        display: block;
+        opacity: 1;
+    }
+
+/* ==================== MAIN CONTENT ==================== */
+#content {
+    margin-left: var(--sidebar-width);
+    min-height: 100vh;
+    transition: all var(--transition-speed) ease;
+    display: flex;
+    flex-direction: column;
+}
+
+#sidebarToggle {
+    display: none;
+}
+
+/* ==================== RESPONSIVE - MOBILE ==================== */
+@media (max-width: 991.98px) {
+    /* Hide sidebar by default on mobile */
+    .sidebar {
+        left: calc(-1 * var(--sidebar-width));
+    }
+
+        /* Show sidebar when active */
+        .sidebar.active {
+            left: 0;
+            box-shadow: 3px 0 15px rgba(0, 0, 0, 0.3);
+        }
+
+    /* Show close button on mobile */
+    #sidebarCollapseBtn {
+        display: block;
+    }
+
+    /* Remove left margin from content on mobile */
+    #content {
+        margin-left: 0;
+    }
+
+    /* Show toggle button on mobile */
+    #sidebarToggle {
+        display: inline-block;
+    }
+
+    /* Adjust navbar for mobile */
+    .navbar-brand {
+        font-size: 1rem;
+    }
+}
+
+@media (max-width: 575.98px) {
+    .sidebar {
+        width: 280px;
+    }
+
+    .sidebar-header h3 {
+        font-size: 1.2rem;
+    }
+
+    .navbar-brand {
+        display: none;
+    }
+}
+
+/* ==================== DESKTOP - TOGGLE COLLAPSED STATE ==================== */
+@media (min-width: 992px) {
+    .sidebar.collapsed {
+        width: 80px;
+    }
+
+        .sidebar.collapsed .sidebar-header h3 span,
+        .sidebar.collapsed ul li a span,
+        .sidebar.collapsed .sidebar-profile,
+        .sidebar.collapsed .sidebar-footer .btn span {
+            display: none;
+        }
+
+        .sidebar.collapsed ul li a {
+            justify-content: center;
+            padding: 12px 0;
+        }
+
+            .sidebar.collapsed ul li a i {
+                margin: 0;
+            }
+
+    #content.expanded {
+        margin-left: 80px;
+    }
+}
+
+/* ==================== CARD STYLES ==================== */
+.card {
+    border: none;
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s, box-shadow 0.3s;
+}
+
+    .card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 5px 20px rgba(0, 0, 0, 0.15);
+    }
+
+.card-header {
+    border-radius: 10px 10px 0 0 !important;
+    font-weight: 600;
+    border-bottom: none;
+}
+
+/* ==================== BUTTON STYLES ==================== */
+.btn {
+    border-radius: 5px;
+    padding: 0.5rem 1rem;
+    transition: all 0.3s;
+}
+
+    .btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    }
+
+/* ==================== BADGE STYLES ==================== */
+.badge {
+    padding: 0.5em 0.8em;
+    font-weight: 500;
+    border-radius: 5px;
+}
+
+/* ==================== TABLE STYLES ==================== */
+.table {
+    background: white;
+}
+
+table.dataTable thead th {
+    font-weight: 600;
+    font-size: 0.9rem;
+    border-bottom: 2px solid #dee2e6;
+}
+
+.table-hover tbody tr:hover {
+    background-color: rgba(52, 152, 219, 0.05);
+    cursor: pointer;
+}
+
+/* ==================== ANIMATION ==================== */
+.alert {
+    animation: slideInDown 0.5s;
+}
+
+@keyframes slideInDown {
+    from {
+        transform: translateY(-100%);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+/* ==================== FOOTER ==================== */
+.footer {
+    margin-top: auto;
+    border-top: 1px solid #dee2e6;
+}
+
+/* ==================== SCROLLBAR CUSTOMIZATION ==================== */
+.sidebar::-webkit-scrollbar {
+    width: 6px;
+}
+
+.sidebar::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.1);
+}
+
+.sidebar::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 3px;
+}
+
+    .sidebar::-webkit-scrollbar-thumb:hover {
+        background: rgba(255, 255, 255, 0.5);
+    }
+
+/* ==================== FORM STYLES ==================== */
+.form-control:focus,
+.form-select:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 0.2rem rgba(52, 152, 219, 0.25);
+}
+
+/* ==================== DATATABLE RESPONSIVE ==================== */
+.dataTables_wrapper .dataTables_length,
+.dataTables_wrapper .dataTables_filter {
+    margin-bottom: 1rem;
+}
+
+@media (max-width: 767.98px) {
+    .dataTables_wrapper .dataTables_length,
+    .dataTables_wrapper .dataTables_filter {
+        text-align: center;
+        margin-bottom: 1rem;
+    }
+
+    .table-responsive {
+        font-size: 0.85rem;
+    }
+
+    .btn-group {
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+    }
+
+        .btn-group .btn {
+            margin-bottom: 0.25rem;
+            border-radius: 5px !important;
+        }
 }

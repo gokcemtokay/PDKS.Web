@@ -27,7 +27,8 @@ namespace PDKS.Data.Context
         public DbSet<CihazLog> CihazLoglari { get; set; }
         public DbSet<Avans> Avanslar { get; set; }
         public DbSet<Prim> Primler { get; set; }
-        
+        public DbSet<Departman> Departmanlar { get; set; }
+        public DbSet<Mesai> Mesailer { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -56,10 +57,10 @@ namespace PDKS.Data.Context
                 }
             }
 
-
             base.OnModelCreating(modelBuilder);
 
-            // Indexes
+            // ============== INDEXES ==============
+
             modelBuilder.Entity<Personel>()
                 .HasIndex(p => p.SicilNo)
                 .IsUnique();
@@ -78,32 +79,146 @@ namespace PDKS.Data.Context
             modelBuilder.Entity<GirisCikis>()
                 .HasIndex(g => new { g.PersonelId, g.GirisZamani });
 
-            // Relationships
+            // Parametre için unique index
+            modelBuilder.Entity<Parametre>()
+                .HasIndex(p => p.Ad)
+                .IsUnique();
+
+            // Tatil için unique index
+            modelBuilder.Entity<Tatil>()
+                .HasIndex(t => t.Tarih)
+                .IsUnique();
+
+            // ============== RELATIONSHIPS ==============
+
+            // Kullanici - Personel (One-to-One)
             modelBuilder.Entity<Kullanici>()
                 .HasOne(k => k.Personel)
                 .WithOne(p => p.Kullanici)
                 .HasForeignKey<Kullanici>(k => k.PersonelId)
                 .OnDelete(DeleteBehavior.Restrict);
 
+            // Kullanici - Rol (Many-to-One)
+            modelBuilder.Entity<Kullanici>()
+                .HasOne(k => k.Rol)
+                .WithMany(r => r.Kullanicilar)
+                .HasForeignKey(k => k.RolId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // GirisCikis - Personel (Many-to-One)
             modelBuilder.Entity<GirisCikis>()
                 .HasOne(g => g.Personel)
                 .WithMany(p => p.GirisCikislar)
                 .HasForeignKey(g => g.PersonelId)
                 .OnDelete(DeleteBehavior.Cascade);
 
+            // GirisCikis - Cihaz (Many-to-One)
+            modelBuilder.Entity<GirisCikis>()
+                .HasOne(g => g.Cihaz)
+                .WithMany()
+                .HasForeignKey(g => g.CihazId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Izin - Personel (Many-to-One)
             modelBuilder.Entity<Izin>()
                 .HasOne(i => i.Personel)
                 .WithMany(p => p.Izinler)
                 .HasForeignKey(i => i.PersonelId)
                 .OnDelete(DeleteBehavior.Cascade);
 
+            // Izin - OnaylayanKullanici (Many-to-One)
+            modelBuilder.Entity<Izin>()
+                .HasOne(i => i.OnaylayanKullanici)
+                .WithMany()
+                .HasForeignKey(i => i.OnaylayanId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Avans - Personel (Many-to-One)
             modelBuilder.Entity<Avans>()
                 .HasOne(a => a.Personel)
                 .WithMany(p => p.Avanslar)
                 .HasForeignKey(a => a.PersonelId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            // Seed Data - Roller
+            // Avans - OnaylayanKullanici (Many-to-One)
+            modelBuilder.Entity<Avans>()
+                .HasOne(a => a.OnaylayanKullanici)
+                .WithMany()
+                .HasForeignKey(a => a.OnaylayanKullaniciId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Prim - Personel (Many-to-One)
+            modelBuilder.Entity<Prim>()
+                .HasOne(p => p.Personel)
+                .WithMany(per => per.Primler)
+                .HasForeignKey(p => p.PersonelId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // Prim - OnaylayanKullanici (Many-to-One)
+            modelBuilder.Entity<Prim>()
+                .HasOne(p => p.OnaylayanKullanici)
+                .WithMany()
+                .HasForeignKey(p => p.OnaylayanKullaniciId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Mesai - Personel (Many-to-One)
+            modelBuilder.Entity<Mesai>()
+                .HasOne(m => m.Personel)
+                .WithMany(p => p.Mesailer)
+                .HasForeignKey(m => m.PersonelId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // Mesai - OnaylayanKullanici (Many-to-One)
+            modelBuilder.Entity<Mesai>()
+                .HasOne(m => m.OnaylayanKullanici)
+                .WithMany()
+                .HasForeignKey(m => m.OnaylayanKullaniciId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Personel - Departman (Many-to-One)
+            modelBuilder.Entity<Personel>()
+                .HasOne(p => p.Departman)
+                .WithMany(d => d.Personeller)
+                .HasForeignKey(p => p.DepartmanId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Personel - Vardiya (Many-to-One)
+            modelBuilder.Entity<Personel>()
+                .HasOne(p => p.Vardiya)
+                .WithMany(v => v.Personeller)
+                .HasForeignKey(p => p.VardiyaId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Departman - UstDepartman (Self-Referencing)
+            modelBuilder.Entity<Departman>()
+                .HasOne(d => d.UstDepartman)
+                .WithMany(d => d.AltDepartmanlar)
+                .HasForeignKey(d => d.UstDepartmanId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // CihazLog - Cihaz (Many-to-One)
+            modelBuilder.Entity<CihazLog>()
+                .HasOne(cl => cl.Cihaz)
+                .WithMany()
+                .HasForeignKey(cl => cl.CihazId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // Log - Kullanici (Many-to-One)
+            modelBuilder.Entity<Log>()
+                .HasOne(l => l.Kullanici)
+                .WithMany(k => k.Loglar)
+                .HasForeignKey(l => l.KullaniciId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // Bildirim - Kullanici (Many-to-One)
+            modelBuilder.Entity<Bildirim>()
+                .HasOne(b => b.Kullanici)
+                .WithMany(k => k.Bildirimler)
+                .HasForeignKey(b => b.KullaniciId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // ============== SEED DATA - ROLLER ==============
+
             modelBuilder.Entity<Rol>().HasData(
                 new Rol { Id = 1, RolAdi = "Admin", Aciklama = "Sistem Yöneticisi" },
                 new Rol { Id = 2, RolAdi = "IK", Aciklama = "İnsan Kaynakları" },
@@ -111,16 +226,83 @@ namespace PDKS.Data.Context
                 new Rol { Id = 4, RolAdi = "Personel", Aciklama = "Çalışan" }
             );
 
-            // Seed Data - Parametreler
+            // ============== SEED DATA - PARAMETRELER ==============
+
             modelBuilder.Entity<Parametre>().HasData(
-                new Parametre { Id = 1, Anahtar = "FazlaMesaiOrani", Deger = "1.5", Aciklama = "Fazla mesai ücret oranı" },
-                new Parametre { Id = 2, Anahtar = "GecKalmaToleransDakika", Deger = "15", Aciklama = "Geç kalma tolerans süresi (dakika)" },
-                new Parametre { Id = 3, Anahtar = "ErkenCikisToLeransDakika", Deger = "15", Aciklama = "Erken çıkış tolerans süresi (dakika)" },
-                new Parametre { Id = 4, Anahtar = "HaftalikcalismaGun", Deger = "5", Aciklama = "Haftalık çalışma günü sayısı" },
-                new Parametre { Id = 5, Anahtar = "GunlukCalismaSaat", Deger = "8", Aciklama = "Günlük çalışma saati" }
+                new Parametre
+                {
+                    Id = 1,
+                    Ad = "Haftalık Çalışma Günü",
+                    Deger = "5",
+                    Birim = "gün",
+                    Kategori = "Çalışma Saatleri",
+                    Aciklama = "Haftalık standart çalışma günü sayısı",
+                    KayitTarihi = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc)
+                },
+                new Parametre
+                {
+                    Id = 2,
+                    Ad = "Günlük Çalışma Saati",
+                    Deger = "8",
+                    Birim = "saat",
+                    Kategori = "Çalışma Saatleri",
+                    Aciklama = "Günlük standart çalışma saati",
+                    KayitTarihi = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc)
+                },
+                new Parametre
+                {
+                    Id = 3,
+                    Ad = "Geç Kalma Toleransı",
+                    Deger = "15",
+                    Birim = "dakika",
+                    Kategori = "Toleranslar",
+                    Aciklama = "İşe geç kalma tolerans süresi",
+                    KayitTarihi = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc)
+                },
+                new Parametre
+                {
+                    Id = 4,
+                    Ad = "Erken Çıkış Toleransı",
+                    Deger = "15",
+                    Birim = "dakika",
+                    Kategori = "Toleranslar",
+                    Aciklama = "Erken çıkış tolerans süresi",
+                    KayitTarihi = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc)
+                },
+                new Parametre
+                {
+                    Id = 5,
+                    Ad = "Fazla Mesai Çarpanı",
+                    Deger = "1.5",
+                    Birim = "kat",
+                    Kategori = "Mesai",
+                    Aciklama = "Fazla mesai ücreti çarpanı",
+                    KayitTarihi = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc)
+                },
+                new Parametre
+                {
+                    Id = 6,
+                    Ad = "Hafta Sonu Mesai Çarpanı",
+                    Deger = "2",
+                    Birim = "kat",
+                    Kategori = "Mesai",
+                    Aciklama = "Hafta sonu mesai ücreti çarpanı",
+                    KayitTarihi = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc)
+                },
+                new Parametre
+                {
+                    Id = 7,
+                    Ad = "Yıllık İzin Günü",
+                    Deger = "14",
+                    Birim = "gün",
+                    Kategori = "İzin",
+                    Aciklama = "Yıllık ücretli izin günü sayısı",
+                    KayitTarihi = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc)
+                }
             );
 
-            // Seed Data - Vardiya
+            // ============== SEED DATA - VARDIYA ==============
+
             modelBuilder.Entity<Vardiya>().HasData(
                 new Vardiya
                 {

@@ -1,42 +1,36 @@
-﻿using System.ComponentModel.DataAnnotations.Schema;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace PDKS.Data.Entities
 {
+    [Table("Vardiyalar")]
     public class Vardiya
     {
         [Key]
-        [Column("id")]
         public int Id { get; set; }
 
         [Required]
-        [MaxLength(100)]
-        [Column("ad")]
+        [StringLength(100)]
         public string Ad { get; set; }
 
-        [Column("baslangic_saati")]
+        [Required]
         public TimeSpan BaslangicSaati { get; set; }
 
-        [Column("bitis_saati")]
+        [Required]
         public TimeSpan BitisSaati { get; set; }
 
-        [Column("gece_vardiyasi_mi")]
-        public bool GeceVardiyasiMi { get; set; }
+        public bool GeceVardiyasiMi { get; set; } = false;
 
-        [Column("esnek_vardiya_mi")]
-        public bool EsnekVardiyaMi { get; set; }
+        public bool EsnekVardiyaMi { get; set; } = false;
 
-        [Column("tolerans_suresi_dakika")]
-        public int ToleransSuresiDakika { get; set; } = 15; // Geç kalma toleransı
+        public int ToleransSuresiDakika { get; set; } = 0;
 
-        [MaxLength(500)]
-        [Column("aciklama")]
-        public string Aciklama { get; set; }
+        [StringLength(500)]
+        public string? Aciklama { get; set; }
 
-        [Column("durum")]
         public bool Durum { get; set; } = true;
 
         // Navigation Properties
-        public virtual ICollection<Personel> Personeller { get; set; }
+        public ICollection<Personel> Personeller { get; set; } = new List<Personel>();
     }
 }

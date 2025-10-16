@@ -1,49 +1,52 @@
-﻿using System.ComponentModel.DataAnnotations.Schema;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace PDKS.Data.Entities
 {
-    [Table("kullanicilar")]
+    [Table("Kullanicilar")]
     public class Kullanici
     {
         [Key]
-        [Column("id")]
         public int Id { get; set; }
 
         [Required]
-        [Column("personel_id")]
-        public int PersonelId { get; set; }
+        [StringLength(50)]
+        public string KullaniciAdi { get; set; }
 
         [Required]
-        [MaxLength(100)]
-        [Column("email")]
+        [StringLength(100)]
         public string Email { get; set; }
 
         [Required]
-        [MaxLength(500)]
-        [Column("sifre_hash")]
-        public string SifreHash { get; set; }
+        [StringLength(255)]
+        public string Sifre { get; set; }
+
+        [StringLength(255)]
+        public string? SifreHash { get; set; }
+
+        public int? PersonelId { get; set; }
 
         [Required]
-        [Column("rol_id")]
         public int RolId { get; set; }
 
-        [Column("aktif")]
         public bool Aktif { get; set; } = true;
 
-        [Column("son_giris_tarihi")]
         public DateTime? SonGirisTarihi { get; set; }
 
-        [Column("olusturma_tarihi")]
-        public DateTime OlusturmaTarihi { get; set; } = DateTime.UtcNow;
+        public DateTime KayitTarihi { get; set; } = DateTime.UtcNow;
+
+        public DateTime? OlusturmaTarihi { get; set; } = DateTime.UtcNow;
+
+        public DateTime? GuncellemeTarihi { get; set; }
 
         // Navigation Properties
         [ForeignKey("PersonelId")]
-        public virtual Personel Personel { get; set; }
+        public Personel? Personel { get; set; }
 
         [ForeignKey("RolId")]
-        public virtual Rol Rol { get; set; }
+        public Rol Rol { get; set; }
 
-        public virtual ICollection<Log> Loglar { get; set; }
+        public ICollection<Log> Loglar { get; set; } = new List<Log>();
+        public ICollection<Bildirim> Bildirimler { get; set; } = new List<Bildirim>();
     }
 }

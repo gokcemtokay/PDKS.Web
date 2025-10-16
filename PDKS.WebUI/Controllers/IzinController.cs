@@ -34,7 +34,7 @@ namespace PDKS.WebUI.Controllers
                 {
                     // Manager sees their department's leaves
                     var departman = User.FindFirst("Departman")?.Value;
-                    izinler = izinler.Where(i => i.Personel.Departman == departman).ToList();
+                    izinler = izinler.Where(i => i.Personel.Departman.Ad == departman).ToList();
                 }
                 else
                 {
@@ -54,7 +54,7 @@ namespace PDKS.WebUI.Controllers
                 GunSayisi = i.GunSayisi,
                 Aciklama = i.Aciklama,
                 OnayDurumu = i.OnayDurumu,
-                OnaylayanAdi = i.Onaylayan?.Personel?.AdSoyad,
+                OnaylayanAdi = i.OnaylayanKullanici?.Personel?.AdSoyad,
                 OnayTarihi = i.OnayTarihi,
                 OlusturmaTarihi = i.OlusturmaTarihi
             }).OrderByDescending(i => i.OlusturmaTarihi);
@@ -187,7 +187,9 @@ namespace PDKS.WebUI.Controllers
                 GunSayisi = izin.GunSayisi,
                 Aciklama = izin.Aciklama,
                 OnayDurumu = izin.OnayDurumu,
-                OnaylayanAdi = izin.Onaylayan?.Personel?.AdSoyad,
+
+                // Replace the problematic line in the Details method with the following:
+                OnaylayanAdi = izin.OnaylayanKullanici?.Personel?.AdSoyad,
                 OnayTarihi = izin.OnayTarihi,
                 OlusturmaTarihi = izin.OlusturmaTarihi
             };

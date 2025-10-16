@@ -1,5 +1,360 @@
-﻿@*
-    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
-*@
+﻿@model IEnumerable<PDKS.Business.DTOs.ParametreListDTO>
 @{
+    ViewData["Title"] = "Sistem Parametreleri";
+}
+
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col">
+            <div class="d-flex justify-content-between align-items-center">
+                <h2><i class="fas fa-cog me-2"></i>Sistem Parametreleri</h2>
+                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createModal">
+                    <i class="fas fa-plus me-2"></i>Yeni Parametre Ekle
+                </button>
+            </div>
+        </div>
+    </div>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="fas fa-check-circle me-2"></i>@TempData["Success"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="fas fa-exclamation-circle me-2"></i>@TempData["Error"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <!-- Parametre Kategorileri -->
+    <div class="row">
+        <!-- Çalışma Saatleri -->
+        <div class="col-md-6 mb-4">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-clock me-2"></i>Çalışma Saatleri
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-sm mb-0">
+                        <tbody>
+                            @if (Model != null)
+                            {
+                                @foreach (var param in Model.Where(p => p.Kategori == "Çalışma Saatleri"))
+                                {
+                                    <tr>
+                                        <td><strong>@param.Ad</strong></td>
+                                        <td class="text-end">
+                                            <span class="badge bg-info">@param.Deger @param.Birim</span>
+                                        </td>
+                                        <td class="text-end" style="width: 100px;">
+                                            <button type="button" class="btn btn-sm btn-outline-warning"
+                                                    onclick="editParametre(@param.Id, '@param.Ad', '@param.Deger', '@param.Birim', '@param.Aciklama', '@param.Kategori')">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    @if (!string.IsNullOrEmpty(param.Aciklama))
+                                    {
+                                        <tr>
+                                            <td colspan="3" class="text-muted small">
+                                                <i class="fas fa-info-circle me-1"></i>@param.Aciklama
+                                            </td>
+                                        </tr>
+                                    }
+                                }
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Toleranslar -->
+        <div class="col-md-6 mb-4">
+            <div class="card shadow">
+                <div class="card-header bg-warning text-dark">
+                    <h5 class="mb-0">
+                        <i class="fas fa-exclamation-triangle me-2"></i>Toleranslar
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-sm mb-0">
+                        <tbody>
+                            @if (Model != null)
+                            {
+                                @foreach (var param in Model.Where(p => p.Kategori == "Toleranslar"))
+                                {
+                                    <tr>
+                                        <td><strong>@param.Ad</strong></td>
+                                        <td class="text-end">
+                                            <span class="badge bg-info">@param.Deger @param.Birim</span>
+                                        </td>
+                                        <td class="text-end" style="width: 100px;">
+                                            <button type="button" class="btn btn-sm btn-outline-warning"
+                                                    onclick="editParametre(@param.Id, '@param.Ad', '@param.Deger', '@param.Birim', '@param.Aciklama', '@param.Kategori')">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    @if (!string.IsNullOrEmpty(param.Aciklama))
+                                    {
+                                        <tr>
+                                            <td colspan="3" class="text-muted small">
+                                                <i class="fas fa-info-circle me-1"></i>@param.Aciklama
+                                            </td>
+                                        </tr>
+                                    }
+                                }
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mesai Hesaplamaları -->
+        <div class="col-md-6 mb-4">
+            <div class="card shadow">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-calculator me-2"></i>Mesai Hesaplamaları
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-sm mb-0">
+                        <tbody>
+                            @if (Model != null)
+                            {
+                                @foreach (var param in Model.Where(p => p.Kategori == "Mesai"))
+                                {
+                                    <tr>
+                                        <td><strong>@param.Ad</strong></td>
+                                        <td class="text-end">
+                                            <span class="badge bg-info">@param.Deger @param.Birim</span>
+                                        </td>
+                                        <td class="text-end" style="width: 100px;">
+                                            <button type="button" class="btn btn-sm btn-outline-warning"
+                                                    onclick="editParametre(@param.Id, '@param.Ad', '@param.Deger', '@param.Birim', '@param.Aciklama', '@param.Kategori')">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    @if (!string.IsNullOrEmpty(param.Aciklama))
+                                    {
+                                        <tr>
+                                            <td colspan="3" class="text-muted small">
+                                                <i class="fas fa-info-circle me-1"></i>@param.Aciklama
+                                            </td>
+                                        </tr>
+                                    }
+                                }
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Diğer Parametreler -->
+        <div class="col-md-6 mb-4">
+            <div class="card shadow">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-cogs me-2"></i>Diğer Parametreler
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-sm mb-0">
+                        <tbody>
+                            @if (Model != null)
+                            {
+                                @foreach (var param in Model.Where(p => p.Kategori != "Çalışma Saatleri" && p.Kategori != "Toleranslar" && p.Kategori != "Mesai"))
+                                {
+                                    <tr>
+                                        <td><strong>@param.Ad</strong></td>
+                                        <td class="text-end">
+                                            <span class="badge bg-secondary">@param.Deger @param.Birim</span>
+                                        </td>
+                                        <td class="text-end" style="width: 100px;">
+                                            <button type="button" class="btn btn-sm btn-outline-warning"
+                                                    onclick="editParametre(@param.Id, '@param.Ad', '@param.Deger', '@param.Birim', '@param.Aciklama', '@param.Kategori')">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <button type="button" class="btn btn-sm btn-outline-danger"
+                                                    onclick="deleteParametre(@param.Id, '@param.Ad')">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    @if (!string.IsNullOrEmpty(param.Aciklama))
+                                    {
+                                        <tr>
+                                            <td colspan="3" class="text-muted small">
+                                                <i class="fas fa-info-circle me-1"></i>@param.Aciklama
+                                            </td>
+                                        </tr>
+                                    }
+                                }
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Create Modal -->
+<div class="modal fade" id="createModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">Yeni Parametre Ekle</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" asp-action="Create">
+                @Html.AntiForgeryToken()
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Parametre Adı <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" name="Ad" required />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Değer <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" name="Deger" required />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Birim</label>
+                        <input type="text" class="form-control" name="Birim" placeholder="örn: dakika, %" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Kategori</label>
+                        <select class="form-select" name="Kategori">
+                            <option value="Çalışma Saatleri">Çalışma Saatleri</option>
+                            <option value="Toleranslar">Toleranslar</option>
+                            <option value="Mesai">Mesai</option>
+                            <option value="Genel">Genel</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Açıklama</label>
+                        <textarea class="form-control" name="Aciklama" rows="2"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-2"></i>Kaydet
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Modal -->
+<div class="modal fade" id="editModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-warning text-dark">
+                <h5 class="modal-title">Parametre Düzenle</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" asp-action="Edit">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="Id" id="editId" />
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Parametre Adı <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" name="Ad" id="editAd" required />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Değer <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" name="Deger" id="editDeger" required />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Birim</label>
+                        <input type="text" class="form-control" name="Birim" id="editBirim" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Kategori</label>
+                        <select class="form-select" name="Kategori" id="editKategori">
+                            <option value="Çalışma Saatleri">Çalışma Saatleri</option>
+                            <option value="Toleranslar">Toleranslar</option>
+                            <option value="Mesai">Mesai</option>
+                            <option value="Genel">Genel</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Açıklama</label>
+                        <textarea class="form-control" name="Aciklama" id="editAciklama" rows="2"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
+                    <button type="submit" class="btn btn-warning">
+                        <i class="fas fa-save me-2"></i>Güncelle
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">Parametre Silme Onayı</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p><strong id="deleteParametreAd"></strong> parametresini silmek istediğinize emin misiniz?</p>
+                <p class="text-danger">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    Bu işlem geri alınamaz!
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
+                <form id="deleteForm" method="post" style="display:inline;">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-trash me-2"></i>Sil
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function editParametre(id, ad, deger, birim, aciklama, kategori) {
+            document.getElementById('editId').value = id;
+            document.getElementById('editAd').value = ad;
+            document.getElementById('editDeger').value = deger;
+            document.getElementById('editBirim').value = birim || '';
+            document.getElementById('editAciklama').value = aciklama || '';
+            document.getElementById('editKategori').value = kategori;
+
+            var modal = new bootstrap.Modal(document.getElementById('editModal'));
+            modal.show();
+        }
+
+        function deleteParametre(id, ad) {
+            document.getElementById('deleteParametreAd').innerText = ad;
+            document.getElementById('deleteForm').action = '@Url.Action("Delete")/' + id;
+            var modal = new bootstrap.Modal(document.getElementById('deleteModal'));
+            modal.show();
+        }
+    </script>
 }

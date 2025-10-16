@@ -1,383 +1,255 @@
-﻿@using System.Security.Claims
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="tr">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] - PDKS</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet">
-    <style>
-        :root {
-            --primary-color: #667eea;
-            --secondary-color: #764ba2;
-            --sidebar-width: 260px;
-        }
-
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-
-        .sidebar {
-            position: fixed;
-            top: 0;
-            left: 0;
-            height: 100vh;
-            width: var(--sidebar-width);
-            background: linear-gradient(180deg, #2c3e50 0%, #34495e 100%);
-            padding-top: 20px;
-            overflow-y: auto;
-            z-index: 1000;
-        }
-
-            .sidebar::-webkit-scrollbar {
-                width: 5px;
-            }
-
-            .sidebar::-webkit-scrollbar-thumb {
-                background: rgba(255,255,255,0.3);
-                border-radius: 10px;
-            }
-
-            .sidebar .logo {
-                text-align: center;
-                padding: 20px;
-                color: white;
-                border-bottom: 1px solid rgba(255,255,255,0.1);
-                margin-bottom: 20px;
-            }
-
-                .sidebar .logo i {
-                    font-size: 40px;
-                    margin-bottom: 10px;
-                }
-
-            .sidebar .nav-link {
-                color: rgba(255,255,255,0.8);
-                padding: 12px 25px;
-                margin: 5px 15px;
-                border-radius: 10px;
-                transition: all 0.3s;
-            }
-
-                .sidebar .nav-link:hover,
-                .sidebar .nav-link.active {
-                    background: rgba(255,255,255,0.1);
-                    color: white;
-                    transform: translateX(5px);
-                }
-
-                .sidebar .nav-link i {
-                    width: 25px;
-                    margin-right: 10px;
-                }
-
-        .main-content {
-            margin-left: var(--sidebar-width);
-            padding: 0;
-        }
-
-        .top-navbar {
-            background: white;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            padding: 15px 30px;
-            position: sticky;
-            top: 0;
-            z-index: 999;
-        }
-
-        .content-wrapper {
-            padding: 30px;
-            background: #f8f9fa;
-            min-height: calc(100vh - 70px);
-        }
-
-        .card {
-            border: none;
-            border-radius: 15px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
-            margin-bottom: 30px;
-        }
-
-        .card-header {
-            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
-            color: white;
-            border-radius: 15px 15px 0 0 !important;
-            padding: 20px;
-            font-weight: 600;
-        }
-
-        .stat-card {
-            border-left: 4px solid var(--primary-color);
-        }
-
-        .btn-primary {
-            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
-            border: none;
-        }
-
-            .btn-primary:hover {
-                transform: translateY(-2px);
-                box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
-            }
-
-        .badge {
-            padding: 6px 12px;
-            border-radius: 20px;
-        }
-
-        .dropdown-menu {
-            border: none;
-            box-shadow: 0 5px 25px rgba(0,0,0,0.15);
-            border-radius: 10px;
-        }
-
-        .user-info {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-
-        .user-avatar {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-weight: 600;
-        }
-
-        .notification-badge {
-            position: absolute;
-            top: -5px;
-            right: -5px;
-            background: #dc3545;
-            color: white;
-            border-radius: 50%;
-            width: 20px;
-            height: 20px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 11px;
-            font-weight: 600;
-        }
-
-        .menu-section {
-            color: rgba(255,255,255,0.5);
-            font-size: 12px;
-            text-transform: uppercase;
-            padding: 20px 25px 10px;
-            font-weight: 600;
-            letter-spacing: 1px;
-        }
-    </style>
-    @await RenderSectionAsync("Styles", required: false)
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css">
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/PDKS.WebUI.styles.css" asp-append-version="true" />
 </head>
 <body>
-    <!-- Sidebar -->
-    <div class="sidebar">
-        <div class="logo">
-            <i class="fas fa-user-clock"></i>
-            <h5 class="mb-0">PDKS</h5>
-            <small>Personel Devam Kontrol</small>
-        </div>
+    @if (User.Identity.IsAuthenticated)
+    {
+        <!-- Sidebar Toggle Overlay (Mobil için) -->
+        <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
-        <nav class="nav flex-column">
-            <div class="menu-section">ANA MENÜ</div>
-            <a class="nav-link" asp-controller="Home" asp-action="Index">
-                <i class="fas fa-home"></i> Ana Sayfa
-            </a>
+        <!-- Sidebar -->
+        <nav id="sidebar" class="sidebar">
+            <div class="sidebar-header">
+                <h3>
+                    <i class="fas fa-clock me-2"></i>PDKS
+                </h3>
+                <button class="btn btn-link text-white d-lg-none" id="sidebarCollapseBtn">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
 
-            @if (User.IsInRole("Admin") || User.IsInRole("IK"))
-            {
-                <div class="menu-section">YÖNETİM</div>
-                <a class="nav-link" asp-controller="Personel" asp-action="Index">
-                    <i class="fas fa-users"></i> Personel Yönetimi
-                </a>
-                <a class="nav-link" asp-controller="Vardiya" asp-action="Index">
-                    <i class="fas fa-clock"></i> Vardiya Yönetimi
-                </a>
-                <a class="nav-link" asp-controller="Cihaz" asp-action="Index">
-                    <i class="fas fa-tablet-alt"></i> Cihaz Yönetimi
-                </a>
-            }
-
-            <div class="menu-section">DEVAM</div>
-            <a class="nav-link" asp-controller="GirisCikis" asp-action="Index">
-                <i class="fas fa-fingerprint"></i> Giriş-Çıkış Kayıtları
-            </a>
-            <a class="nav-link" asp-controller="Izin" asp-action="Index">
-                <i class="fas fa-calendar-check"></i> İzin Yönetimi
-            </a>
-
-            @if (User.IsInRole("Admin") || User.IsInRole("IK") || User.IsInRole("Yönetici"))
-            {
-                <div class="menu-section">RAPORLAR</div>
-                <a class="nav-link" asp-controller="Rapor" asp-action="Index">
-                    <i class="fas fa-chart-bar"></i> Tüm Raporlar
-                </a>
-                <a class="nav-link" asp-controller="Rapor" asp-action="GenelGirisCikis">
-                    <i class="fas fa-file-alt"></i> Giriş-Çıkış Raporu
-                </a>
-                <a class="nav-link" asp-controller="Rapor" asp-action="GenelMaasBordrosu">
-                    <i class="fas fa-money-bill-wave"></i> Maaş Bordrosu
-                </a>
-            }
-
-            @if (User.IsInRole("Admin"))
-            {
-                <div class="menu-section">SİSTEM</div>
-                <a class="nav-link" asp-controller="Kullanici" asp-action="Index">
-                    <i class="fas fa-user-shield"></i> Kullanıcı Yönetimi
-                </a>
-                <a class="nav-link" asp-controller="Tatil" asp-action="Index">
-                    <i class="fas fa-calendar-alt"></i> Tatil Günleri
-                </a>
-                <a class="nav-link" asp-controller="Parametre" asp-action="Index">
-                    <i class="fas fa-cog"></i> Parametreler
-                </a>
-                <a class="nav-link" asp-controller="Log" asp-action="Index">
-                    <i class="fas fa-history"></i> Sistem Logları
-                </a>
-            }
-        </nav>
-    </div>
-
-    <!-- Main Content -->
-    <div class="main-content">
-        <!-- Top Navbar -->
-        <nav class="top-navbar">
-            <div class="d-flex justify-content-between align-items-center">
-                <div>
-                    <h5 class="mb-0">@ViewData["Title"]</h5>
-                    <small class="text-muted">
-                        <i class="far fa-calendar"></i> @DateTime.UtcNow.ToString("dd MMMM yyyy, dddd")
-                    </small>
+            <div class="sidebar-profile">
+                <div class="text-center">
+                    <i class="fas fa-user-circle fa-3x mb-2"></i>
+                    <h6 class="mb-0">@User.Identity.Name</h6>
+                    <small class="text-muted">@User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value</small>
                 </div>
+            </div>
 
-                <div class="d-flex align-items-center gap-3">
-                    <!-- Notifications -->
-                    <div class="dropdown">
-                        <button class="btn btn-link position-relative" type="button" data-bs-toggle="dropdown">
-                            <i class="far fa-bell fa-lg text-dark"></i>
-                            @if (ViewBag.OkunmamisBildirimler > 0)
-                            {
-                                <span class="notification-badge">@ViewBag.OkunmamisBildirimler</span>
-                            }
-                        </button>
-                        <div class="dropdown-menu dropdown-menu-end" style="width: 300px;">
-                            <h6 class="dropdown-header">Bildirimler</h6>
-                            <div class="dropdown-divider"></div>
-                            <a class="dropdown-item" asp-controller="Home" asp-action="Bildirimler">
-                                <i class="fas fa-envelope"></i> Tüm Bildirimleri Gör
-                            </a>
-                        </div>
-                    </div>
+            <ul class="list-unstyled components">
+                <li class="@(ViewContext.RouteData.Values["Controller"]?.ToString() == "Home" ? "active" : "")">
+                    <a asp-controller="Home" asp-action="Index">
+                        <i class="fas fa-home me-2"></i>
+                        <span>Ana Sayfa</span>
+                    </a>
+                </li>
 
-                    <!-- User Menu -->
-                    <div class="dropdown">
-                        <button class="btn btn-link text-decoration-none" type="button" data-bs-toggle="dropdown">
-                            <div class="user-info">
-                                <div class="user-avatar">
-                                    @User.FindFirst(ClaimTypes.Name)?.Value?.Substring(0, 2).ToUpper()
-                                </div>
-                                <div class="text-start">
-                                    <div class="fw-bold text-dark">@User.FindFirst(ClaimTypes.Name)?.Value</div>
-                                    <small class="text-muted">@User.FindFirst(ClaimTypes.Role)?.Value</small>
-                                </div>
-                                <i class="fas fa-chevron-down text-dark"></i>
-                            </div>
-                        </button>
-                        <ul class="dropdown-menu dropdown-menu-end">
+                @if (User.IsInRole("Admin") || User.IsInRole("IK"))
+                {
+                    <li class="@(ViewContext.RouteData.Values["Controller"]?.ToString() == "Personel" ? "active" : "")">
+                        <a asp-controller="Personel" asp-action="Index">
+                            <i class="fas fa-users me-2"></i>
+                            <span>Personeller</span>
+                        </a>
+                    </li>
+
+                    <li class="@(ViewContext.RouteData.Values["Controller"]?.ToString() == "Departman" ? "active" : "")">
+                        <a asp-controller="Departman" asp-action="Index">
+                            <i class="fas fa-building me-2"></i>
+                            <span>Departmanlar</span>
+                        </a>
+                    </li>
+
+                    <li class="@(ViewContext.RouteData.Values["Controller"]?.ToString() == "Vardiya" ? "active" : "")">
+                        <a asp-controller="Vardiya" asp-action="Index">
+                            <i class="fas fa-clock me-2"></i>
+                            <span>Vardiyalar</span>
+                        </a>
+                    </li>
+                }
+
+                <li class="@(ViewContext.RouteData.Values["Controller"]?.ToString() == "GirisCikis" ? "active" : "")">
+                    <a asp-controller="GirisCikis" asp-action="Index">
+                        <i class="fas fa-door-open me-2"></i>
+                        <span>Giriş-Çıkış</span>
+                    </a>
+                </li>
+
+                @if (User.IsInRole("Admin") || User.IsInRole("IK") || User.IsInRole("Yönetici"))
+                {
+                    <li class="@(ViewContext.RouteData.Values["Controller"]?.ToString() == "Izin" ? "active" : "")">
+                        <a asp-controller="Izin" asp-action="Index">
+                            <i class="fas fa-umbrella-beach me-2"></i>
+                            <span>İzinler</span>
+                        </a>
+                    </li>
+
+                    <li class="@(ViewContext.RouteData.Values["Controller"]?.ToString() == "Mesai" ? "active" : "")">
+                        <a asp-controller="Mesai" asp-action="Index">
+                            <i class="fas fa-business-time me-2"></i>
+                            <span>Mesai</span>
+                        </a>
+                    </li>
+
+                    <li>
+                        <a href="#raporlarSubmenu" data-bs-toggle="collapse"
+                           class="@(ViewContext.RouteData.Values["Controller"]?.ToString() == "Rapor" ? "" : "collapsed")">
+                            <i class="fas fa-chart-bar me-2"></i>
+                            <span>Raporlar</span>
+                            <i class="fas fa-chevron-down ms-auto"></i>
+                        </a>
+                        <ul class="collapse list-unstyled @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Rapor" ? "show" : "")"
+                            id="raporlarSubmenu">
                             <li>
-                                <a class="dropdown-item" asp-controller="Auth" asp-action="ChangePassword">
-                                    <i class="fas fa-key"></i> Şifre Değiştir
+                                <a asp-controller="Rapor" asp-action="GunlukRapor">
+                                    <i class="fas fa-calendar-day me-2"></i>Günlük Rapor
                                 </a>
                             </li>
-                            <li><hr class="dropdown-divider"></li>
                             <li>
-                                <form method="post" asp-controller="Auth" asp-action="Logout">
-                                    <button type="submit" class="dropdown-item text-danger">
-                                        <i class="fas fa-sign-out-alt"></i> Çıkış Yap
-                                    </button>
-                                </form>
+                                <a asp-controller="Rapor" asp-action="AylikRapor">
+                                    <i class="fas fa-calendar-alt me-2"></i>Aylık Rapor
+                                </a>
+                            </li>
+                            <li>
+                                <a asp-controller="Rapor" asp-action="PersonelDetay">
+                                    <i class="fas fa-user-clock me-2"></i>Personel Detay
+                                </a>
                             </li>
                         </ul>
-                    </div>
-                </div>
+                    </li>
+                }
+
+                @if (User.IsInRole("Admin"))
+                {
+                    <li>
+                        <a href="#yonetimSubmenu" data-bs-toggle="collapse"
+                           class="@(new[] { "Cihaz", "Kullanici", "Parametre", "Tatil" }.Contains(ViewContext.RouteData.Values["Controller"]?.ToString()) ? "" : "collapsed")">
+                            <i class="fas fa-cog me-2"></i>
+                            <span>Yönetim</span>
+                            <i class="fas fa-chevron-down ms-auto"></i>
+                        </a>
+                        <ul class="collapse list-unstyled @(new[] { "Cihaz", "Kullanici", "Parametre", "Tatil" }.Contains(ViewContext.RouteData.Values["Controller"]?.ToString()) ? "show" : "")"
+                            id="yonetimSubmenu">
+                            <li class="@(ViewContext.RouteData.Values["Controller"]?.ToString() == "Cihaz" ? "active" : "")">
+                                <a asp-controller="Cihaz" asp-action="Index">
+                                    <i class="fas fa-desktop me-2"></i>Cihazlar
+                                </a>
+                            </li>
+                            <li class="@(ViewContext.RouteData.Values["Controller"]?.ToString() == "Kullanici" ? "active" : "")">
+                                <a asp-controller="Kullanici" asp-action="Index">
+                                    <i class="fas fa-users-cog me-2"></i>Kullanıcılar
+                                </a>
+                            </li>
+                            <li class="@(ViewContext.RouteData.Values["Controller"]?.ToString() == "Parametre" ? "active" : "")">
+                                <a asp-controller="Parametre" asp-action="Index">
+                                    <i class="fas fa-sliders-h me-2"></i>Parametreler
+                                </a>
+                            </li>
+                            <li class="@(ViewContext.RouteData.Values["Controller"]?.ToString() == "Tatil" ? "active" : "")">
+                                <a asp-controller="Tatil" asp-action="Index">
+                                    <i class="fas fa-calendar-alt me-2"></i>Tatil Günleri
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+
+                    <li class="@(ViewContext.RouteData.Values["Controller"]?.ToString() == "Log" ? "active" : "")">
+                        <a asp-controller="Log" asp-action="Index">
+                            <i class="fas fa-list me-2"></i>
+                            <span>Sistem Logları</span>
+                        </a>
+                    </li>
+                }
+
+                <li class="@(ViewContext.RouteData.Values["Controller"]?.ToString() == "Bildirim" ? "active" : "")">
+                    <a asp-controller="Bildirim" asp-action="Index">
+                        <i class="fas fa-bell me-2"></i>
+                        <span>Bildirimler</span>
+                        @if (ViewBag.OkunmamisBildirimler != null && ViewBag.OkunmamisBildirimler > 0)
+                        {
+                            <span class="badge bg-danger ms-2">@ViewBag.OkunmamisBildirimler</span>
+                        }
+                    </a>
+                </li>
+            </ul>
+
+            <div class="sidebar-footer">
+                <a asp-controller="Auth" asp-action="Logout" class="btn btn-danger btn-sm w-100">
+                    <i class="fas fa-sign-out-alt me-2"></i>Çıkış Yap
+                </a>
             </div>
         </nav>
 
-        <!-- Content -->
-        <div class="content-wrapper">
-            @if (TempData["Success"] != null)
-            {
-                <div class="alert alert-success alert-dismissible fade show" role="alert">
-                    <i class="fas fa-check-circle me-2"></i> @TempData["Success"]
-                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                </div>
-            }
-            @if (TempData["Error"] != null)
-            {
-                <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                    <i class="fas fa-exclamation-circle me-2"></i> @TempData["Error"]
-                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                </div>
-            }
-            @if (TempData["Info"] != null)
-            {
-                <div class="alert alert-info alert-dismissible fade show" role="alert">
-                    <i class="fas fa-info-circle me-2"></i> @TempData["Info"]
-                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                </div>
-            }
+        <!-- Main Content -->
+        <div id="content">
+            <!-- Top Navbar -->
+            <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm mb-4">
+                <div class="container-fluid">
+                    <button type="button" id="sidebarToggle" class="btn btn-primary">
+                        <i class="fas fa-bars"></i>
+                    </button>
 
-            @RenderBody()
+                    <span class="navbar-brand mb-0 h1 ms-3">
+                        @ViewData["Title"]
+                    </span>
+
+                    <div class="ms-auto d-flex align-items-center">
+                        <div class="dropdown">
+                            <button class="btn btn-link text-dark dropdown-toggle" type="button"
+                                    id="userDropdown" data-bs-toggle="dropdown">
+                                <i class="fas fa-user-circle fa-lg me-2"></i>
+                                @User.Identity.Name
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                <li>
+                                    <a class="dropdown-item" href="#">
+                                        <i class="fas fa-user me-2"></i>Profilim
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" href="#">
+                                        <i class="fas fa-cog me-2"></i>Ayarlar
+                                    </a>
+                                </li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <a class="dropdown-item" asp-controller="Auth" asp-action="Logout">
+                                        <i class="fas fa-sign-out-alt me-2"></i>Çıkış Yap
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </nav>
+
+            <!-- Page Content -->
+            <main role="main" class="container-fluid px-4">
+                @RenderBody()
+            </main>
+
+            <!-- Footer -->
+            <footer class="footer mt-5 py-3 bg-light">
+                <div class="container-fluid text-center">
+                    <span class="text-muted">
+                        &copy; @DateTime.Now.Year - PDKS Sistemi - Tüm hakları saklıdır.
+                    </span>
+                </div>
+            </footer>
         </div>
-    </div>
+    }
+    else
+    {
+        <main role="main">
+            @RenderBody()
+        </main>
+    }
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script>
-        // Auto dismiss alerts after 5 seconds
-        setTimeout(function() {
-            $('.alert').fadeOut('slow');
-        }, 5000);
-
-        // Confirm delete
-        function confirmDelete(url, itemName) {
-            Swal.fire({
-                title: 'Emin misiniz?',
-                text: itemName + " silinecek!",
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#dc3545',
-                cancelButtonColor: '#6c757d',
-                confirmButtonText: 'Evet, Sil',
-                cancelButtonText: 'İptal'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    window.location.href = url;
-                }
-            });
-        }
-
-        // Active menu item
-        $(document).ready(function() {
-            var url = window.location.pathname;
-            $('.sidebar .nav-link').each(function() {
-                if ($(this).attr('href') === url) {
-                    $(this).addClass('active');
-                }
-            });
-        });
-    </script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

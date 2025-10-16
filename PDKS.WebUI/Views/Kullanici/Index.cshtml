@@ -1,5 +1,346 @@
-﻿@*
-    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
-*@
+﻿@model IEnumerable<PDKS.Business.DTOs.KullaniciListDTO>
 @{
+    ViewData["Title"] = "Kullanıcı Yönetimi";
+}
+
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col">
+            <div class="d-flex justify-content-between align-items-center">
+                <h2><i class="fas fa-users me-2"></i>Kullanıcı Yönetimi</h2>
+                <a asp-action="Create" class="btn btn-primary">
+                    <i class="fas fa-plus me-2"></i>Yeni Kullanıcı Ekle
+                </a>
+            </div>
+        </div>
+    </div>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="fas fa-check-circle me-2"></i>@TempData["Success"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="fas fa-exclamation-circle me-2"></i>@TempData["Error"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <div class="card shadow">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle" id="kullaniciTable">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Kullanıcı Adı</th>
+                            <th>Personel</th>
+                            <th>Rol</th>
+                            <th>Son Giriş</th>
+                            <th>Durum</th>
+                            <th class="text-end">İşlemler</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model != null && Model.Any())
+                        {
+                            @foreach (var kullanici in Model)
+                            {
+                                <tr>
+                                    <td>
+                                        <div>
+                                            <strong>@kullanici.KullaniciAdi</strong>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        @if (!string.IsNullOrEmpty(kullanici.PersonelAdi))
+                                        {
+                                            <div>
+                                                <i class="fas fa-user me-1"></i>@kullanici.PersonelAdi
+                                            </div>
+                                            <small class="text-muted">@kullanici.PersonelSicilNo</small>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">-</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        @if (kullanici.RolAdi == "Admin")
+                                        {
+                                            <span class="badge bg-danger">
+                                                <i class="fas fa-shield-alt me-1"></i>@kullanici.RolAdi
+                                            </span>
+                                        }
+                                        else if (kullanici.RolAdi == "IK")
+                                        {
+                                            <span class="badge bg-warning text-dark">
+                                                <i class="fas fa-user-tie me-1"></i>@kullanici.RolAdi
+                                            </span>
+                                        }
+                                        else if (kullanici.RolAdi == "Yönetici")
+                                        {
+                                            <span class="badge bg-info">
+                                                <i class="fas fa-user-cog me-1"></i>@kullanici.RolAdi
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-secondary">
+                                                <i class="fas fa-user me-1"></i>@kullanici.RolAdi
+                                            </span>
+                                        }
+                                    </td>
+                                    <td>
+                                        @if (kullanici.SonGirisTarihi.HasValue)
+                                        {
+                                            <small class="text-muted">
+                                                <i class="far fa-clock me-1"></i>
+                                                @kullanici.SonGirisTarihi.Value.ToLocalTime().ToString("dd.MM.yyyy HH:mm")
+                                            </small>
+                                        }
+                                        else
+                                        {
+                                            <small class="text-muted">Hiç giriş yapmadı</small>
+                                        }
+                                    </td>
+                                    <td>
+                                        @if (kullanici.Aktif)
+                                        {
+                                            <span class="badge bg-success">
+                                                <i class="fas fa-check me-1"></i>Aktif
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-danger">
+                                                <i class="fas fa-times me-1"></i>Pasif
+                                            </span>
+                                        }
+                                    </td>
+                                    <td class="text-end">
+                                        <div class="btn-group" role="group">
+                                            <a asp-action="Edit" asp-route-id="@kullanici.Id"
+                                               class="btn btn-sm btn-outline-warning" title="Düzenle">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            <button type="button" class="btn btn-sm btn-outline-info"
+                                                    onclick="showPasswordModal(@kullanici.Id, '@kullanici.KullaniciAdi')"
+                                                    title="Şifre Değiştir">
+                                                <i class="fas fa-key"></i>
+                                            </button>
+                                            <button type="button" class="btn btn-sm btn-outline-danger"
+                                                    onclick="deleteKullanici(@kullanici.Id, '@kullanici.KullaniciAdi')"
+                                                    title="Sil">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="6" class="text-center text-muted py-4">
+                                    <i class="fas fa-inbox fa-3x mb-3 d-block"></i>
+                                    Henüz kullanıcı bulunmamaktadır.
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- İstatistikler -->
+    @if (Model != null && Model.Any())
+    {
+        <div class="row mt-4">
+            <div class="col-md-3">
+                <div class="card bg-success text-white">
+                    <div class="card-body">
+                        <h5 class="card-title">Aktif Kullanıcılar</h5>
+                        <h2>@Model.Count(k => k.Aktif)</h2>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-danger text-white">
+                    <div class="card-body">
+                        <h5 class="card-title">Pasif Kullanıcılar</h5>
+                        <h2>@Model.Count(k => !k.Aktif)</h2>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-warning text-dark">
+                    <div class="card-body">
+                        <h5 class="card-title">Admin Sayısı</h5>
+                        <h2>@Model.Count(k => k.RolAdi == "Admin")</h2>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-primary text-white">
+                    <div class="card-body">
+                        <h5 class="card-title">Toplam Kullanıcı</h5>
+                        <h2>@Model.Count()</h2>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">Kullanıcı Silme Onayı</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p><strong id="deleteKullaniciName"></strong> kullanıcısını silmek istediğinize emin misiniz?</p>
+                <p class="text-danger">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    Bu işlem geri alınamaz!
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
+                <form id="deleteForm" method="post" style="display:inline;">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-trash me-2"></i>Sil
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Password Change Modal -->
+<div class="modal fade" id="passwordModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-info text-white">
+                <h5 class="modal-title">Şifre Değiştir</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="passwordForm" method="post" asp-action="SifreDegistir">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="id" id="passwordKullaniciId" />
+                <div class="modal-body">
+                    <p>Kullanıcı: <strong id="passwordKullaniciName"></strong></p>
+                    <div class="mb-3">
+                        <label for="yeniSifre" class="form-label">Yeni Şifre</label>
+                        <div class="input-group">
+                            <input type="password" class="form-control" id="yeniSifre" name="yeniSifre"
+                                   placeholder="En az 6 karakter" required minlength="6" />
+                            <button class="btn btn-outline-secondary" type="button" onclick="togglePassword('yeniSifre')">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="yeniSifreTekrar" class="form-label">Yeni Şifre (Tekrar)</label>
+                        <div class="input-group">
+                            <input type="password" class="form-control" id="yeniSifreTekrar"
+                                   placeholder="Şifreyi tekrar girin" required minlength="6" />
+                            <button class="btn btn-outline-secondary" type="button" onclick="togglePassword('yeniSifreTekrar')">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="alert alert-warning">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Şifre en az 6 karakter olmalıdır.
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
+                    <button type="submit" class="btn btn-info">
+                        <i class="fas fa-key me-2"></i>Şifreyi Değiştir
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            $('#kullaniciTable').DataTable({
+                language: {
+                    url: '//cdn.datatables.net/plug-ins/1.13.7/i18n/tr.json'
+                },
+                order: [[0, 'asc']],
+                pageLength: 25
+            });
+        });
+
+        function deleteKullanici(id, name) {
+            document.getElementById('deleteKullaniciName').innerText = name;
+            document.getElementById('deleteForm').action = '@Url.Action("Delete")/' + id;
+            var modal = new bootstrap.Modal(document.getElementById('deleteModal'));
+            modal.show();
+        }
+
+        function showPasswordModal(id, name) {
+            document.getElementById('passwordKullaniciId').value = id;
+            document.getElementById('passwordKullaniciName').innerText = name;
+            document.getElementById('yeniSifre').value = '';
+            document.getElementById('yeniSifreTekrar').value = '';
+            var modal = new bootstrap.Modal(document.getElementById('passwordModal'));
+            modal.show();
+        }
+
+        function togglePassword(inputId) {
+            var input = document.getElementById(inputId);
+            var icon = event.currentTarget.querySelector('i');
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.classList.remove('fa-eye');
+                icon.classList.add('fa-eye-slash');
+            } else {
+                input.type = 'password';
+                icon.classList.remove('fa-eye-slash');
+                icon.classList.add('fa-eye');
+            }
+        }
+
+        // Password validation
+        document.getElementById('passwordForm').addEventListener('submit', function(e) {
+            var sifre = document.getElementById('yeniSifre').value;
+            var sifreTekrar = document.getElementById('yeniSifreTekrar').value;
+
+            if (sifre !== sifreTekrar) {
+                e.preventDefault();
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Hata',
+                    text: 'Şifreler eşleşmiyor!'
+                });
+                return false;
+            }
+
+            if (sifre.length < 6) {
+                e.preventDefault();
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Hata',
+                    text: 'Şifre en az 6 karakter olmalıdır!'
+                });
+                return false;
+            }
+        });
+    </script>
 }

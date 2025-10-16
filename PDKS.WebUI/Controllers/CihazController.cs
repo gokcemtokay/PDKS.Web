@@ -23,27 +23,37 @@ namespace PDKS.WebUI.Controllers
         [HttpGet]
         public async Task<IActionResult> Index()
         {
+            // 1. Bugünün başlangıcını ve yarının başlangıcını UTC olarak tanımla
+            var bugunBaslangicUtc = DateTime.UtcNow.Date;
+            var yarinBaslangicUtc = bugunBaslangicUtc.AddDays(1);
+
+            // 2. Repository'nin FindAsync metodunu kullanarak ilgili tüm kayıtları TEK BİR SORGUDAYLA veritabanından çek
+            var bugunkuGirisCikislar = await _unitOfWork.GirisCikislar
+                .FindAsync(g => g.CihazId.HasValue &&
+                              g.GirisZamani.HasValue && // Null kontrolü eklemek her zaman iyidir
+                              g.GirisZamani.Value >= bugunBaslangicUtc &&
+                              g.GirisZamani.Value < yarinBaslangicUtc);
+
+            // 3. Veritabanından gelen sonuçları C# tarafında (hafızada) grupla
+            var bugunkuOkumalar = bugunkuGirisCikislar
+                .GroupBy(g => g.CihazId.Value)
+                .ToDictionary(group => group.Key, group => group.Count());
+
+            // 4. Tüm cihazları veritabanından çek (Bu ikinci sorgu)
             var cihazlar = await _unitOfWork.Cihazlar.GetAllAsync();
-            var cihazList = new List<CihazListDTO>();
 
-            foreach (var cihaz in cihazlar)
+            // 5. Cihaz listesini oluştururken önceden hazırladığımız dictionary'den verileri al
+            var cihazList = cihazlar.Select(cihaz => new CihazListDTO
             {
-                var bugunkuOkuma = await _unitOfWork.GirisCikislar.CountAsync(g =>
-                    g.CihazId == cihaz.Id &&
-                    g.GirisZamani.HasValue &&
-                    g.GirisZamani.Value.Date == DateTime.Today);
-
-                cihazList.Add(new CihazListDTO
-                {
-                    Id = cihaz.Id,
-                    CihazAdi = cihaz.CihazAdi,
-                    IPAdres = cihaz.IPAdres,
-                    Lokasyon = cihaz.Lokasyon,
-                    Durum = cihaz.Durum,
-                    SonBaglantiZamani = cihaz.SonBaglantiZamani,
-                    BugunkuOkumaSayisi = bugunkuOkuma
-                });
-            }
+                Id = cihaz.Id,
+                CihazAdi = cihaz.CihazAdi,
+                IPAdres = cihaz.IPAdres,
+                Lokasyon = cihaz.Lokasyon,
+                Durum = cihaz.Durum,
+                SonBaglantiZamani = cihaz.SonBaglantiZamani,
+                // Eğer cihaz için okuma varsa sayıyı al, yoksa 0 ata
+                BugunkuOkumaSayisi = bugunkuOkumalar.GetValueOrDefault(cihaz.Id, 0)
+            }).ToList();
 
             return View(cihazList);
         }

@@ -1,20 +1,33 @@
-﻿using System.ComponentModel.DataAnnotations.Schema;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace PDKS.Data.Entities
 {
-    [Table("parametreler")]
+    [Table("Parametreler")]
     public class Parametre
     {
         [Key]
-        [Column("id")]
         public int Id { get; set; }
 
         [Required]
-        [MaxLength(100)]
-        [Column("anahtar")]
-        public string Anahtar { get; set; }
+        [StringLength(100)]
+        public string Ad { get; set; }
+
+        [Required]
+        [StringLength(100)]
         public string Deger { get; set; }
-        public string Aciklama { get; set; }
+
+        [StringLength(50)]
+        public string? Birim { get; set; }
+
+        [StringLength(500)]
+        public string? Aciklama { get; set; }
+
+        [StringLength(50)]
+        public string? Kategori { get; set; }
+
+        public DateTime KayitTarihi { get; set; } = DateTime.UtcNow;
+
+        public DateTime? GuncellemeTarihi { get; set; }
     }
 }

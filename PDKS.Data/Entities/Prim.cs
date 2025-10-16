@@ -1,38 +1,59 @@
-﻿using System.ComponentModel.DataAnnotations.Schema;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace PDKS.Data.Entities
 {
-    [Table("primler")]
+    [Table("Primler")]
     public class Prim
     {
         [Key]
-        [Column("id")]
         public int Id { get; set; }
 
         [Required]
-        [Column("personel_id")]
         public int PersonelId { get; set; }
 
-        [Column("donem")]
-        public DateTime Donem { get; set; } // Ay/Yıl
+        [Required]
+        [StringLength(100)]
+        public string PrimAdi { get; set; }
 
-        [Column("tutar")]
+        [Required]
+        [Column(TypeName = "decimal(18,2)")]
         public decimal Tutar { get; set; }
 
-        [MaxLength(200)]
-        [Column("prim_tipi")]
-        public string PrimTipi { get; set; } // Performans, Satış, Hedef vb.
+        [Required]
+        public DateTime Tarih { get; set; }
 
-        [MaxLength(500)]
-        [Column("aciklama")]
-        public string Aciklama { get; set; }
+        public int Ay { get; set; }
 
-        [Column("olusturma_tarihi")]
-        public DateTime OlusturmaTarihi { get; set; } = DateTime.UtcNow;
+        public int Yil { get; set; }
+
+        [StringLength(50)]
+        public string Donem { get; set; } // "2024/01", "2024-Ocak" vb.
+
+        [StringLength(500)]
+        public string? Aciklama { get; set; }
+
+        [Required]
+        [StringLength(50)]
+        public string PrimTipi { get; set; } = "Performans"; // Performans, Satış, Proje, Diğer
+
+        [Required]
+        [StringLength(50)]
+        public string OnayDurumu { get; set; } = "Beklemede"; // Beklemede, Onaylandı, Reddedildi
+
+        public int? OnaylayanKullaniciId { get; set; }
+
+        public DateTime? OnayTarihi { get; set; }
+
+        public bool OdendiMi { get; set; } = false;
+
+        public DateTime KayitTarihi { get; set; } = DateTime.UtcNow;
 
         // Navigation Properties
         [ForeignKey("PersonelId")]
-        public virtual Personel Personel { get; set; }
+        public Personel Personel { get; set; }
+
+        [ForeignKey("OnaylayanKullaniciId")]
+        public Kullanici? OnaylayanKullanici { get; set; }
     }
 }

@@ -13,6 +13,7 @@ namespace PDKS.Data.Entities
         [Required]
         [Column("cihaz_id")]
         public int CihazId { get; set; }
+        public Cihaz Cihaz { get; set; }  
 
         [MaxLength(100)]
         [Column("islem")]
@@ -27,8 +28,5 @@ namespace PDKS.Data.Entities
         [Column("tarih")]
         public DateTime Tarih { get; set; } = DateTime.UtcNow;
 
-        // Navigation Properties
-        [ForeignKey("CihazId")]
-        public virtual Cihaz Cihaz { get; set; }
     }
 }

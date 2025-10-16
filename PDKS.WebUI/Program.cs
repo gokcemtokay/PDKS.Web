@@ -21,6 +21,11 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IPersonelService, PersonelService>();
 builder.Services.AddScoped<IGirisCikisService, GirisCikisService>();
 builder.Services.AddScoped<IReportService, ReportService>();
+builder.Services.AddScoped<ITatilService, TatilService>();
+builder.Services.AddScoped<IParametreService, ParametreService>();
+builder.Services.AddScoped<IKullaniciService, KullaniciService>();
+builder.Services.AddScoped<IDepartmanService, DepartmanService>();
+builder.Services.AddScoped<IMesaiService, MesaiService>();
 
 // Authentication
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
@@ -127,7 +132,7 @@ using (var scope = app.Services.CreateScope())
             {
                 AdSoyad = "Sistem Yöneticisi",
                 SicilNo = "ADM001",
-                Departman = "Bilgi Ýþlem",
+                DepartmanId = 1,
                 Gorev = "Sistem Yöneticisi",
                 Email = "admin@pdks.com",
                 Telefon = "05001234567",

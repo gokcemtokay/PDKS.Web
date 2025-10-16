@@ -1,5 +1,123 @@
-﻿@*
-    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
-*@
+﻿@model PDKS.Business.DTOs.CihazCreateDTO
 @{
+    ViewData["Title"] = "Yeni Cihaz Ekle";
+}
+
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-desktop me-2"></i>Yeni Cihaz Ekle
+                    </h4>
+                </div>
+                <div class="card-body">
+                    @if (TempData["Error"] != null)
+                    {
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            <i class="fas fa-exclamation-circle me-2"></i>@TempData["Error"]
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    }
+
+                    <form asp-action="Create" method="post">
+                        @Html.AntiForgeryToken()
+                        <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="CihazAdi" class="form-label">
+                                    <i class="fas fa-desktop me-1"></i>Cihaz Adı
+                                    <span class="text-danger">*</span>
+                                </label>
+                                <input asp-for="CihazAdi" class="form-control" placeholder="örn: PDKS-001" />
+                                <span asp-validation-for="CihazAdi" class="text-danger small"></span>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="IPAdres" class="form-label">
+                                    <i class="fas fa-network-wired me-1"></i>IP Adresi
+                                </label>
+                                <input asp-for="IPAdres" class="form-control" placeholder="192.168.1.100" />
+                                <span asp-validation-for="IPAdres" class="text-danger small"></span>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Lokasyon" class="form-label">
+                                <i class="fas fa-map-marker-alt me-1"></i>Lokasyon
+                            </label>
+                            <input asp-for="Lokasyon" class="form-control" placeholder="örn: Giriş Kapısı, 1. Kat" />
+                            <span asp-validation-for="Lokasyon" class="text-danger small"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <div class="form-check form-switch">
+                                <input asp-for="Durum" class="form-check-input" type="checkbox" checked />
+                                <label asp-for="Durum" class="form-check-label">
+                                    Cihaz Aktif
+                                </label>
+                            </div>
+                            <small class="text-muted">
+                                Pasif cihazlar sistemde görünür ancak okuma yapamaz.
+                            </small>
+                        </div>
+
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i>
+                            <strong>Not:</strong> Cihaz eklendikten sonra bağlantı testi yapabilirsiniz.
+                        </div>
+
+                        <hr class="my-4">
+
+                        <div class="d-flex justify-content-between">
+                            <a asp-action="Index" class="btn btn-outline-secondary">
+                                <i class="fas fa-arrow-left me-2"></i>Geri Dön
+                            </a>
+                            <button type="submit" class="btn btn-primary px-4">
+                                <i class="fas fa-save me-2"></i>Kaydet
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Yardım Kartı -->
+            <div class="card mt-3">
+                <div class="card-body">
+                    <h6 class="card-title">
+                        <i class="fas fa-question-circle me-2"></i>Cihaz Ekleme Hakkında
+                    </h6>
+                    <ul class="mb-0 small">
+                        <li>Cihaz adı benzersiz olmalıdır</li>
+                        <li>IP adresi format: xxx.xxx.xxx.xxx</li>
+                        <li>Lokasyon bilgisi kullanıcıların cihazı kolayca tanımasını sağlar</li>
+                        <li>Pasif cihazlar okuma yapamaz ancak silinmez</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+    <script>
+        // IP address validation
+        $('input[name="IPAdres"]').on('blur', function() {
+            var ip = $(this).val();
+            var ipPattern = /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
+
+            if (ip && !ipPattern.test(ip)) {
+                $(this).addClass('is-invalid');
+                $(this).siblings('.text-danger').text('Geçerli bir IP adresi giriniz (örn: 192.168.1.100)');
+            } else {
+                $(this).removeClass('is-invalid');
+                $(this).siblings('.text-danger').text('');
+            }
+        });
+    </script>
 }

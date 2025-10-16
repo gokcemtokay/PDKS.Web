@@ -1,5 +1,381 @@
-﻿@*
-    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
-*@
+﻿@model IEnumerable<PDKS.Business.DTOs.TatilListDTO>
 @{
+    ViewData["Title"] = "Tatil Günleri";
+}
+
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col">
+            <div class="d-flex justify-content-between align-items-center">
+                <h2><i class="fas fa-calendar-alt me-2"></i>Tatil Günleri</h2>
+                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createModal">
+                    <i class="fas fa-plus me-2"></i>Yeni Tatil Ekle
+                </button>
+            </div>
+        </div>
+    </div>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="fas fa-check-circle me-2"></i>@TempData["Success"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="fas fa-exclamation-circle me-2"></i>@TempData["Error"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <!-- Yıl Seçici -->
+    <div class="card shadow mb-4">
+        <div class="card-body">
+            <div class="row align-items-center">
+                <div class="col-md-3">
+                    <label class="form-label">Yıl Seçin:</label>
+                    <select class="form-select" id="yilSelect" onchange="filterByYear()">
+                        @for (int year = DateTime.Now.Year - 1; year <= DateTime.Now.Year + 2; year++)
+                        {
+                            <option value="@year" selected="@(year == DateTime.Now.Year)">@year</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-md-9 text-end">
+                    <button class="btn btn-outline-success" onclick="addCommonHolidays()">
+                        <i class="fas fa-star me-2"></i>Resmi Tatilleri Ekle
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle" id="tatilTable">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Tarih</th>
+                            <th>Gün</th>
+                            <th>Tatil Adı</th>
+                            <th>Açıklama</th>
+                            <th>Tür</th>
+                            <th class="text-end">İşlemler</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model != null && Model.Any())
+                        {
+                            @foreach (var tatil in Model.OrderBy(t => t.Tarih))
+                            {
+                                <tr data-year="@tatil.Tarih.Year">
+                                    <td>
+                                        <strong>@tatil.Tarih.ToString("dd.MM.yyyy")</strong>
+                                    </td>
+                                    <td>
+                                        @switch (tatil.Tarih.DayOfWeek)
+                                        {
+                                            case DayOfWeek.Monday:
+                                                <span class="badge bg-secondary">Pazartesi</span>
+                                                break;
+                                            case DayOfWeek.Tuesday:
+                                                <span class="badge bg-secondary">Salı</span>
+                                                break;
+                                            case DayOfWeek.Wednesday:
+                                                <span class="badge bg-secondary">Çarşamba</span>
+                                                break;
+                                            case DayOfWeek.Thursday:
+                                                <span class="badge bg-secondary">Perşembe</span>
+                                                break;
+                                            case DayOfWeek.Friday:
+                                                <span class="badge bg-secondary">Cuma</span>
+                                                break;
+                                            case DayOfWeek.Saturday:
+                                                <span class="badge bg-warning">Cumartesi</span>
+                                                break;
+                                            case DayOfWeek.Sunday:
+                                                <span class="badge bg-danger">Pazar</span>
+                                                break;
+                                        }
+                                    </td>
+                                    <td>
+                                        <i class="fas fa-calendar-check me-2 text-primary"></i>
+                                        <strong>@tatil.Ad</strong>
+                                    </td>
+                                    <td>
+                                        <small class="text-muted">@tatil.Aciklama</small>
+                                    </td>
+                                    <td>
+                                        @if (tatil.Aciklama != null && tatil.Aciklama.Contains("Resmi"))
+                                        {
+                                            <span class="badge bg-danger">
+                                                <i class="fas fa-flag me-1"></i>Resmi Tatil
+                                            </span>
+                                        }
+                                        else if (tatil.Aciklama != null && tatil.Aciklama.Contains("Dini"))
+                                        {
+                                            <span class="badge bg-success">
+                                                <i class="fas fa-mosque me-1"></i>Dini Tatil
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-info">
+                                                <i class="fas fa-calendar me-1"></i>Özel Tatil
+                                            </span>
+                                        }
+                                    </td>
+                                    <td class="text-end">
+                                        <div class="btn-group" role="group">
+                                            <button type="button" class="btn btn-sm btn-outline-warning"
+                                                    onclick="editTatil(@tatil.Id, '@tatil.Ad', '@tatil.Tarih.ToString("yyyy-MM-dd")', '@tatil.Aciklama')">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <button type="button" class="btn btn-sm btn-outline-danger"
+                                                    onclick="deleteTatil(@tatil.Id, '@tatil.Ad')">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="6" class="text-center text-muted py-4">
+                                    <i class="fas fa-inbox fa-3x mb-3 d-block"></i>
+                                    Henüz tatil günü bulunmamaktadır.
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- İstatistikler -->
+    @if (Model != null && Model.Any())
+    {
+        var currentYear = DateTime.Now.Year;
+        var currentYearHolidays = Model.Where(t => t.Tarih.Year == currentYear);
+
+        <div class="row mt-4">
+            <div class="col-md-4">
+                <div class="card bg-primary text-white">
+                    <div class="card-body">
+                        <h5 class="card-title">Bu Yıl Toplam</h5>
+                        <h2>@currentYearHolidays.Count()</h2>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card bg-success text-white">
+                    <div class="card-body">
+                        <h5 class="card-title">Geçen Tatiller</h5>
+                        <h2>@currentYearHolidays.Count(t => t.Tarih < DateTime.Now)</h2>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card bg-warning text-dark">
+                    <div class="card-body">
+                        <h5 class="card-title">Yaklaşan Tatiller</h5>
+                        <h2>@currentYearHolidays.Count(t => t.Tarih >= DateTime.Now)</h2>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+<!-- Create Modal -->
+<div class="modal fade" id="createModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">Yeni Tatil Günü Ekle</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" asp-action="Create">
+                @Html.AntiForgeryToken()
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Tatil Adı <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" name="Ad" placeholder="örn: Cumhuriyet Bayramı" required />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Tarih <span class="text-danger">*</span></label>
+                        <input type="date" class="form-control" name="Tarih" required />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Açıklama</label>
+                        <textarea class="form-control" name="Aciklama" rows="2" placeholder="örn: Resmi Tatil"></textarea>
+                    </div>
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>Not:</strong> Tatil günlerinde mesai hesaplamaları yapılmaz.
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-2"></i>Kaydet
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Modal -->
+<div class="modal fade" id="editModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-warning text-dark">
+                <h5 class="modal-title">Tatil Günü Düzenle</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" asp-action="Edit">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="Id" id="editId" />
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Tatil Adı <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" name="Ad" id="editAd" required />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Tarih <span class="text-danger">*</span></label>
+                        <input type="date" class="form-control" name="Tarih" id="editTarih" required />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Açıklama</label>
+                        <textarea class="form-control" name="Aciklama" id="editAciklama" rows="2"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
+                    <button type="submit" class="btn btn-warning">
+                        <i class="fas fa-save me-2"></i>Güncelle
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">Tatil Silme Onayı</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p><strong id="deleteTatilAd"></strong> tatilini silmek istediğinize emin misiniz?</p>
+                <p class="text-danger">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    Bu işlem geri alınamaz!
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
+                <form id="deleteForm" method="post" style="display:inline;">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-trash me-2"></i>Sil
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            $('#tatilTable').DataTable({
+                language: {
+                    url: '//cdn.datatables.net/plug-ins/1.13.7/i18n/tr.json'
+                },
+                order: [[0, 'asc']],
+                pageLength: 50
+            });
+        });
+
+        function filterByYear() {
+            var selectedYear = document.getElementById('yilSelect').value;
+            var table = $('#tatilTable').DataTable();
+
+            table.rows().every(function() {
+                var row = this.node();
+                var year = $(row).data('year');
+                if (year == selectedYear) {
+                    $(row).show();
+                } else {
+                    $(row).hide();
+                }
+            });
+        }
+
+        function editTatil(id, ad, tarih, aciklama) {
+            document.getElementById('editId').value = id;
+            document.getElementById('editAd').value = ad;
+            document.getElementById('editTarih').value = tarih;
+            document.getElementById('editAciklama').value = aciklama || '';
+
+            var modal = new bootstrap.Modal(document.getElementById('editModal'));
+            modal.show();
+        }
+
+        function deleteTatil(id, ad) {
+            document.getElementById('deleteTatilAd').innerText = ad;
+            document.getElementById('deleteForm').action = '@Url.Action("Delete")/' + id;
+            var modal = new bootstrap.Modal(document.getElementById('deleteModal'));
+            modal.show();
+        }
+
+        function addCommonHolidays() {
+            Swal.fire({
+                title: 'Resmi Tatilleri Ekle',
+                text: 'Türkiye\'nin resmi tatil günlerini eklemek istiyor musunuz?',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonText: 'Evet, Ekle',
+                cancelButtonText: 'İptal'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $.post('@Url.Action("ResmiTatilleriEkle")')
+                        .done(function(response) {
+                            if (response.success) {
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: 'Başarılı',
+                                    text: response.message
+                                }).then(() => location.reload());
+                            } else {
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Hata',
+                                    text: response.message
+                                });
+                            }
+                        })
+                        .fail(function() {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Hata',
+                                text: 'İşlem başarısız oldu.'
+                            });
+                        });
+                }
+            });
+        }
+    </script>
 }

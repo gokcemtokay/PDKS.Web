@@ -26,7 +26,7 @@ namespace PDKS.Business.Services
                 Tarih = k.GirisZamani?.Date ?? DateTime.UtcNow,
                 PersonelAdi = personel.AdSoyad,
                 SicilNo = personel.SicilNo,
-                Departman = personel.Departman,
+                Departman = personel.Departman?.Ad,  // ✅ DÜZELTILDI
                 GirisZamani = k.GirisZamani,
                 CikisZamani = k.CikisZamani,
                 CalismaSuresi = CalculateWorkMinutes(k.GirisZamani, k.CikisZamani),
@@ -52,7 +52,7 @@ namespace PDKS.Business.Services
                     Tarih = kayit.GirisZamani?.Date ?? DateTime.UtcNow,
                     PersonelAdi = personel.AdSoyad,
                     SicilNo = personel.SicilNo,
-                    Departman = personel.Departman,
+                    Departman = personel.Departman?.Ad,  // ✅ DÜZELTILDI
                     GirisZamani = kayit.GirisZamani,
                     CikisZamani = kayit.CikisZamani,
                     CalismaSuresi = CalculateWorkMinutes(kayit.GirisZamani, kayit.CikisZamani),
@@ -81,7 +81,7 @@ namespace PDKS.Business.Services
                 Tarih = k.GirisZamani?.Date ?? DateTime.UtcNow,
                 PersonelAdi = personel.AdSoyad,
                 SicilNo = personel.SicilNo,
-                Departman = personel.Departman,
+                Departman = personel.Departman?.Ad,  // ✅ DÜZELTILDI
                 BeklenenGiris = personel.Vardiya?.BaslangicSaati.ToString(@"hh\:mm") ?? "",
                 GercekGiris = k.GirisZamani?.ToString("HH:mm") ?? "",
                 GecKalmaSuresi = k.GecKalmaSuresi ?? 0
@@ -104,7 +104,7 @@ namespace PDKS.Business.Services
                     Tarih = kayit.GirisZamani?.Date ?? DateTime.UtcNow,
                     PersonelAdi = personel.AdSoyad,
                     SicilNo = personel.SicilNo,
-                    Departman = personel.Departman,
+                    Departman = personel.Departman?.Ad,  // ✅ DÜZELTILDI
                     BeklenenGiris = personel.Vardiya?.BaslangicSaati.ToString(@"hh\:mm") ?? "",
                     GercekGiris = kayit.GirisZamani?.ToString("HH:mm") ?? "",
                     GecKalmaSuresi = kayit.GecKalmaSuresi ?? 0
@@ -129,7 +129,7 @@ namespace PDKS.Business.Services
                 Tarih = k.GirisZamani?.Date ?? DateTime.UtcNow,
                 PersonelAdi = personel.AdSoyad,
                 SicilNo = personel.SicilNo,
-                Departman = personel.Departman,
+                Departman = personel.Departman?.Ad,  // ✅ DÜZELTILDI
                 BeklenenCikis = personel.Vardiya?.BitisSaati.ToString(@"hh\:mm") ?? "",
                 GercekCikis = k.CikisZamani?.ToString("HH:mm") ?? "",
                 ErkenCikisSuresi = k.ErkenCikisSuresi ?? 0
@@ -152,7 +152,7 @@ namespace PDKS.Business.Services
                     Tarih = kayit.GirisZamani?.Date ?? DateTime.UtcNow,
                     PersonelAdi = personel.AdSoyad,
                     SicilNo = personel.SicilNo,
-                    Departman = personel.Departman,
+                    Departman = personel.Departman?.Ad,  // ✅ DÜZELTILDI
                     BeklenenCikis = personel.Vardiya?.BitisSaati.ToString(@"hh\:mm") ?? "",
                     GercekCikis = kayit.CikisZamani?.ToString("HH:mm") ?? "",
                     ErkenCikisSuresi = kayit.ErkenCikisSuresi ?? 0
@@ -178,9 +178,9 @@ namespace PDKS.Business.Services
                     Tarih = kayit.GirisZamani?.Date ?? DateTime.UtcNow,
                     PersonelAdi = personel.AdSoyad,
                     SicilNo = personel.SicilNo,
-                    Departman = personel.Departman,
+                    Departman = personel.Departman?.Ad,  // ✅ DÜZELTILDI
                     FazlaMesaiSuresi = kayit.FazlaMesaiSuresi ?? 0,
-                    FazlaMesaiUcreti = CalculateOvertimePay(personel.Maas, kayit.FazlaMesaiSuresi ?? 0)
+                    FazlaMesaiUcreti = CalculateOvertimePay(personel.Maas ?? 0m, kayit.FazlaMesaiSuresi ?? 0)  // ✅ DÜZELTILDI
                 });
             }
 
@@ -233,7 +233,7 @@ namespace PDKS.Business.Services
                     {
                         PersonelAdi = personel.AdSoyad,
                         SicilNo = personel.SicilNo,
-                        Departman = personel.Departman,
+                        Departman = personel.Departman?.Ad,  // ✅ DÜZELTILDI
                         DevamsizGunSayisi = devamsizGunler.Count,
                         DevamsizGunler = string.Join(", ", devamsizGunler.Select(d => d.ToString("dd.MM.yyyy")))
                     });
@@ -265,15 +265,15 @@ namespace PDKS.Business.Services
                 g.FazlaMesaiSuresi > 0);
 
             var toplamFazlaMesai = fazlaMesailar.Sum(f => f.FazlaMesaiSuresi ?? 0);
-            var fazlaMesaiUcreti = CalculateOvertimePay(personel.Maas, toplamFazlaMesai);
+            var fazlaMesaiUcreti = CalculateOvertimePay(personel.Maas ?? 0m, toplamFazlaMesai);  // ✅ DÜZELTILDI
 
-            // Get bonuses
+            // Get bonuses - Donem string olarak tanımlandığı için DateTime parse etmiyoruz
             var primler = await _unitOfWork.Primler.FindAsync(p =>
                 p.PersonelId == personelId &&
-                p.Donem.Year == yil &&
-                p.Donem.Month == ay);
+                p.Yil == yil &&
+                p.Ay == ay);  // ✅ DÜZELTILDI: Year ve Month yerine Yil ve Ay
 
-            var toplamPrim = primler.Sum(p => p.Tutar);
+            var toplamPrim = primler.Sum(p => (decimal?)p.Tutar) ?? 0m;  // ✅ DÜZELTILDI
 
             // Get advances
             var avanslar = await _unitOfWork.Avanslar.FindAsync(a =>
@@ -283,9 +283,9 @@ namespace PDKS.Business.Services
                 a.OdemeTarihi.Value <= donemBitis &&
                 a.Durum == "Ödendi");
 
-            var toplamAvans = avanslar.Sum(a => a.Tutar);
+            var toplamAvans = avanslar.Sum(a => (decimal?)a.Tutar) ?? 0m;  // ✅ DÜZELTILDI
 
-            var brutMaas = personel.Maas + fazlaMesaiUcreti + toplamPrim;
+            var brutMaas = (personel.Maas ?? 0m) + fazlaMesaiUcreti + toplamPrim;
             var sgkKesintisi = brutMaas * 0.14m;
             var gelirVergisi = brutMaas * 0.15m;
             var netMaas = brutMaas - sgkKesintisi - gelirVergisi - toplamAvans;
@@ -294,9 +294,9 @@ namespace PDKS.Business.Services
             {
                 PersonelAdi = personel.AdSoyad,
                 SicilNo = personel.SicilNo,
-                Departman = personel.Departman,
+                Departman = personel.Departman?.Ad,  // ✅ DÜZELTILDI
                 Donem = $"{ay:00}/{yil}",
-                BrutMaas = personel.Maas,
+                BrutMaas = personel.Maas ?? 0m,
                 FazlaMesaiUcreti = fazlaMesaiUcreti,
                 Primler = toplamPrim,
                 ToplamBrut = brutMaas,
@@ -354,8 +354,8 @@ namespace PDKS.Business.Services
             foreach (var avans in avanslar)
             {
                 var personel = await _unitOfWork.Personeller.GetByIdAsync(avans.PersonelId);
-                var onaylayan = avans.OnaylayanId.HasValue ?
-                    await _unitOfWork.Kullanicilar.GetByIdAsync(avans.OnaylayanId.Value) : null;
+                var onaylayan = avans.OnaylayanKullaniciId.HasValue ?  // ✅ DÜZELTILDI
+                    await _unitOfWork.Kullanicilar.GetByIdAsync(avans.OnaylayanKullaniciId.Value) : null;
 
                 result.Add(new AvansListDTO
                 {
@@ -386,7 +386,7 @@ namespace PDKS.Business.Services
             {
                 PersonelAdi = personel.AdSoyad,
                 SicilNo = personel.SicilNo,
-                Departman = personel.Departman,
+                Departman = personel.Departman?.Ad,  // ✅ DÜZELTILDI
                 Gorev = personel.Gorev,
                 Donem = bordro.Donem,
                 BrutMaas = bordro.BrutMaas,
@@ -404,9 +404,8 @@ namespace PDKS.Business.Services
 
         public async Task<List<PrimListDTO>> PrimListesi(int yil, int ay)
         {
-            var donem = new DateTime(yil, ay, 1);
             var primler = await _unitOfWork.Primler.FindAsync(p =>
-                p.Donem.Year == yil && p.Donem.Month == ay);
+                p.Yil == yil && p.Ay == ay);  // ✅ DÜZELTILDI
 
             var result = new List<PrimListDTO>();
             foreach (var prim in primler)
@@ -443,7 +442,7 @@ namespace PDKS.Business.Services
                 {
                     PersonelAdi = personel.AdSoyad,
                     SicilNo = personel.SicilNo,
-                    Departman = personel.Departman,
+                    Departman = personel.Departman?.Ad,  
                     IzinTipi = izin.IzinTipi,
                     BaslangicTarihi = izin.BaslangicTarihi,
                     BitisTarihi = izin.BitisTarihi,
@@ -458,7 +457,7 @@ namespace PDKS.Business.Services
         public async Task<List<TatilGunuCalisanlarRaporDTO>> TatilGunuCalisanlarRaporu(DateTime baslangic, DateTime bitis)
         {
             var tatiller = await _unitOfWork.Tatiller.FindAsync(t =>
-                t.Tarih >= baslangic && t.Tarih <= bitis && t.ResmiTatil);
+                t.Tarih >= baslangic && t.Tarih <= bitis);
 
             var result = new List<TatilGunuCalisanlarRaporDTO>();
 
@@ -477,7 +476,7 @@ namespace PDKS.Business.Services
                         Tarih = tatil.Tarih,
                         PersonelAdi = personel.AdSoyad,
                         SicilNo = personel.SicilNo,
-                        Departman = personel.Departman,
+                        Departman = personel.Departman?.Ad,  // ✅ DÜZELTILDI
                         GirisZamani = calisan.GirisZamani,
                         CikisZamani = calisan.CikisZamani,
                         CalismaSuresi = CalculateWorkMinutes(calisan.GirisZamani, calisan.CikisZamani)
@@ -504,7 +503,7 @@ namespace PDKS.Business.Services
                     Tarih = kayit.GirisZamani?.Date ?? DateTime.UtcNow,
                     PersonelAdi = personel.AdSoyad,
                     SicilNo = personel.SicilNo,
-                    Departman = personel.Departman,
+                    Departman = personel.Departman?.Ad,  // ✅ DÜZELTILDI
                     GirisZamani = kayit.GirisZamani,
                     CikisZamani = kayit.CikisZamani,
                     Not = kayit.Not,
@@ -541,7 +540,7 @@ namespace PDKS.Business.Services
             {
                 AdSoyad = p.AdSoyad,
                 SicilNo = p.SicilNo,
-                Departman = p.Departman,
+                Departman = p.Departman?.Ad,  // ✅ DÜZELTILDI
                 Gorev = p.Gorev,
                 Email = p.Email,
                 Telefon = p.Telefon,
@@ -561,7 +560,7 @@ namespace PDKS.Business.Services
             {
                 AdSoyad = p.AdSoyad,
                 SicilNo = p.SicilNo,
-                Departman = p.Departman,
+                Departman = p.Departman?.Ad,  // ✅ DÜZELTILDI
                 Gorev = p.Gorev,
                 GirisTarihi = p.GirisTarihi,
                 CikisTarihi = p.CikisTarihi.Value,
@@ -585,7 +584,7 @@ namespace PDKS.Business.Services
                     Tarih = kayit.GirisZamani?.Date ?? DateTime.UtcNow,
                     PersonelAdi = personel.AdSoyad,
                     SicilNo = personel.SicilNo,
-                    Departman = personel.Departman,
+                    Departman = personel.Departman?.Ad,  // ✅ DÜZELTILDI
                     GirisZamani = kayit.GirisZamani,
                     CikisZamani = kayit.CikisZamani,
                     Not = kayit.Not,
@@ -647,7 +646,7 @@ namespace PDKS.Business.Services
             {
                 PersonelAdi = personel.AdSoyad,
                 SicilNo = personel.SicilNo,
-                Departman = personel.Departman,
+                Departman = personel.Departman?.Ad,  // ✅ DÜZELTILDI
                 Donem = $"{ay:00}/{yil}",
                 Gunler = gunler,
                 ToplamCalismaGunu = gunler.Count(g => g.Durum == "Normal" || g.Durum == "Geç Kalmış" || g.Durum == "Fazla Mesai"),

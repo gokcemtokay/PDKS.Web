@@ -1,0 +1,94 @@
+﻿@model PDKS.Business.DTOs.KullaniciUpdateDTO
+@{
+    ViewData["Title"] = "Kullanıcı Düzenle";
+}
+
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow">
+                <div class="card-header bg-warning text-dark">
+                    <h4 class="mb-0">
+                        <i class="fas fa-user-edit me-2"></i>Kullanıcı Düzenle
+                    </h4>
+                </div>
+                <div class="card-body">
+                    @if (TempData["Error"] != null)
+                    {
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            <i class="fas fa-exclamation-circle me-2"></i>@TempData["Error"]
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    }
+
+                    <form asp-action="Edit" method="post">
+                        @Html.AntiForgeryToken()
+                        <input asp-for="Id" type="hidden" />
+                        <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="KullaniciAdi" class="form-label">
+                                    <i class="fas fa-user me-1"></i>Kullanıcı Adı
+                                    <span class="text-danger">*</span>
+                                </label>
+                                <input asp-for="KullaniciAdi" class="form-control" />
+                                <span asp-validation-for="KullaniciAdi" class="text-danger small"></span>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="RolId" class="form-label">
+                                    <i class="fas fa-shield-alt me-1"></i>Rol
+                                    <span class="text-danger">*</span>
+                                </label>
+                                <select asp-for="RolId" class="form-select" asp-items="ViewBag.Roller"></select>
+                                <span asp-validation-for="RolId" class="text-danger small"></span>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="PersonelId" class="form-label">
+                                <i class="fas fa-user-tie me-1"></i>Personel (Opsiyonel)
+                            </label>
+                            <select asp-for="PersonelId" class="form-select" asp-items="ViewBag.Personeller">
+                                <option value="">-- Personel Seçiniz --</option>
+                            </select>
+                            <span asp-validation-for="PersonelId" class="text-danger small"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <div class="form-check form-switch">
+                                <input asp-for="Aktif" class="form-check-input" type="checkbox" />
+                                <label asp-for="Aktif" class="form-check-label">
+                                    Kullanıcı Aktif
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            <strong>Dikkat:</strong> Şifre değiştirmek için liste sayfasındaki "Şifre Değiştir" butonunu kullanın.
+                        </div>
+
+                        <hr class="my-4">
+
+                        <div class="d-flex justify-content-between">
+                            <a asp-action="Index" class="btn btn-outline-secondary">
+                                <i class="fas fa-arrow-left me-2"></i>Geri Dön
+                            </a>
+                            <button type="submit" class="btn btn-warning px-4">
+                                <i class="fas fa-save me-2"></i>Güncelle
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

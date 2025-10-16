@@ -1,73 +1,89 @@
-﻿using System.ComponentModel.DataAnnotations.Schema;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace PDKS.Data.Entities
 {
-    [Table("personeller")]
+    [Table("Personeller")]
     public class Personel
     {
         [Key]
-        [Column("id")]
         public int Id { get; set; }
 
         [Required]
-        [MaxLength(100)]
-        [Column("ad_soyad")]
+        [StringLength(100)]
         public string AdSoyad { get; set; }
 
         [Required]
-        [MaxLength(20)]
-        [Column("sicil_no")]
+        [StringLength(20)]
         public string SicilNo { get; set; }
 
-        [MaxLength(100)]
-        [Column("departman")]
-        public string Departman { get; set; }
-
-        [MaxLength(100)]
-        [Column("gorev")]
-        public string Gorev { get; set; }
+        [Required]
+        [StringLength(11)]
+        public string TcKimlikNo { get; set; }
 
         [Required]
-        [MaxLength(100)]
-        [Column("email")]
+        [StringLength(100)]
         public string Email { get; set; }
 
-        [MaxLength(20)]
-        [Column("telefon")]
-        public string Telefon { get; set; }
+        [StringLength(15)]
+        public string? Telefon { get; set; }
 
-        [Column("durum")]
-        public bool Durum { get; set; } = true; // Aktif/Pasif
+        [StringLength(500)]
+        public string? Adres { get; set; }
 
-        [Column("giris_tarihi")]
+        public DateTime DogumTarihi { get; set; }
+
+        [StringLength(10)]
+        public string? Cinsiyet { get; set; }
+
+        [StringLength(50)]
+        public string? KanGrubu { get; set; }
+
         public DateTime GirisTarihi { get; set; }
 
-        [Column("cikis_tarihi")]
         public DateTime? CikisTarihi { get; set; }
 
-        [Column("vardiya_id")]
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal? Maas { get; set; }
+
+        [StringLength(100)]
+        public string? Unvan { get; set; }
+
+        [StringLength(100)]
+        public string? Gorev { get; set; }
+
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal? AvansLimiti { get; set; }
+
+        public bool Durum { get; set; } = true;
+
+        // Foreign Keys
+        public int? DepartmanId { get; set; }
+
         public int? VardiyaId { get; set; }
 
-        [Column("maas")]
-        public decimal Maas { get; set; }
+        [StringLength(500)]
+        public string? Notlar { get; set; }
 
-        [Column("avans_limiti")]
-        public decimal AvansLimiti { get; set; }
+        public DateTime KayitTarihi { get; set; } = DateTime.UtcNow;
 
-        [Column("olusturma_tarihi")]
-        public DateTime OlusturmaTarihi { get; set; } = DateTime.UtcNow;
+        public DateTime? OlusturmaTarihi { get; set; } = DateTime.UtcNow;
 
-        [Column("guncelleme_tarihi")]
         public DateTime? GuncellemeTarihi { get; set; }
 
         // Navigation Properties
-        [ForeignKey("VardiyaId")]
-        public virtual Vardiya Vardiya { get; set; }
+        [ForeignKey("DepartmanId")]
+        public Departman? Departman { get; set; }
 
-        public virtual ICollection<GirisCikis> GirisCikislar { get; set; }
-        public virtual ICollection<Izin> Izinler { get; set; }
-        public virtual ICollection<Avans> Avanslar { get; set; }
-        public virtual Kullanici Kullanici { get; set; }
+        [ForeignKey("VardiyaId")]
+        public Vardiya? Vardiya { get; set; }
+
+        public Kullanici? Kullanici { get; set; }
+
+        public ICollection<GirisCikis> GirisCikislar { get; set; } = new List<GirisCikis>();
+        public ICollection<Izin> Izinler { get; set; } = new List<Izin>();
+        public ICollection<Mesai> Mesailer { get; set; } = new List<Mesai>();
+        public ICollection<Avans> Avanslar { get; set; } = new List<Avans>();
+        public ICollection<Prim> Primler { get; set; } = new List<Prim>();
     }
 }

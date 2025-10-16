@@ -1,5 +1,248 @@
-﻿@*
-    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
-*@
+﻿@model IEnumerable<PDKS.Business.DTOs.CihazListDTO>
 @{
+    ViewData["Title"] = "Cihaz Yönetimi";
+}
+
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col">
+            <div class="d-flex justify-content-between align-items-center">
+                <h2><i class="fas fa-desktop me-2"></i>Cihaz Yönetimi</h2>
+                <a asp-action="Create" class="btn btn-primary">
+                    <i class="fas fa-plus me-2"></i>Yeni Cihaz Ekle
+                </a>
+            </div>
+        </div>
+    </div>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="fas fa-check-circle me-2"></i>@TempData["Success"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="fas fa-exclamation-circle me-2"></i>@TempData["Error"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <div class="card shadow">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle" id="cihazTable">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Cihaz Adı</th>
+                            <th>IP Adres</th>
+                            <th>Lokasyon</th>
+                            <th>Durum</th>
+                            <th>Son Bağlantı</th>
+                            <th>Bugünkü Okuma</th>
+                            <th class="text-end">İşlemler</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model != null && Model.Any())
+                        {
+                            @foreach (var cihaz in Model)
+                            {
+                                <tr>
+                                    <td>
+                                        <strong>@cihaz.CihazAdi</strong>
+                                    </td>
+                                    <td>
+                                        <code>@cihaz.IPAdres</code>
+                                    </td>
+                                    <td>
+                                        <i class="fas fa-map-marker-alt me-1"></i>@cihaz.Lokasyon
+                                    </td>
+                                    <td>
+                                        @if (cihaz.Durum)
+                                        {
+                                            <span class="badge bg-success">
+                                                <i class="fas fa-check me-1"></i>Aktif
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-danger">
+                                                <i class="fas fa-times me-1"></i>Pasif
+                                            </span>
+                                        }
+                                    </td>
+                                    <td>
+                                        @if (cihaz.SonBaglantiZamani.HasValue)
+                                        {
+                                            <small class="text-muted">
+                                                @cihaz.SonBaglantiZamani.Value.ToLocalTime().ToString("dd.MM.yyyy HH:mm")
+                                            </small>
+                                        }
+                                        else
+                                        {
+                                            <small class="text-muted">Hiç bağlanmadı</small>
+                                        }
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-info">@cihaz.BugunkuOkumaSayisi</span>
+                                    </td>
+                                    <td class="text-end">
+                                        <div class="btn-group" role="group">
+                                            <button type="button" class="btn btn-sm btn-outline-primary"
+                                                    onclick="testConnection(@cihaz.Id)" title="Bağlantı Test">
+                                                <i class="fas fa-plug"></i>
+                                            </button>
+                                            <a asp-action="Loglar" asp-route-id="@cihaz.Id"
+                                               class="btn btn-sm btn-outline-info" title="Loglar">
+                                                <i class="fas fa-list"></i>
+                                            </a>
+                                            <a asp-action="Edit" asp-route-id="@cihaz.Id"
+                                               class="btn btn-sm btn-outline-warning" title="Düzenle">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            <button type="button" class="btn btn-sm btn-outline-danger"
+                                                    onclick="deleteCihaz(@cihaz.Id, '@cihaz.CihazAdi')" title="Sil">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="7" class="text-center text-muted py-4">
+                                    <i class="fas fa-inbox fa-3x mb-3 d-block"></i>
+                                    Henüz cihaz bulunmamaktadır.
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- İstatistikler -->
+    @if (Model != null && Model.Any())
+    {
+        <div class="row mt-4">
+            <div class="col-md-3">
+                <div class="card bg-success text-white">
+                    <div class="card-body">
+                        <h5 class="card-title">Aktif Cihazlar</h5>
+                        <h2>@Model.Count(c => c.Durum)</h2>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-danger text-white">
+                    <div class="card-body">
+                        <h5 class="card-title">Pasif Cihazlar</h5>
+                        <h2>@Model.Count(c => !c.Durum)</h2>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-info text-white">
+                    <div class="card-body">
+                        <h5 class="card-title">Toplam Okuma</h5>
+                        <h2>@Model.Sum(c => c.BugunkuOkumaSayisi)</h2>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-primary text-white">
+                    <div class="card-body">
+                        <h5 class="card-title">Toplam Cihaz</h5>
+                        <h2>@Model.Count()</h2>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">Cihaz Silme Onayı</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p><strong id="deleteCihazName"></strong> cihazını silmek istediğinize emin misiniz?</p>
+                <p class="text-danger">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    Bu işlem geri alınamaz!
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
+                <form id="deleteForm" method="post" style="display:inline;">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-trash me-2"></i>Sil
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // DataTable initialization
+        $(document).ready(function() {
+            $('#cihazTable').DataTable({
+                language: {
+                    url: '//cdn.datatables.net/plug-ins/1.13.7/i18n/tr.json'
+                },
+                order: [[0, 'asc']],
+                pageLength: 25
+            });
+        });
+
+        // Test connection
+        function testConnection(id) {
+            $.post('@Url.Action("BaglantiTest")', { id: id })
+                .done(function(response) {
+                    if (response.success) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Başarılı',
+                            text: response.message,
+                            timer: 2000
+                        });
+                    } else {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Hata',
+                            text: response.message
+                        });
+                    }
+                })
+                .fail(function() {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Hata',
+                        text: 'Bağlantı testi başarısız oldu.'
+                    });
+                });
+        }
+
+        // Delete confirmation
+        function deleteCihaz(id, name) {
+            document.getElementById('deleteCihazName').innerText = name;
+            document.getElementById('deleteForm').action = '@Url.Action("Delete")/' + id;
+            var modal = new bootstrap.Modal(document.getElementById('deleteModal'));
+            modal.show();
+        }
+    </script>
 }

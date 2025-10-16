@@ -54,6 +54,6 @@ namespace PDKS.Data.Entities
         public virtual Personel Personel { get; set; }
 
         [ForeignKey("OnaylayanId")]
-        public virtual Kullanici Onaylayan { get; set; }
+        public Kullanici? OnaylayanKullanici { get; set; }
     }
 }

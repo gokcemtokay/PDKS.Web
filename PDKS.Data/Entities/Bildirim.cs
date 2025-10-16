@@ -1,40 +1,38 @@
-﻿using System.ComponentModel.DataAnnotations.Schema;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace PDKS.Data.Entities
 {
-    [Table("bildirimler")]
+    [Table("Bildirimler")]
     public class Bildirim
     {
         [Key]
-        [Column("id")]
         public int Id { get; set; }
 
         [Required]
-        [Column("kullanici_id")]
         public int KullaniciId { get; set; }
 
         [Required]
-        [MaxLength(200)]
-        [Column("baslik")]
+        [StringLength(200)]
         public string Baslik { get; set; }
 
-        [Required]
-        [Column("mesaj")]
-        public string Mesaj { get; set; }
+        [StringLength(1000)]
+        public string? Mesaj { get; set; }
 
-        [MaxLength(50)]
-        [Column("tip")]
-        public string Tip { get; set; } // Info, Warning, Success, Error
+        [StringLength(50)]
+        public string? Tip { get; set; } // Bilgi, Uyarı, Hata, Başarı
 
-        [Column("okundu")]
         public bool Okundu { get; set; } = false;
 
-        [Column("olusturma_tarihi")]
+        public DateTime? OkunmaTarihi { get; set; }
+
+        [StringLength(500)]
+        public string? Link { get; set; }
+
         public DateTime OlusturmaTarihi { get; set; } = DateTime.UtcNow;
 
         // Navigation Properties
         [ForeignKey("KullaniciId")]
-        public virtual Kullanici Kullanici { get; set; }
+        public Kullanici Kullanici { get; set; }
     }
 }
