@@ -13,6 +13,8 @@ namespace PDKS.Data.Entities
         [Required]
         [Column("cihaz_id")]
         public int CihazId { get; set; }
+
+        [ForeignKey(nameof(CihazId))]
         public Cihaz Cihaz { get; set; }  
 
         [MaxLength(100)]

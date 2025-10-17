@@ -1,175 +1,141 @@
-﻿@* Izin/Index.cshtml *@
-@model IEnumerable<PDKS.Business.DTOs.IzinListDTO>
+﻿@model IEnumerable<PDKS.Business.DTOs.IzinListDTO>
+
 @{
     ViewData["Title"] = "İzin Yönetimi";
 }
 
-<div class="row mb-3">
-    <div class="col-md-8">
-        <h4>İzin Talepleri</h4>
-    </div>
-    <div class="col-md-4 text-end">
-        <a asp-action="Create" class="btn btn-primary">
-            <i class="fas fa-plus"></i> Yeni İzin Talebi
-        </a>
-        @if (User.IsInRole("Admin") || User.IsInRole("IK") || User.IsInRole("Yönetici"))
-        {
-            <a asp-action="BekleyenIzinler" class="btn btn-warning">
-                <i class="fas fa-hourglass-half"></i> Bekleyen İzinler
-                @{
-                    var bekleyenSayisi = Model.Count(i => i.OnayDurumu == "Beklemede");
-                    if (bekleyenSayisi > 0)
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">İzin Talepleri</h3>
+                    <div class="card-tools">
+                        <a asp-action="Create" class="btn btn-success btn-sm">
+                            <i class="fas fa-plus"></i> Yeni İzin Talebi
+                        </a>
+                        @if (User.IsInRole("Admin") || User.IsInRole("IK") || User.IsInRole("Yönetici"))
+                        {
+                            <a asp-action="Pending" class="btn btn-warning btn-sm">
+                                <i class="fas fa-clock"></i> Bekleyen İzinler
+                            </a>
+                        }
+                    </div>
+                </div>
+                <div class="card-body">
+                    @if (TempData["Success"] != null)
                     {
-                        <span class="badge bg-danger">@bekleyenSayisi</span>
+                        <div class="alert alert-success alert-dismissible fade show">
+                            @TempData["Success"]
+                            <button type="button" class="close" data-dismiss="alert">&times;</button>
+                        </div>
                     }
-                }
-            </a>
-        }
-    </div>
-</div>
-
-<!-- Filter Tabs -->
-<ul class="nav nav-pills mb-3">
-    <li class="nav-item">
-        <a class="nav-link active" data-filter="all" href="#">
-            <i class="fas fa-list"></i> Tümü (@Model.Count())
-        </a>
-    </li>
-    <li class="nav-item">
-        <a class="nav-link" data-filter="Beklemede" href="#">
-            <i class="fas fa-hourglass-half text-warning"></i> Beklemede (@Model.Count(i => i.OnayDurumu == "Beklemede"))
-        </a>
-    </li>
-    <li class="nav-item">
-        <a class="nav-link" data-filter="Onaylandı" href="#">
-            <i class="fas fa-check-circle text-success"></i> Onaylandı (@Model.Count(i => i.OnayDurumu == "Onaylandı"))
-        </a>
-    </li>
-    <li class="nav-item">
-        <a class="nav-link" data-filter="Reddedildi" href="#">
-            <i class="fas fa-times-circle text-danger"></i> Reddedildi (@Model.Count(i => i.OnayDurumu == "Reddedildi"))
-        </a>
-    </li>
-</ul>
-
-<div class="card">
-    <div class="card-body">
-        <div class="table-responsive">
-            <table class="table table-hover" id="izinTable">
-                <thead>
-                    <tr>
-                        <th>Personel</th>
-                        <th>İzin Tipi</th>
-                        <th>Başlangıç</th>
-                        <th>Bitiş</th>
-                        <th>Gün Sayısı</th>
-                        <th>Durum</th>
-                        <th>Onaylayan</th>
-                        <th>İşlemler</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (var item in Model)
+                    @if (TempData["Error"] != null)
                     {
-                        <tr data-status="@item.OnayDurumu">
-                            <td>
-                                <i class="fas fa-user-circle text-primary me-2"></i>
-                                @item.PersonelAdi
-                            </td>
-                            <td>
-                                <span class="badge bg-secondary">@item.IzinTipi</span>
-                            </td>
-                            <td>@item.BaslangicTarihi.ToString("dd.MM.yyyy")</td>
-                            <td>@item.BitisTarihi.ToString("dd.MM.yyyy")</td>
-                            <td>
-                                <strong>@item.GunSayisi</strong> gün
-                            </td>
-                            <td>
-                                @if (item.OnayDurumu == "Beklemede")
-                                {
-                                    <span class="badge bg-warning">
-                                        <i class="fas fa-hourglass-half"></i> Beklemede
-                                    </span>
-                                }
-                                else if (item.OnayDurumu == "Onaylandı")
-                                {
-                                    <span class="badge bg-success">
-                                        <i class="fas fa-check"></i> Onaylandı
-                                    </span>
-                                }
-                                else if (item.OnayDurumu == "Reddedildi")
-                                {
-                                    <span class="badge bg-danger">
-                                        <i class="fas fa-times"></i> Reddedildi
-                                    </span>
-                                }
-                            </td>
-                            <td>
-                                @if (!string.IsNullOrEmpty(item.OnaylayanAdi))
-                                {
-                                    <small>@item.OnaylayanAdi</small>
-
-                                    <br />
-                                    <small class="text-muted">@item.OnayTarihi?.ToString("dd.MM.yyyy")</small>
-                                }
-                                else
-                                {
-                                    <span class="text-muted">-</span>
-                                }
-                            </td>
-                            <td>
-                                <a asp-action="Details" asp-route-id="@item.Id"
-                                   class="btn btn-sm btn-info" title="Detaylar">
-                                    <i class="fas fa-eye"></i>
-                                </a>
-                                @if (item.OnayDurumu == "Beklemede")
-                                {
-                                    @if (User.IsInRole("Admin") || User.IsInRole("IK"))
-                                    {
-                                        <form method="post" asp-action="Delete" asp-route-id="@item.Id"
-                                              style="display:inline;" onsubmit="return confirm('Silmek istediğinizden emin misiniz?');">
-                                            <button type="submit" class="btn btn-sm btn-danger" title="Sil">
-                                                <i class="fas fa-trash"></i>
-                                            </button>
-                                        </form>
-                                    }
-                                }
-                            </td>
-                        </tr>
+                        <div class="alert alert-danger alert-dismissible fade show">
+                            @TempData["Error"]
+                            <button type="button" class="close" data-dismiss="alert">&times;</button>
+                        </div>
                     }
-                </tbody>
-            </table>
-        </div>
 
-        @if (!Model.Any())
-        {
-            <div class="text-center py-5 text-muted">
-                <i class="fas fa-calendar-check fa-4x mb-3"></i>
-                <p>Henüz izin kaydı bulunmamaktadır.</p>
-                <a asp-action="Create" class="btn btn-primary">
-                    <i class="fas fa-plus"></i> İlk İzin Talebini Oluştur
-                </a>
+                    @if (Model.Any())
+                    {
+                        <table class="table table-bordered table-striped" id="izinTable">
+                            <thead>
+                                <tr>
+                                    <th>Personel</th>
+                                    <th>İzin Tipi</th>
+                                    <th>Başlangıç</th>
+                                    <th>Bitiş</th>
+                                    <th>Gün Sayısı</th>
+                                    <th>Durum</th>
+                                    <th>İşlemler</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var item in Model)
+                                {
+                                    <tr>
+                                        <td>@item.PersonelAdi</td>
+                                        <td><span class="badge badge-info">@item.IzinTipi</span></td>
+                                        <td>@item.BaslangicTarihi.ToString("dd.MM.yyyy")</td>
+                                        <td>@item.BitisTarihi.ToString("dd.MM.yyyy")</td>
+                                        <td><span class="badge badge-primary">@item.GunSayisi</span></td>
+                                        <td>
+                                            @switch (item.OnayDurumu)
+                                            {
+                                                case "Beklemede":
+                                                    <span class="badge badge-warning">Beklemede</span>
+                                                    break;
+                                                case "Onaylandı":
+                                                    <span class="badge badge-success">Onaylandı</span>
+                                                    break;
+                                                case "Reddedildi":
+                                                    <span class="badge badge-danger">Reddedildi</span>
+                                                    break;
+                                            }
+                                        </td>
+                                        <td>
+                                            <div class="btn-group">
+                                                <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-info btn-sm">
+                                                    <i class="fas fa-eye"></i>
+                                                </a>
+                                                @if (item.OnayDurumu == "Beklemede")
+                                                {
+                                                    <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-warning btn-sm">
+                                                        <i class="fas fa-edit"></i>
+                                                    </a>
+                                                    @if (User.IsInRole("Admin") || User.IsInRole("IK") || User.IsInRole("Yönetici"))
+                                                    {
+                                                        <form asp-action="Approve" asp-route-id="@item.Id" method="post" style="display:inline;">
+                                                            <button type="submit" class="btn btn-success btn-sm" onclick="return confirm('İzin talebini onaylamak istediğinizden emin misiniz?')">
+                                                                <i class="fas fa-check"></i>
+                                                            </button>
+                                                        </form>
+                                                    }
+                                                }
+                                                <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-danger btn-sm">
+                                                    <i class="fas fa-trash"></i>
+                                                </a>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    }
+                    else
+                    {
+                        <div class="text-center py-5">
+                            <i class="fas fa-clipboard-list fa-4x text-muted mb-3"></i>
+                            <p class="text-muted">Henüz izin kaydı bulunmamaktadır.</p>
+                            <a asp-action="Create" class="btn btn-primary">
+                                <i class="fas fa-plus"></i> İlk İzin Talebini Oluştur
+                            </a>
+                        </div>
+                    }
+                </div>
             </div>
-        }
+        </div>
     </div>
 </div>
 
 @section Scripts {
     <script>
-        // Filter functionality
-        $('.nav-link[data-filter]').on('click', function(e) {
-            e.preventDefault();
-            $('.nav-link').removeClass('active');
-            $(this).addClass('active');
-
-            var filter = $(this).data('filter');
-
-            if (filter === 'all') {
-                $('#izinTable tbody tr').show();
-            } else {
-                $('#izinTable tbody tr').hide();
-                $('#izinTable tbody tr[data-status="' + filter + '"]').show();
-            }
+        $(document).ready(function () {
+        @if (Model.Any())
+        {
+            <text>
+                    $("#izinTable").DataTable({
+                        "responsive": true,
+                        "lengthChange": false,
+                        "autoWidth": false,
+                        "language": {
+                            "url": "//cdn.datatables.net/plug-ins/1.10.24/i18n/Turkish.json"
+                        }
+                    });
+            </text>
+        }
         });
     </script>
 }

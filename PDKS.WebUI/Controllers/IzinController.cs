@@ -1,250 +1,286 @@
-﻿using System;
-using System.Linq;
-using System.Security.Claims;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using PDKS.Business.DTOs;
-using PDKS.Data.Repositories;
+using PDKS.Business.Services;
+using System.Security.Claims;
 
 namespace PDKS.WebUI.Controllers
 {
     [Authorize]
     public class IzinController : Controller
     {
-        private readonly IUnitOfWork _unitOfWork;
+        private readonly IIzinService _izinService;
+        private readonly IPersonelService _personelService;
 
-        public IzinController(IUnitOfWork unitOfWork)
+        public IzinController(IIzinService izinService, IPersonelService personelService)
         {
-            _unitOfWork = unitOfWork;
+            _izinService = izinService;
+            _personelService = personelService;
         }
 
-        [HttpGet]
+        // GET: Izin
         public async Task<IActionResult> Index()
         {
-            var izinler = await _unitOfWork.Izinler.GetAllAsync();
-
-            // Filter based on role
-            if (!User.IsInRole("Admin") && !User.IsInRole("IK"))
+            try
             {
-                var personelId = int.Parse(User.FindFirst("PersonelId")?.Value ?? "0");
-
-                if (User.IsInRole("Yönetici"))
-                {
-                    // Manager sees their department's leaves
-                    var departman = User.FindFirst("Departman")?.Value;
-                    izinler = izinler.Where(i => i.Personel.Departman.Ad == departman).ToList();
-                }
-                else
-                {
-                    // Employee sees only their own leaves
-                    izinler = izinler.Where(i => i.PersonelId == personelId).ToList();
-                }
+                var izinler = await _izinService.GetAllAsync();
+                return View(izinler);
             }
-
-            var izinListDto = izinler.Select(i => new IzinListDTO
+            catch (Exception ex)
             {
-                Id = i.Id,
-                PersonelId = i.PersonelId,
-                PersonelAdi = i.Personel.AdSoyad,
-                IzinTipi = i.IzinTipi,
-                BaslangicTarihi = i.BaslangicTarihi,
-                BitisTarihi = i.BitisTarihi,
-                GunSayisi = i.GunSayisi,
-                Aciklama = i.Aciklama,
-                OnayDurumu = i.OnayDurumu,
-                OnaylayanAdi = i.OnaylayanKullanici?.Personel?.AdSoyad,
-                OnayTarihi = i.OnayTarihi,
-                OlusturmaTarihi = i.OlusturmaTarihi
-            }).OrderByDescending(i => i.OlusturmaTarihi);
-
-            return View(izinListDto);
+                TempData["Error"] = ex.Message;
+                return View(new List<IzinListDTO>());
+            }
         }
 
-        //private async Task LoadViewBagData()
-        //{
-        //    // Burada ViewBag'e veri doldurabilirsin.
-        //    // Örneğin:
-        //    ViewBag.Departmanlar = await _context.Departmanlar
-        //        .OrderBy(d => d.Adi)
-        //        .ToListAsync();
+        // GET: Izin/Details/5
+        public async Task<IActionResult> Details(int id)
+        {
+            try
+            {
+                var izin = await _izinService.GetByIdAsync(id);
+                if (izin == null)
+                {
+                    TempData["Error"] = "İzin kaydı bulunamadı";
+                    return RedirectToAction(nameof(Index));
+                }
+                return View(izin);
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = ex.Message;
+                return RedirectToAction(nameof(Index));
+            }
+        }
 
-        //    ViewBag.Pozisyonlar = await _context.Pozisyonlar
-        //        .OrderBy(p => p.Adi)
-        //        .ToListAsync();
-        //}
-
-        [HttpGet]
+        // GET: Izin/Create
         public async Task<IActionResult> Create()
         {
-            //await LoadViewBagData();
-
-            var dto = new IzinCreateDTO
+            try
             {
-                BaslangicTarihi = DateTime.Today,
-                BitisTarihi = DateTime.Today.AddDays(1)
-            };
+                // Aktif personel listesi
+                var personeller = await _personelService.GetActivePersonelsAsync();
+                ViewBag.Personeller = new SelectList(personeller, "Id", "AdSoyad");
 
-            // If not admin/ik, set current user as personel
-            if (!User.IsInRole("Admin") && !User.IsInRole("IK"))
-            {
-                dto.PersonelId = int.Parse(User.FindFirst("PersonelId")?.Value ?? "0");
+                // İzin tipleri
+                ViewBag.IzinTipleri = new SelectList(new[]
+                {
+                    new { Value = "Yıllık", Text = "Yıllık İzin" },
+                    new { Value = "Mazeret", Text = "Mazeret İzni" },
+                    new { Value = "Hastalık", Text = "Hastalık İzni" },
+                    new { Value = "Ücretsiz", Text = "Ücretsiz İzin" },
+                    new { Value = "Evlilik", Text = "Evlilik İzni" },
+                    new { Value = "Vefat", Text = "Vefat İzni" },
+                    new { Value = "Doğum", Text = "Doğum İzni" }
+                }, "Value", "Text");
+
+                return View();
             }
-
-            return View(dto);
+            catch (Exception ex)
+            {
+                TempData["Error"] = ex.Message;
+                return RedirectToAction(nameof(Index));
+            }
         }
 
+        // POST: Izin/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(IzinCreateDTO dto)
         {
             if (!ModelState.IsValid)
             {
-                //await LoadViewBagData();
+                await LoadDropdownsAsync(dto.PersonelId, dto.IzinTipi);
                 return View(dto);
             }
 
             try
             {
-                // Calculate days
-                var gunSayisi = (dto.BitisTarihi - dto.BaslangicTarihi).Days + 1;
-
-                var izin = new Data.Entities.Izin
-                {
-                    PersonelId = dto.PersonelId,
-                    IzinTipi = dto.IzinTipi,
-                    BaslangicTarihi = dto.BaslangicTarihi,
-                    BitisTarihi = dto.BitisTarihi,
-                    GunSayisi = gunSayisi,
-                    Aciklama = dto.Aciklama,
-                    OnayDurumu = "Beklemede",
-                    OlusturmaTarihi = DateTime.UtcNow
-                };
-
-                await _unitOfWork.Izinler.AddAsync(izin);
-                await _unitOfWork.SaveChangesAsync();
-
-                // Create notification for managers
-                var personel = await _unitOfWork.Personeller.GetByIdAsync(dto.PersonelId);
-                var yoneticiler = await _unitOfWork.Kullanicilar.FindAsync(k =>
-                    (k.Rol.RolAdi == "Admin" || k.Rol.RolAdi == "IK" || k.Rol.RolAdi == "Yönetici")
-                    && k.Aktif);
-
-                foreach (var yonetici in yoneticiler)
-                {
-                    await _unitOfWork.Bildirimler.AddAsync(new Data.Entities.Bildirim
-                    {
-                        KullaniciId = yonetici.Id,
-                        Baslik = "Yeni İzin Talebi",
-                        Mesaj = $"{personel.AdSoyad} ({gunSayisi} gün) izin talebi oluşturdu.",
-                        Tip = "Info",
-                        Okundu = false,
-                        OlusturmaTarihi = DateTime.UtcNow
-                    });
-                }
-
-                await _unitOfWork.SaveChangesAsync();
-
-                //// Log the action
-                //await LogAction("İzin Talebi Oluşturma", "Izin",
-                //    $"{personel.AdSoyad} için izin talebi oluşturuldu");
-
+                await _izinService.CreateAsync(dto);
                 TempData["Success"] = "İzin talebi başarıyla oluşturuldu";
                 return RedirectToAction(nameof(Index));
             }
             catch (Exception ex)
             {
                 TempData["Error"] = ex.Message;
-                //await LoadViewBagData();
+                await LoadDropdownsAsync(dto.PersonelId, dto.IzinTipi);
                 return View(dto);
             }
         }
 
-        [HttpGet]
-        public async Task<IActionResult> Details(int id)
-        {
-            var izin = await _unitOfWork.Izinler.GetByIdAsync(id);
-            if (izin == null)
-                return NotFound();
-
-            // Check permission
-            if (!User.IsInRole("Admin") && !User.IsInRole("IK") && !User.IsInRole("Yönetici"))
-            {
-                var personelId = int.Parse(User.FindFirst("PersonelId")?.Value ?? "0");
-                if (izin.PersonelId != personelId)
-                    return Forbid();
-            }
-
-            var dto = new IzinListDTO
-            {
-                Id = izin.Id,
-                PersonelId = izin.PersonelId,
-                PersonelAdi = izin.Personel.AdSoyad,
-                IzinTipi = izin.IzinTipi,
-                BaslangicTarihi = izin.BaslangicTarihi,
-                BitisTarihi = izin.BitisTarihi,
-                GunSayisi = izin.GunSayisi,
-                Aciklama = izin.Aciklama,
-                OnayDurumu = izin.OnayDurumu,
-
-                // Replace the problematic line in the Details method with the following:
-                OnaylayanAdi = izin.OnaylayanKullanici?.Personel?.AdSoyad,
-                OnayTarihi = izin.OnayTarihi,
-                OlusturmaTarihi = izin.OlusturmaTarihi
-            };
-
-            return View(dto);
-        }
-
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        [Authorize(Roles = "Admin,IK,Yönetici")]
-        public async Task<IActionResult> Onayla(int id)
+        // GET: Izin/Edit/5
+        public async Task<IActionResult> Edit(int id)
         {
             try
             {
-                var izin = await _unitOfWork.Izinler.GetByIdAsync(id);
+                var izin = await _izinService.GetByIdAsync(id);
                 if (izin == null)
-                    return NotFound();
-
-                var kullaniciId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
-
-                izin.OnayDurumu = "Onaylandı";
-                izin.OnaylayanId = kullaniciId;
-                izin.OnayTarihi = DateTime.UtcNow;
-
-                _unitOfWork.Izinler.Update(izin);
-                await _unitOfWork.SaveChangesAsync();
-
-                // Bildirim ekle
-                var personelKullanici = await _unitOfWork.Kullanicilar.FirstOrDefaultAsync(k =>
-                    k.PersonelId == izin.PersonelId);
-
-                if (personelKullanici != null)
                 {
-                    await _unitOfWork.Bildirimler.AddAsync(new Data.Entities.Bildirim
-                    {
-                        KullaniciId = personelKullanici.Id,
-                        Baslik = "İzin Talebi Onaylandı",
-                        Mesaj = $"{izin.GunSayisi} gün izin talebiniz onaylandı.",
-                        Tip = "Success",
-                        Okundu = false,
-                        OlusturmaTarihi = DateTime.UtcNow
-                    });
-                    await _unitOfWork.SaveChangesAsync();
+                    TempData["Error"] = "İzin kaydı bulunamadı";
+                    return RedirectToAction(nameof(Index));
                 }
 
-                TempData["Success"] = "İzin başarıyla onaylandı";
+                // Onaylanmış izin düzenlenemez
+                if (izin.OnayDurumu == "Onaylandı")
+                {
+                    TempData["Error"] = "Onaylanmış izin kaydı düzenlenemez";
+                    return RedirectToAction(nameof(Index));
+                }
+
+                var updateDto = new IzinUpdateDTO
+                {
+                    Id = izin.Id,
+                    PersonelId = izin.PersonelId,
+                    IzinTipi = izin.IzinTipi,
+                    BaslangicTarihi = izin.BaslangicTarihi,
+                    BitisTarihi = izin.BitisTarihi,
+                    Aciklama = izin.Aciklama
+                };
+
+                await LoadDropdownsAsync(izin.PersonelId, izin.IzinTipi);
+                return View(updateDto);
             }
             catch (Exception ex)
             {
-                // Loglama yapılmalı (burada sadece TempData)
-                TempData["Error"] = "İzin onaylanırken bir hata oluştu: " + ex.Message;
+                TempData["Error"] = ex.Message;
+                return RedirectToAction(nameof(Index));
+            }
+        }
+
+        // POST: Izin/Edit/5
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Edit(IzinUpdateDTO dto)
+        {
+            if (!ModelState.IsValid)
+            {
+                await LoadDropdownsAsync(dto.PersonelId, dto.IzinTipi);
+                return View(dto);
             }
 
-            // her durumda bir IActionResult dön
-            return RedirectToAction("Index"); // veya ilgili liste/ayrıntı sayfası
+            try
+            {
+                await _izinService.UpdateAsync(dto);
+                TempData["Success"] = "İzin kaydı başarıyla güncellendi";
+                return RedirectToAction(nameof(Index));
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = ex.Message;
+                await LoadDropdownsAsync(dto.PersonelId, dto.IzinTipi);
+                return View(dto);
+            }
+        }
+
+        // GET: Izin/Delete/5
+        public async Task<IActionResult> Delete(int id)
+        {
+            try
+            {
+                var izin = await _izinService.GetByIdAsync(id);
+                if (izin == null)
+                {
+                    TempData["Error"] = "İzin kaydı bulunamadı";
+                    return RedirectToAction(nameof(Index));
+                }
+                return View(izin);
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = ex.Message;
+                return RedirectToAction(nameof(Index));
+            }
+        }
+
+        // POST: Izin/Delete/5
+        [HttpPost, ActionName("Delete")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeleteConfirmed(int id)
+        {
+            try
+            {
+                await _izinService.DeleteAsync(id);
+                TempData["Success"] = "İzin kaydı başarıyla silindi";
+                return RedirectToAction(nameof(Index));
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = ex.Message;
+                return RedirectToAction(nameof(Index));
+            }
+        }
+
+        // POST: Izin/Approve/5
+        [HttpPost]
+        [Authorize(Roles = "Admin,IK,Yönetici")]
+        public async Task<IActionResult> Approve(int id)
+        {
+            try
+            {
+                var kullaniciId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
+                await _izinService.OnaylaAsync(id, kullaniciId);
+                TempData["Success"] = "İzin talebi onaylandı";
+                return RedirectToAction(nameof(Index));
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = ex.Message;
+                return RedirectToAction(nameof(Index));
+            }
+        }
+
+        // POST: Izin/Reject/5
+        [HttpPost]
+        [Authorize(Roles = "Admin,IK,Yönetici")]
+        public async Task<IActionResult> Reject(int id, string redNedeni)
+        {
+            try
+            {
+                var kullaniciId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
+                await _izinService.ReddetAsync(id, kullaniciId, redNedeni);
+                TempData["Success"] = "İzin talebi reddedildi";
+                return RedirectToAction(nameof(Index));
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = ex.Message;
+                return RedirectToAction(nameof(Index));
+            }
+        }
+
+        // GET: Izin/Pending
+        [Authorize(Roles = "Admin,IK,Yönetici")]
+        public async Task<IActionResult> Pending()
+        {
+            try
+            {
+                var izinler = await _izinService.GetBekleyenIzinlerAsync();
+                return View("Index", izinler);
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = ex.Message;
+                return View("Index", new List<IzinListDTO>());
+            }
+        }
+
+        // Helper method
+        private async Task LoadDropdownsAsync(int? selectedPersonelId = null, string? selectedIzinTipi = null)
+        {
+            var personeller = await _personelService.GetActivePersonelsAsync();
+            ViewBag.Personeller = new SelectList(personeller, "Id", "AdSoyad", selectedPersonelId);
+
+            ViewBag.IzinTipleri = new SelectList(new[]
+            {
+                new { Value = "Yıllık", Text = "Yıllık İzin" },
+                new { Value = "Mazeret", Text = "Mazeret İzni" },
+                new { Value = "Hastalık", Text = "Hastalık İzni" },
+                new { Value = "Ücretsiz", Text = "Ücretsiz İzin" },
+                new { Value = "Evlilik", Text = "Evlilik İzni" },
+                new { Value = "Vefat", Text = "Vefat İzni" },
+                new { Value = "Doğum", Text = "Doğum İzni" }
+            }, "Value", "Text", selectedIzinTipi);
         }
     }
 }

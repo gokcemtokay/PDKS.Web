@@ -1,131 +1,122 @@
-﻿// Please see documentation at https://learn.microsoft.com/aspnet/core/client-side/bundling-and-minification
-// for details on configuring this project to bundle and minify static web assets.
+﻿$(document).ready(function () {
+    // ================================================
+    // SIDEBAR TOGGLE (Desktop + Mobile)
+    // ================================================
 
-// Write your JavaScript code.
-// ==================== SIDEBAR TOGGLE FUNCTIONALITY ====================
-$(document).ready(function () {
-    const sidebar = $('#sidebar');
-    const content = $('#content');
-    const overlay = $('#sidebarOverlay');
-    const toggleBtn = $('#sidebarToggle');
-    const collapseBtn = $('#sidebarCollapseBtn');
-
-    // Toggle sidebar on mobile
-    toggleBtn.on('click', function () {
-        if (window.innerWidth < 992) {
-            sidebar.toggleClass('active');
-            overlay.toggleClass('active');
-            $('body').toggleClass('overflow-hidden');
-        } else {
-            // Desktop: collapse sidebar
-            sidebar.toggleClass('collapsed');
-            content.toggleClass('expanded');
-
-            // Save state to localStorage
-            const isCollapsed = sidebar.hasClass('collapsed');
-            localStorage.setItem('sidebarCollapsed', isCollapsed);
-        }
-    });
-
-    // Close sidebar when clicking collapse button (mobile)
-    collapseBtn.on('click', function () {
-        closeSidebar();
-    });
-
-    // Close sidebar when clicking overlay (mobile)
-    overlay.on('click', function () {
-        closeSidebar();
-    });
-
-    // Close sidebar function
-    function closeSidebar() {
-        sidebar.removeClass('active');
-        overlay.removeClass('active');
-        $('body').removeClass('overflow-hidden');
+    // LocalStorage'dan sidebar durumunu yükle
+    if (localStorage.getItem('sidebar-collapsed') === 'true') {
+        $('.sidebar').addClass('collapsed');
+        $('#content').addClass('expanded');
     }
 
-    // Handle window resize
-    $(window).on('resize', function () {
-        if (window.innerWidth >= 992) {
-            // Desktop
-            closeSidebar();
-            $('body').removeClass('overflow-hidden');
+    // Hamburger butonu - Toggle sidebar
+    $('#sidebarToggle').on('click', function () {
+        if ($(window).width() >= 992) {
+            // Desktop: Collapse/Expand
+            $('.sidebar').toggleClass('collapsed');
+            $('#content').toggleClass('expanded');
 
-            // Restore collapsed state from localStorage
-            const isCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
-            if (isCollapsed) {
-                sidebar.addClass('collapsed');
-                content.addClass('expanded');
+            // Kaydet
+            if ($('.sidebar').hasClass('collapsed')) {
+                localStorage.setItem('sidebar-collapsed', 'true');
+            } else {
+                localStorage.removeItem('sidebar-collapsed');
             }
         } else {
-            // Mobile
-            sidebar.removeClass('collapsed');
-            content.removeClass('expanded');
+            // Mobile: Show
+            $('.sidebar').addClass('active');
+            $('.sidebar-overlay').addClass('active');
+            $('body').css('overflow', 'hidden');
         }
     });
 
-    // Initialize sidebar state on page load (desktop only)
-    if (window.innerWidth >= 992) {
-        const isCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
-        if (isCollapsed) {
-            sidebar.addClass('collapsed');
-            content.addClass('expanded');
+    // Mobile: Close sidebar
+    $('#sidebarCloseBtn, .sidebar-overlay').on('click', function () {
+        $('.sidebar').removeClass('active');
+        $('.sidebar-overlay').removeClass('active');
+        $('body').css('overflow', 'auto');
+    });
+
+    // ================================================
+    // DROPDOWN MENÜLER (Raporlar & Yönetim)
+    // ================================================
+    $('.dropdown-toggle').on('click', function (e) {
+        e.preventDefault();
+
+        // Sidebar collapsed ise çalıştırma
+        if ($('.sidebar').hasClass('collapsed') && $(window).width() >= 992) {
+            return false;
         }
+
+        var submenuId = $(this).data('submenu') + 'Submenu';
+        var $submenu = $('#' + submenuId);
+
+        // Toggle
+        $(this).toggleClass('active');
+        $submenu.slideToggle(200);
+
+        // Diğerlerini kapat
+        $('.dropdown-toggle').not(this).removeClass('active');
+        $('.submenu').not($submenu).slideUp(200);
+    });
+
+    // ================================================
+    // ACTIVE MENU STATE
+    // ================================================
+    var currentPath = window.location.pathname;
+    $('.sidebar a').each(function () {
+        var href = $(this).attr('href');
+        if (href && href !== '#' && currentPath.indexOf(href) === 0) {
+            $(this).parent('li').addClass('active');
+
+            // Parent dropdown'ı aç
+            var $submenu = $(this).closest('.submenu');
+            if ($submenu.length > 0) {
+                $submenu.show();
+                $submenu.prev('.dropdown-toggle').addClass('active');
+            }
+        }
+    });
+
+    // ================================================
+    // MOBILE - AUTO CLOSE
+    // ================================================
+    $('.sidebar a:not(.dropdown-toggle)').on('click', function () {
+        if ($(window).width() < 992) {
+            $('.sidebar').removeClass('active');
+            $('.sidebar-overlay').removeClass('active');
+            $('body').css('overflow', 'auto');
+        }
+    });
+
+    // ================================================
+    // WINDOW RESIZE
+    // ================================================
+    $(window).on('resize', function () {
+        if ($(window).width() >= 992) {
+            $('.sidebar').removeClass('active');
+            $('.sidebar-overlay').removeClass('active');
+            $('body').css('overflow', 'auto');
+        }
+    });
+});
+
+// DataTables Türkçe
+var datatablesTurkish = {
+    "sDecimal": ",",
+    "sEmptyTable": "Tabloda herhangi bir veri mevcut değil",
+    "sInfo": "_TOTAL_ kayıttan _START_ - _END_ arasındaki kayıtlar gösteriliyor",
+    "sInfoEmpty": "Kayıt yok",
+    "sInfoFiltered": "(_MAX_ kayıt içerisinden bulunan)",
+    "sLengthMenu": "Sayfada _MENU_ kayıt göster",
+    "sLoadingRecords": "Yükleniyor...",
+    "sProcessing": "İşleniyor...",
+    "sSearch": "Ara:",
+    "sZeroRecords": "Eşleşen kayıt bulunamadı",
+    "oPaginate": {
+        "sFirst": "İlk",
+        "sLast": "Son",
+        "sNext": "Sonraki",
+        "sPrevious": "Önceki"
     }
-
-    // Close mobile menu when clicking on a menu item
-    $('.sidebar ul li a:not([data-bs-toggle])').on('click', function () {
-        if (window.innerWidth < 992) {
-            closeSidebar();
-        }
-    });
-
-    // Prevent body scroll when mobile menu is open
-    sidebar.on('show.bs.collapse hide.bs.collapse', function () {
-        if (window.innerWidth < 992) {
-            $('body').toggleClass('overflow-hidden');
-        }
-    });
-});
-
-// ==================== NOTIFICATION AUTO HIDE ====================
-$(document).ready(function () {
-    // Auto hide alerts after 5 seconds
-    $('.alert').each(function () {
-        const alert = $(this);
-        setTimeout(function () {
-            alert.fadeOut('slow', function () {
-                alert.remove();
-            });
-        }, 5000);
-    });
-});
-
-// ==================== DATATABLE DEFAULT SETTINGS ====================
-$.extend(true, $.fn.dataTable.defaults, {
-    language: {
-        url: '//cdn.datatables.net/plug-ins/1.13.7/i18n/tr.json'
-    },
-    responsive: true,
-    pageLength: 25,
-    lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, "Tümü"]],
-    dom: "<'row'<'col-sm-12 col-md-6'l><'col-sm-12 col-md-6'f>>" +
-        "<'row'<'col-sm-12'tr>>" +
-        "<'row'<'col-sm-12 col-md-5'i><'col-sm-12 col-md-7'p>>"
-});
-
-// ==================== PREVENT BODY OVERFLOW ====================
-$('body').on('overflow-hidden', function () {
-    $('body').css('overflow', 'hidden');
-});
-
-// ==================== SMOOTH SCROLL ====================
-$('a[href^="#"]').on('click', function (e) {
-    e.preventDefault();
-    const target = $(this.getAttribute('href'));
-    if (target.length) {
-        $('html, body').stop().animate({
-            scrollTop: target.offset().top - 20
-        }, 500);
-    }
-});
+};

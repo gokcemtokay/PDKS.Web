@@ -6,59 +6,72 @@
     ViewData["Title"] = "Personel Düzenle";
 }
 
-<div class="row">
-    <div class="col-md-8 mx-auto">
-        <div class="card">
-            <div class="card-header">
-                <i class="fas fa-user-edit me-2"></i> Personel Düzenle
-            </div>
-            <div class="card-body">
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">Personel Düzenle</h3>
+                </div>
                 <form asp-action="Edit" method="post">
-                    <input type="hidden" asp-for="Id" />
-                    <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+                    <div class="card-body">
+                        <input type="hidden" asp-for="Id" />
 
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <label asp-for="AdSoyad" class="form-label">Ad Soyad <span class="text-danger">*</span></label>
-                            <input asp-for="AdSoyad" class="form-control" placeholder="Örn: Ahmet Yılmaz">
-                            <span asp-validation-for="AdSoyad" class="text-danger"></span>
-                        </div>
-                        <div class="col-md-6">
-                            <label asp-for="SicilNo" class="form-label">Sicil No <span class="text-danger">*</span></label>
-                            <input asp-for="SicilNo" class="form-control" placeholder="Örn: PER001">
-                            <span asp-validation-for="SicilNo" class="text-danger"></span>
-                        </div>
-                    </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label asp-for="TcKimlikNo"></label>
+                                    <input asp-for="TcKimlikNo" class="form-control" />
+                                    <span asp-validation-for="TcKimlikNo" class="text-danger"></span>
+                                </div>
+                            </div>
 
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <label asp-for="Email" class="form-label">Email <span class="text-danger">*</span></label>
-                            <input asp-for="Email" type="email" class="form-control" placeholder="ornek@sirket.com">
-                            <span asp-validation-for="Email" class="text-danger"></span>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label asp-for="SicilNo"></label>
+                                    <input asp-for="SicilNo" class="form-control" />
+                                    <span asp-validation-for="SicilNo" class="text-danger"></span>
+                                </div>
+                            </div>
                         </div>
-                        <div class="col-md-6">
-                            <label asp-for="Telefon" class="form-label">Telefon</label>
-                            <input asp-for="Telefon" class="form-control" placeholder="05001234567">
-                            <span asp-validation-for="Telefon" class="text-danger"></span>
-                        </div>
-                    </div>
 
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <label asp-for="Departman" class="form-label">Departman</label>
-                            <select asp-for="Departman" class="form-select" asp-items="ViewBag.Departmanlar">
-                                <option value="">Seçiniz...</option>
-                            </select>
-                            <span asp-validation-for="Departman" class="text-danger"></span>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label asp-for="AdSoyad"></label>
+                                    <input asp-for="AdSoyad" class="form-control" />
+                                    <span asp-validation-for="AdSoyad" class="text-danger"></span>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label asp-for="SicilNo"></label>
+                                    <input asp-for="SicilNo" class="form-control" />
+                                    <span asp-validation-for="SicilNo" class="text-danger"></span>
+                                </div>
+                            </div>
                         </div>
-                        <div class="col-md-6">
-                            <label asp-for="Gorev" class="form-label">Görev</label>
-                            <select asp-for="Gorev" class="form-select" asp-items="ViewBag.Gorevler">
-                                <option value="">Seçiniz...</option>
-                            </select>
-                            <span asp-validation-for="Gorev" class="text-danger"></span>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label asp-for="DepartmanId">Departman</label>
+                                    <select asp-for="DepartmanId" class="form-control" asp-items="ViewBag.Departmanlar">
+                                        <option value="">-- Departman Seçiniz --</option>
+                                    </select>
+                                    <span asp-validation-for="DepartmanId" class="text-danger"></span>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label asp-for="Gorev"></label>
+                                    <input asp-for="Gorev" class="form-control" />
+                                    <span asp-validation-for="Gorev" class="text-danger"></span>
+                                </div>
+                            </div>
                         </div>
-                    </div>
 
                     <div class="row mb-3">
                         <div class="col-md-6">
@@ -92,6 +105,19 @@
                             </div>
                         </div>
                     </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label asp-for="Email" class="form-label">Email</label>
+                                <input asp-for="Email" type="email" class="form-control">
+                                <span asp-validation-for="Email" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-6">
+                                <label asp-for="Telefon" class="form-label">Telefon</label>
+                                <input asp-for="Telefon" class="form-control" placeholder="05001234567">
+                                <span asp-validation-for="Telefon" class="text-danger"></span>
+                            </div>
+                        </div>
 
                     <div class="row mb-3">
                         <div class="col-md-6">

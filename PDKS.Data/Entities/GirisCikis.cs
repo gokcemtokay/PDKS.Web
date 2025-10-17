@@ -38,7 +38,7 @@ namespace PDKS.Data.Entities
 
         [MaxLength(50)]
         [Column("durum")]
-        public string Durum { get; set; } // Normal, Geç Kalmış, Erken Çıkmış, vb.
+        public string Durum { get; set; } = "Normal";// Normal, Geç Kalmış, Erken Çıkmış, vb.
 
         [Column("elle_giris")]
         public bool ElleGiris { get; set; } = false;
@@ -50,11 +50,10 @@ namespace PDKS.Data.Entities
         [Column("olusturma_tarihi")]
         public DateTime OlusturmaTarihi { get; set; } = DateTime.UtcNow;
 
-        // Navigation Properties
-        [ForeignKey("PersonelId")]
+        [ForeignKey(nameof(PersonelId))]
         public virtual Personel Personel { get; set; }
 
-        [ForeignKey("CihazId")]
+        [ForeignKey(nameof(CihazId))]
         public virtual Cihaz Cihaz { get; set; }
     }
 }

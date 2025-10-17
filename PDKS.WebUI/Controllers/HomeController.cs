@@ -102,7 +102,7 @@ namespace PDKS.WebUI.Controllers
                     IzinTipi = i.IzinTipi,
                     BaslangicTarihi = i.BaslangicTarihi,
                     BitisTarihi = i.BitisTarihi,
-                    GunSayisi = i.GunSayisi,
+                    GunSayisi = i.IzinGunSayisi,
                     OnayDurumu = i.OnayDurumu,
                     OlusturmaTarihi = i.OlusturmaTarihi
                 })

@@ -446,7 +446,7 @@ namespace PDKS.Business.Services
                     IzinTipi = izin.IzinTipi,
                     BaslangicTarihi = izin.BaslangicTarihi,
                     BitisTarihi = izin.BitisTarihi,
-                    GunSayisi = izin.GunSayisi,
+                    GunSayisi = izin.IzinGunSayisi,
                     Aciklama = izin.Aciklama
                 });
             }

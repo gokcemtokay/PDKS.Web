@@ -26,6 +26,11 @@ builder.Services.AddScoped<IParametreService, ParametreService>();
 builder.Services.AddScoped<IKullaniciService, KullaniciService>();
 builder.Services.AddScoped<IDepartmanService, DepartmanService>();
 builder.Services.AddScoped<IMesaiService, MesaiService>();
+builder.Services.AddScoped<IVardiyaService, VardiyaService>();  
+builder.Services.AddScoped<IIzinService, IzinService>();  
+
+
+
 
 // Authentication
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)

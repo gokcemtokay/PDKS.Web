@@ -85,6 +85,7 @@ namespace PDKS.Business.Services
                 Sifre = _authService.HashPassword(dto.Sifre),
                 PersonelId = dto.PersonelId,
                 RolId = dto.RolId,
+                Email = dto.KullaniciAdi,
                 Aktif = dto.Aktif,
                 KayitTarihi = DateTime.UtcNow
             };

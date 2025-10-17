@@ -1,0 +1,62 @@
+﻿@model PDKS.Business.DTOs.DepartmanListDTO
+
+@{
+    ViewData["Title"] = "Departman Detayı";
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">Departman Detayı</h3>
+                    <div class="card-tools">
+                        <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-warning btn-sm">
+                            <i class="fas fa-edit"></i> Düzenle
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <dl class="row">
+                        <dt class="col-sm-3">Departman Kodu:</dt>
+                        <dd class="col-sm-9">@(Model.Kod ?? "-")</dd>
+
+                        <dt class="col-sm-3">Departman Adı:</dt>
+                        <dd class="col-sm-9">@Model.Ad</dd>
+
+                        <dt class="col-sm-3">Üst Departman:</dt>
+                        <dd class="col-sm-9">@(Model.UstDepartmanAdi ?? "-")</dd>
+
+                        <dt class="col-sm-3">Personel Sayısı:</dt>
+                        <dd class="col-sm-9">
+                            <span class="badge badge-info badge-lg">@Model.PersonelSayisi</span>
+                        </dd>
+
+                        <dt class="col-sm-3">Durum:</dt>
+                        <dd class="col-sm-9">
+                            @if (Model.Durum)
+                            {
+                                <span class="badge badge-success">Aktif</span>
+                            }
+                            else
+                            {
+                                <span class="badge badge-danger">Pasif</span>
+                            }
+                        </dd>
+
+                        <dt class="col-sm-3">Açıklama:</dt>
+                        <dd class="col-sm-9">@(Model.Aciklama ?? "-")</dd>
+                    </dl>
+                </div>
+                <div class="card-footer">
+                    <a asp-action="Index" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> Geri Dön
+                    </a>
+                    <a asp-action="Delete" asp-route-id="@Model.Id" class="btn btn-danger">
+                        <i class="fas fa-trash"></i> Sil
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

@@ -35,8 +35,8 @@ namespace PDKS.WebUI.Controllers
                 {
                     Id = vardiya.Id,
                     Ad = vardiya.Ad,
-                    BaslangicSaati = vardiya.BaslangicSaati,
-                    BitisSaati = vardiya.BitisSaati,
+                    BaslangicSaati = vardiya.BaslangicSaati.ToString(@"hh\:mm"),
+                    BitisSaati = vardiya.BitisSaati.ToString(@"hh\:mm"),
                     GeceVardiyasiMi = vardiya.GeceVardiyasiMi,
                     EsnekVardiyaMi = vardiya.EsnekVardiyaMi,
                     ToleransSuresiDakika = vardiya.ToleransSuresiDakika,
@@ -64,11 +64,17 @@ namespace PDKS.WebUI.Controllers
 
             try
             {
+                if (!TimeSpan.TryParse(dto.BaslangicSaati, out var baslangic))
+                    throw new Exception("Geçersiz başlangıç saati formatı");
+
+                if (!TimeSpan.TryParse(dto.BitisSaati, out var bitis))
+                    throw new Exception("Geçersiz bitiş saati formatı");
+
                 var vardiya = new Vardiya
                 {
                     Ad = dto.Ad,
-                    BaslangicSaati = dto.BaslangicSaati,
-                    BitisSaati = dto.BitisSaati,
+                    BaslangicSaati = baslangic,
+                    BitisSaati = bitis,
                     GeceVardiyasiMi = dto.GeceVardiyasiMi,
                     EsnekVardiyaMi = dto.EsnekVardiyaMi,
                     ToleransSuresiDakika = dto.ToleransSuresiDakika,
@@ -80,7 +86,6 @@ namespace PDKS.WebUI.Controllers
                 await _unitOfWork.SaveChangesAsync();
 
                 await LogAction("Vardiya Ekleme", "Vardiya", $"Yeni vardiya eklendi: {dto.Ad}");
-
                 TempData["Success"] = "Vardiya başarıyla eklendi";
                 return RedirectToAction(nameof(Index));
             }
@@ -90,6 +95,7 @@ namespace PDKS.WebUI.Controllers
                 return View(dto);
             }
         }
+
 
         [HttpGet]
         public async Task<IActionResult> Edit(int id)
@@ -102,8 +108,8 @@ namespace PDKS.WebUI.Controllers
             {
                 Id = vardiya.Id,
                 Ad = vardiya.Ad,
-                BaslangicSaati = vardiya.BaslangicSaati,
-                BitisSaati = vardiya.BitisSaati,
+                BaslangicSaati = vardiya.BaslangicSaati.ToString(@"hh\:mm"),
+                BitisSaati = vardiya.BitisSaati.ToString(@"hh\:mm"),
                 GeceVardiyasiMi = vardiya.GeceVardiyasiMi,
                 EsnekVardiyaMi = vardiya.EsnekVardiyaMi,
                 ToleransSuresiDakika = vardiya.ToleransSuresiDakika,
@@ -127,9 +133,15 @@ namespace PDKS.WebUI.Controllers
                 if (vardiya == null)
                     return NotFound();
 
+                if (!TimeSpan.TryParse(dto.BaslangicSaati, out var baslangic))
+                    throw new Exception("Geçersiz başlangıç saati formatı");
+
+                if (!TimeSpan.TryParse(dto.BitisSaati, out var bitis))
+                    throw new Exception("Geçersiz bitiş saati formatı");
+
                 vardiya.Ad = dto.Ad;
-                vardiya.BaslangicSaati = dto.BaslangicSaati;
-                vardiya.BitisSaati = dto.BitisSaati;
+                vardiya.BaslangicSaati = baslangic;
+                vardiya.BitisSaati = bitis;
                 vardiya.GeceVardiyasiMi = dto.GeceVardiyasiMi;
                 vardiya.EsnekVardiyaMi = dto.EsnekVardiyaMi;
                 vardiya.ToleransSuresiDakika = dto.ToleransSuresiDakika;

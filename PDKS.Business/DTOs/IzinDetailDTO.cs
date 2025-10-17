@@ -1,6 +1,6 @@
 ﻿namespace PDKS.Business.DTOs
 {
-    public class IzinListDTO
+    public class IzinDetailDTO
     {
         public int Id { get; set; }
         public int PersonelId { get; set; }
@@ -15,6 +15,6 @@
         public DateTime? OnayTarihi { get; set; }
         public string? Aciklama { get; set; }
         public string? RedNedeni { get; set; }
-        public DateTime? OlusturmaTarihi { get; set; }
+        public DateTime TalepTarihi { get; set; }
     }
 }

@@ -1,0 +1,62 @@
+﻿@model PDKS.Business.DTOs.DepartmanListDTO
+
+@{
+    ViewData["Title"] = "Departman Sil";
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card card-danger">
+                <div class="card-header">
+                    <h3 class="card-title">Departman Sil</h3>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-warning">
+                        <h5><i class="icon fas fa-exclamation-triangle"></i> Uyarı!</h5>
+                        Bu departmanı silmek istediğinizden emin misiniz?
+                    </div>
+
+                    <dl class="row">
+                        <dt class="col-sm-3">Departman Kodu:</dt>
+                        <dd class="col-sm-9">@(Model.Kod ?? "-")</dd>
+
+                        <dt class="col-sm-3">Departman Adı:</dt>
+                        <dd class="col-sm-9">@Model.Ad</dd>
+
+                        <dt class="col-sm-3">Üst Departman:</dt>
+                        <dd class="col-sm-9">@(Model.UstDepartmanAdi ?? "-")</dd>
+
+                        <dt class="col-sm-3">Personel Sayısı:</dt>
+                        <dd class="col-sm-9">
+                            <span class="badge badge-info badge-lg">@Model.PersonelSayisi</span>
+                        </dd>
+
+                        <dt class="col-sm-3">Açıklama:</dt>
+                        <dd class="col-sm-9">@(Model.Aciklama ?? "-")</dd>
+                    </dl>
+
+                    @if (Model.PersonelSayisi > 0)
+                    {
+                        <div class="alert alert-danger">
+                            <h5><i class="icon fas fa-ban"></i> Dikkat!</h5>
+                            Bu departmanda <strong>@Model.PersonelSayisi</strong> personel bulunmaktadır.
+                            Departmanı silmeden önce personelleri başka departmanlara aktarmanız gerekmektedir.
+                        </div>
+                    }
+                </div>
+                <div class="card-footer">
+                    <form asp-action="Delete" method="post">
+                        <input type="hidden" asp-for="Id" />
+                        <button type="submit" class="btn btn-danger" @(Model.PersonelSayisi > 0 ? "disabled" : "")>
+                            <i class="fas fa-trash"></i> Evet, Sil
+                        </button>
+                        <a asp-action="Index" class="btn btn-secondary">
+                            <i class="fas fa-times"></i> İptal
+                        </a>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

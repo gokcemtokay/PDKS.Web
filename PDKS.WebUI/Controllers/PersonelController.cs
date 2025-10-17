@@ -1,150 +1,245 @@
-﻿using System;
-using System.Linq;
-using System.Security.Claims;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using PDKS.Business.DTOs;
 using PDKS.Business.Services;
-using PDKS.Data.Repositories;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace PDKS.WebUI.Controllers
 {
-    [Authorize(Roles = "Admin,IK")]
+    [Authorize]
     public class PersonelController : Controller
     {
         private readonly IPersonelService _personelService;
-        private readonly IUnitOfWork _unitOfWork;
+        private readonly IDepartmanService _departmanService;
+        private readonly IVardiyaService _vardiyaService;
 
-        public PersonelController(IPersonelService personelService, IUnitOfWork unitOfWork)
+        public PersonelController(
+            IPersonelService personelService,
+            IDepartmanService departmanService,
+            IVardiyaService vardiyaService)
         {
             _personelService = personelService;
-            _unitOfWork = unitOfWork;
+            _departmanService = departmanService;
+            _vardiyaService = vardiyaService;
         }
 
-        [HttpGet]
+        // GET: Personel
         public async Task<IActionResult> Index()
         {
-            var personeller = await _personelService.GetAllAsync();
-            return View(personeller);
+            try
+            {
+                var personeller = await _personelService.GetAllAsync();
+                return View(personeller);
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = ex.Message;
+                return View(new List<PersonelListDTO>());
+            }
         }
 
-        [HttpGet]
+        // GET: Personel/Details/5
         public async Task<IActionResult> Details(int id)
         {
-            var personel = await _personelService.GetByIdAsync(id);
-            if (personel == null)
-                return NotFound();
-
-            return View(personel);
+            try
+            {
+                var personel = await _personelService.GetByIdAsync(id);
+                if (personel == null)
+                {
+                    TempData["Error"] = "Personel bulunamadı";
+                    return RedirectToAction(nameof(Index));
+                }
+                return View(personel);
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = ex.Message;
+                return RedirectToAction(nameof(Index));
+            }
         }
 
-        [HttpGet]
+        // GET: Personel/Create
         public async Task<IActionResult> Create()
         {
-            await LoadViewBagData();
-            return View();
+            try
+            {
+                // Departman listesini ViewBag'e ekle
+                var departmanlar = await _departmanService.GetAktifDepartmanlarAsync();
+                ViewBag.Departmanlar = new SelectList(departmanlar, "Id", "Ad");
+
+                // Vardiya listesini ViewBag'e ekle
+                var vardiyalar = await _vardiyaService.GetAktifVardiyalarAsync();
+                ViewBag.Vardiyalar = new SelectList(vardiyalar, "Id", "Ad");
+
+                return View();
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = ex.Message;
+                return RedirectToAction(nameof(Index));
+            }
         }
 
+        // POST: Personel/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(PersonelCreateDTO dto)
         {
             if (!ModelState.IsValid)
             {
-                await LoadViewBagData();
+                // Hata durumunda dropdown'ları tekrar doldur
+                var departmanlar = await _departmanService.GetAktifDepartmanlarAsync();
+                ViewBag.Departmanlar = new SelectList(departmanlar, "Id", "Ad", dto.DepartmanId);
+
+                var vardiyalar = await _vardiyaService.GetAktifVardiyalarAsync();
+                ViewBag.Vardiyalar = new SelectList(vardiyalar, "Id", "Ad", dto.VardiyaId);
+
                 return View(dto);
             }
 
             try
             {
-                var personelId = await _personelService.CreateAsync(dto);
-
-                // Log the action
-                await LogAction("Personel Ekleme", "Personel", $"Yeni personel eklendi: {dto.AdSoyad}");
-
+                await _personelService.CreateAsync(dto);
                 TempData["Success"] = "Personel başarıyla eklendi";
-                return RedirectToAction(nameof(Details), new { id = personelId });
+                return RedirectToAction(nameof(Index));
             }
             catch (Exception ex)
             {
                 TempData["Error"] = ex.Message;
-                await LoadViewBagData();
+
+                // Hata durumunda dropdown'ları tekrar doldur
+                var departmanlar = await _departmanService.GetAktifDepartmanlarAsync();
+                ViewBag.Departmanlar = new SelectList(departmanlar, "Id", "Ad", dto.DepartmanId);
+
+                var vardiyalar = await _vardiyaService.GetAktifVardiyalarAsync();
+                ViewBag.Vardiyalar = new SelectList(vardiyalar, "Id", "Ad", dto.VardiyaId);
+
                 return View(dto);
             }
         }
 
-        [HttpGet]
+        // GET: Personel/Edit/5
         public async Task<IActionResult> Edit(int id)
         {
-            var personel = await _personelService.GetByIdAsync(id);
-            if (personel == null)
-                return NotFound();
-
-            var dto = new PersonelUpdateDTO
+            try
             {
-                Id = personel.Id,
-                AdSoyad = personel.AdSoyad,
-                SicilNo = personel.SicilNo,
-                Departman = personel.Departman,
-                Gorev = personel.Gorev,
-                Email = personel.Email,
-                Telefon = personel.Telefon,
-                Durum = personel.Durum,
-                GirisTarihi = personel.GirisTarihi,
-                CikisTarihi = personel.CikisTarihi,
-                VardiyaId = personel.VardiyaId,
-                Maas = personel.Maas,
-                AvansLimiti = personel.AvansLimiti
-            };
+                var personel = await _personelService.GetByIdAsync(id);
+                if (personel == null)
+                {
+                    TempData["Error"] = "Personel bulunamadı";
+                    return RedirectToAction(nameof(Index));
+                }
 
-            await LoadViewBagData();
-            return View(dto);
+                // PersonelDetailDTO'dan PersonelUpdateDTO'ya mapping
+                var updateDto = new PersonelUpdateDTO
+                {
+                    Id = personel.Id,
+                    AdSoyad = personel.AdSoyad,
+                    SicilNo = personel.SicilNo,
+                    TcKimlikNo = personel.TcKimlikNo,
+                    Email = personel.Email,
+                    Telefon = personel.Telefon,
+                    Adres = personel.Adres,
+                    DogumTarihi = personel.DogumTarihi,
+                    Cinsiyet = personel.Cinsiyet,
+                    KanGrubu = personel.KanGrubu,
+                    GirisTarihi = personel.GirisTarihi,
+                    CikisTarihi = personel.CikisTarihi,
+                    Maas = personel.Maas,
+                    Unvan = personel.Unvan,
+                    Gorev = personel.Gorev,
+                    AvansLimiti = personel.AvansLimiti,
+                    DepartmanId = personel.DepartmanId,
+                    Departman = personel.DepartmanAdi,
+                    VardiyaId = personel.VardiyaId,
+                    Durum = personel.Durum,
+                    Notlar = personel.Notlar
+                };
+
+                // Departman listesini ViewBag'e ekle
+                var departmanlar = await _departmanService.GetAktifDepartmanlarAsync();
+                ViewBag.Departmanlar = new SelectList(departmanlar, "Id", "Ad", updateDto.DepartmanId);
+
+                // Vardiya listesini ViewBag'e ekle
+                var vardiyalar = await _vardiyaService.GetAktifVardiyalarAsync();
+                ViewBag.Vardiyalar = new SelectList(vardiyalar, "Id", "Ad", updateDto.VardiyaId);
+
+                return View(updateDto);
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = ex.Message;
+                return RedirectToAction(nameof(Index));
+            }
         }
 
+        // POST: Personel/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(PersonelUpdateDTO dto)
         {
             if (!ModelState.IsValid)
             {
-                await LoadViewBagData();
+                // Hata durumunda dropdown'ları tekrar doldur
+                var departmanlar = await _departmanService.GetAktifDepartmanlarAsync();
+                ViewBag.Departmanlar = new SelectList(departmanlar, "Id", "Ad", dto.DepartmanId);
+
+                var vardiyalar = await _vardiyaService.GetAktifVardiyalarAsync();
+                ViewBag.Vardiyalar = new SelectList(vardiyalar, "Id", "Ad", dto.VardiyaId);
+
                 return View(dto);
             }
 
             try
             {
                 await _personelService.UpdateAsync(dto);
-
-                // Log the action
-                await LogAction("Personel Güncelleme", "Personel", $"Personel güncellendi: {dto.AdSoyad}");
-
                 TempData["Success"] = "Personel başarıyla güncellendi";
-                return RedirectToAction(nameof(Details), new { id = dto.Id });
+                return RedirectToAction(nameof(Index));
             }
             catch (Exception ex)
             {
                 TempData["Error"] = ex.Message;
-                await LoadViewBagData();
+
+                // Hata durumunda dropdown'ları tekrar doldur
+                var departmanlar = await _departmanService.GetAktifDepartmanlarAsync();
+                ViewBag.Departmanlar = new SelectList(departmanlar, "Id", "Ad", dto.DepartmanId);
+
+                var vardiyalar = await _vardiyaService.GetAktifVardiyalarAsync();
+                ViewBag.Vardiyalar = new SelectList(vardiyalar, "Id", "Ad", dto.VardiyaId);
+
                 return View(dto);
             }
         }
 
-        [HttpPost]
-        [ValidateAntiForgeryToken]
+        // GET: Personel/Delete/5
         public async Task<IActionResult> Delete(int id)
         {
             try
             {
                 var personel = await _personelService.GetByIdAsync(id);
+                if (personel == null)
+                {
+                    TempData["Error"] = "Personel bulunamadı";
+                    return RedirectToAction(nameof(Index));
+                }
+                return View(personel);
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = ex.Message;
+                return RedirectToAction(nameof(Index));
+            }
+        }
+
+        // POST: Personel/Delete/5
+        [HttpPost, ActionName("Delete")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeleteConfirmed(int id)
+        {
+            try
+            {
                 await _personelService.DeleteAsync(id);
-
-                // Log the action
-                await LogAction("Personel Silme", "Personel", $"Personel pasif yapıldı: {personel.AdSoyad}");
-
-                TempData["Success"] = "Personel başarıyla pasif yapıldı";
+                TempData["Success"] = "Personel başarıyla silindi (pasif edildi)";
                 return RedirectToAction(nameof(Index));
             }
             catch (Exception ex)
@@ -154,65 +249,34 @@ namespace PDKS.WebUI.Controllers
             }
         }
 
-        [HttpGet]
+        // GET: Personel/Search
         public async Task<IActionResult> Search(string searchTerm)
         {
-            var personeller = await _personelService.SearchAsync(searchTerm);
-            return View("Index", personeller);
+            try
+            {
+                var personeller = await _personelService.SearchAsync(searchTerm);
+                return View("Index", personeller);
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = ex.Message;
+                return View("Index", new List<PersonelListDTO>());
+            }
         }
 
-        // Helper methods
-        private async Task LoadViewBagData()
+        // GET: Personel/Active
+        public async Task<IActionResult> Active()
         {
-            var vardiyalar = await _unitOfWork.Vardiyalar.FindAsync(v => v.Durum);
-            ViewBag.Vardiyalar = new SelectList(vardiyalar, "Id", "Ad");
-
-            ViewBag.Departmanlar = new SelectList(new[]
+            try
             {
-                "Bilgi İşlem",
-                "İnsan Kaynakları",
-                "Muhasebe",
-                "Satış",
-                "Pazarlama",
-                "Üretim",
-                "Lojistik",
-                "Ar-Ge",
-                "Kalite Kontrol",
-                "Genel Müdürlük"
-            });
-
-            ViewBag.Gorevler = new SelectList(new[]
+                var personeller = await _personelService.GetActivePersonelsAsync();
+                return View("Index", personeller);
+            }
+            catch (Exception ex)
             {
-                "Yazılım Geliştirici",
-                "İK Uzmanı",
-                "Muhasebe Uzmanı",
-                "Satış Temsilcisi",
-                "Pazarlama Müdürü",
-                "Üretim Operatörü",
-                "Lojistik Sorumlusu",
-                "Ar-Ge Müdürü",
-                "Kalite Kontrol Uzmanı",
-                "Genel Müdür",
-                "Yönetici",
-                "Uzman",
-                "Memur",
-                "İşçi"
-            });
-        }
-
-        private async Task LogAction(string islem, string modul, string detay)
-        {
-            var kullaniciId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
-            await _unitOfWork.Loglar.AddAsync(new Data.Entities.Log
-            {
-                KullaniciId = kullaniciId,
-                Islem = islem,
-                Modul = modul,
-                Detay = detay,
-                IpAdres = HttpContext.Connection.RemoteIpAddress?.ToString(),
-                Tarih = DateTime.UtcNow
-            });
-            await _unitOfWork.SaveChangesAsync();
+                TempData["Error"] = ex.Message;
+                return View("Index", new List<PersonelListDTO>());
+            }
         }
     }
 }

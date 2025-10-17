@@ -1,0 +1,71 @@
+﻿@model PDKS.Business.DTOs.DepartmanUpdateDTO
+
+@{
+    ViewData["Title"] = "Departman Düzenle";
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">Departman Düzenle</h3>
+                </div>
+                <form asp-action="Edit" method="post">
+                    <div class="card-body">
+                        <input type="hidden" asp-for="Id" />
+                        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+                        <div class="form-group">
+                            <label asp-for="Ad"></label>
+                            <input asp-for="Ad" class="form-control" />
+                            <span asp-validation-for="Ad" class="text-danger"></span>
+                        </div>
+
+                        <div class="form-group">
+                            <label asp-for="Kod"></label>
+                            <input asp-for="Kod" class="form-control" />
+                            <span asp-validation-for="Kod" class="text-danger"></span>
+                        </div>
+
+                        <div class="form-group">
+                            <label asp-for="UstDepartmanId">Üst Departman</label>
+                            <select asp-for="UstDepartmanId" class="form-control" asp-items="ViewBag.UstDepartmanlar">
+                                <option value="">-- Ana Departman --</option>
+                            </select>
+                            <span asp-validation-for="UstDepartmanId" class="text-danger"></span>
+                            <small class="form-text text-muted">Ana departman için boş bırakabilirsiniz</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label asp-for="Aciklama"></label>
+                            <textarea asp-for="Aciklama" class="form-control" rows="3"></textarea>
+                            <span asp-validation-for="Aciklama" class="text-danger"></span>
+                        </div>
+
+                        <div class="form-group">
+                            <div class="custom-control custom-switch">
+                                <input type="checkbox" class="custom-control-input" asp-for="Durum" id="Durum">
+                                <label class="custom-control-label" for="Durum">Aktif</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-footer">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Güncelle
+                        </button>
+                        <a asp-action="Index" class="btn btn-secondary">
+                            <i class="fas fa-times"></i> İptal
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

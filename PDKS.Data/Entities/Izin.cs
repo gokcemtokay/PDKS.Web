@@ -1,59 +1,52 @@
-﻿using System.ComponentModel.DataAnnotations.Schema;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace PDKS.Data.Entities
 {
-    [Table("izinler")]
+    [Table("Izinler")]
     public class Izin
     {
         [Key]
-        [Column("id")]
         public int Id { get; set; }
 
         [Required]
-        [Column("personel_id")]
         public int PersonelId { get; set; }
 
         [Required]
-        [MaxLength(50)]
-        [Column("izin_tipi")]
-        public string IzinTipi { get; set; } // Yıllık, Raporlu, Ücretsiz, Doğum, Mazeret
+        [StringLength(50)]
+        public string IzinTipi { get; set; } // Yıllık, Mazeret, Hastalık, Ücretsiz, Evlilik, Vefat, Doğum
 
-        [Column("baslangic_tarihi")]
+        [Required]
         public DateTime BaslangicTarihi { get; set; }
 
-        [Column("bitis_tarihi")]
+        [Required]
         public DateTime BitisTarihi { get; set; }
 
-        [Column("gun_sayisi")]
-        public int GunSayisi { get; set; }
+        public int IzinGunSayisi { get; set; }  
 
-        [MaxLength(1000)]
-        [Column("aciklama")]
-        public string Aciklama { get; set; }
-
-        [MaxLength(50)]
-        [Column("onay_durumu")]
+        [Required]
+        [StringLength(50)]
         public string OnayDurumu { get; set; } = "Beklemede"; // Beklemede, Onaylandı, Reddedildi
 
-        [Column("onaylayan_id")]
-        public int? OnaylayanId { get; set; }
+        public int? OnaylayanKullaniciId { get; set; }  
 
-        [Column("onay_tarihi")]
         public DateTime? OnayTarihi { get; set; }
 
-        [MaxLength(500)]
-        [Column("red_nedeni")]
-        public string RedNedeni { get; set; }
+        [StringLength(1000)]
+        public string? Aciklama { get; set; }
 
-        [Column("olusturma_tarihi")]
-        public DateTime OlusturmaTarihi { get; set; } = DateTime.UtcNow;
+        [StringLength(500)]
+        public string? RedNedeni { get; set; }
+
+        public DateTime TalepTarihi { get; set; } = DateTime.UtcNow;  
+        public DateTime OlusturmaTarihi { get; set; } = DateTime.UtcNow;  
 
         // Navigation Properties
         [ForeignKey("PersonelId")]
-        public virtual Personel Personel { get; set; }
+        public Personel Personel { get; set; }
 
-        [ForeignKey("OnaylayanId")]
+        [ForeignKey("OnaylayanKullaniciId")]
         public Kullanici? OnaylayanKullanici { get; set; }
+
     }
 }

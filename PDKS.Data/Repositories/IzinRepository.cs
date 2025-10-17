@@ -45,7 +45,7 @@ namespace PDKS.Data.Repositories
                     && i.OnayDurumu == "Onaylandı")
                 .ToListAsync();
 
-            return izinler.Sum(i => i.GunSayisi);
+            return izinler.Sum(i => i.IzinGunSayisi);
         }
 
         public async Task<bool> IzinCakismaMiAsync(int personelId, DateTime baslangic, DateTime bitis, int? excludeId = null)

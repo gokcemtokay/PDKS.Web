@@ -110,6 +110,7 @@ namespace PDKS.Data.Context
                 .HasOne(g => g.Personel)
                 .WithMany(p => p.GirisCikislar)
                 .HasForeignKey(g => g.PersonelId)
+                .HasForeignKey(g => g.CihazId)
                 .OnDelete(DeleteBehavior.Cascade);
 
             // GirisCikis - Cihaz (Many-to-One)
@@ -130,7 +131,7 @@ namespace PDKS.Data.Context
             modelBuilder.Entity<Izin>()
                 .HasOne(i => i.OnaylayanKullanici)
                 .WithMany()
-                .HasForeignKey(i => i.OnaylayanId)
+                .HasForeignKey(i => i.OnaylayanKullaniciId)
                 .OnDelete(DeleteBehavior.Restrict);
 
             // Avans - Personel (Many-to-One)
