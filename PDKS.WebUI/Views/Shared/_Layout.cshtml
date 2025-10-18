@@ -78,34 +78,88 @@
                 </a>
             </li>
 
-            <!-- RAPORLAR DROPDOWN -->
-            <li>
-                <a href="#" class="dropdown-toggle" data-submenu="raporlar">
-                    <i class="fas fa-chart-line"></i>
-                    <span class="sidebar-text">Raporlar</span>
-                    <i class="fas fa-chevron-down ms-auto sidebar-text dropdown-arrow"></i>
-                </a>
-                <ul class="submenu" id="raporlarSubmenu" style="display: none;">
-                    <li>
-                        <a asp-controller="Report" asp-action="GunlukRapor">
-                            <i class="far fa-circle"></i>
-                            <span class="sidebar-text">Günlük Rapor</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a asp-controller="Report" asp-action="AylikRapor">
-                            <i class="far fa-circle"></i>
-                            <span class="sidebar-text">Aylık Rapor</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a asp-controller="Report" asp-action="PersonelDetay">
-                            <i class="far fa-circle"></i>
-                            <span class="sidebar-text">Personel Detay</span>
-                        </a>
-                    </li>
-                </ul>
-            </li>
+<!-- RAPORLAR DROPDOWN - DÜZELTİLDİ -->
+<li>
+    <a href="#" class="dropdown-toggle" data-submenu="raporlar">
+        <i class="fas fa-chart-line"></i>
+        <span class="sidebar-text">Raporlar</span>
+        <i class="fas fa-chevron-down ms-auto sidebar-text dropdown-arrow"></i>
+    </a>
+    <ul class="submenu" id="raporlarSubmenu" style="display: none;">
+        <li>
+            <a asp-controller="Rapor" asp-action="Index">
+                <i class="fas fa-th-large"></i>
+                <span class="sidebar-text">Rapor Merkezi</span>
+            </a>
+        </li>
+        <li class="submenu-divider"></li>
+        <li class="submenu-header">Giriş-Çıkış</li>
+        <li>
+            <a asp-controller="Rapor" asp-action="KisiBazindaGirisCikis">
+                <i class="far fa-circle"></i>
+                <span class="sidebar-text">Kişi Bazında</span>
+            </a>
+        </li>
+        <li>
+            <a asp-controller="Rapor" asp-action="GenelGirisCikis">
+                <i class="far fa-circle"></i>
+                <span class="sidebar-text">Genel Rapor</span>
+            </a>
+        </li>
+        <li>
+            <a asp-controller="Rapor" asp-action="GenelGecKalanlar">
+                <i class="far fa-circle"></i>
+                <span class="sidebar-text">Geç Kalanlar</span>
+            </a>
+        </li>
+        <li>
+            <a asp-controller="Rapor" asp-action="GenelErkenCikanlar">
+                <i class="far fa-circle"></i>
+                <span class="sidebar-text">Erken Çıkanlar</span>
+            </a>
+        </li>
+        <li class="submenu-divider"></li>
+        <li class="submenu-header">Özel Raporlar</li>
+        <li>
+            <a asp-controller="Rapor" asp-action="MesaiyeKalanlar">
+                <i class="far fa-circle"></i>
+                <span class="sidebar-text">Fazla Mesai</span>
+            </a>
+        </li>
+        <li>
+            <a asp-controller="Rapor" asp-action="Devamsizlar">
+                <i class="far fa-circle"></i>
+                <span class="sidebar-text">Devamsızlar</span>
+            </a>
+        </li>
+        <li>
+            <a asp-controller="Rapor" asp-action="IzinliPersoneller">
+                <i class="far fa-circle"></i>
+                <span class="sidebar-text">İzinli Personel</span>
+            </a>
+        </li>
+        <li class="submenu-divider"></li>
+        <li class="submenu-header">Maaş & Bordro</li>
+        <li>
+            <a asp-controller="Rapor" asp-action="GenelMaasBordrosu">
+                <i class="far fa-circle"></i>
+                <span class="sidebar-text">Maaş Bordrosu</span>
+            </a>
+        </li>
+        <li>
+            <a asp-controller="Rapor" asp-action="AvansListesi">
+                <i class="far fa-circle"></i>
+                <span class="sidebar-text">Avans Listesi</span>
+            </a>
+        </li>
+        <li>
+            <a asp-controller="Rapor" asp-action="PrimListesi">
+                <i class="far fa-circle"></i>
+                <span class="sidebar-text">Prim Listesi</span>
+            </a>
+        </li>
+    </ul>
+</li>
 
             <!-- YÖNETİM DROPDOWN (Admin Only) -->
             @if (User.IsInRole("Admin"))
@@ -141,6 +195,14 @@
                                 <span class="sidebar-text">Tatil Günleri</span>
                             </a>
                         </li>
+
+                                        <li class="submenu-divider"></li>
+                <li>
+                    <a asp-controller="Settings" asp-action="Index">
+                        <i class="fas fa-cogs"></i>
+                        <span class="sidebar-text">Sistem Ayarları</span>
+                    </a>
+                </li>
                     </ul>
                 </li>
                 <li>

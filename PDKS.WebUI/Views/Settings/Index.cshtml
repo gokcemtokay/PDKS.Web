@@ -1,0 +1,306 @@
+﻿@{
+    ViewData["Title"] = "Sistem Ayarları";
+}
+
+<div class="container-fluid">
+    <!-- Başlık -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2>
+                <i class="fas fa-cogs text-primary"></i>
+                Sistem Ayarları
+            </h2>
+            <p class="text-muted">PDKS sisteminin tüm ayarlarını buradan yönetebilirsiniz</p>
+        </div>
+    </div>
+
+    <!-- Ayar Kategorileri -->
+    <div class="row">
+        <!-- Otomatik Mail Gönderimi -->
+        <div class="col-md-4 mb-4">
+            <div class="card h-100 report-card">
+                <div class="card-body text-center">
+                    <div class="report-icon text-primary">
+                        <i class="fas fa-envelope-open-text"></i>
+                    </div>
+                    <h5 class="card-title">Otomatik Mail Gönderimi</h5>
+                    <p class="text-muted">Raporları otomatik olarak belirlenen saatlerde mail ile gönderin</p>
+                    <a asp-action="AutomaticEmails" class="btn btn-primary">
+                        <i class="fas fa-cog me-2"></i>Ayarları Düzenle
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Yedekleme ve Geri Yükleme -->
+        <div class="col-md-4 mb-4">
+            <div class="card h-100 report-card">
+                <div class="card-body text-center">
+                    <div class="report-icon text-success">
+                        <i class="fas fa-database"></i>
+                    </div>
+                    <h5 class="card-title">Yedekleme</h5>
+                    <p class="text-muted">Veritabanı yedekleme ve geri yükleme işlemleri</p>
+                    <a asp-action="Backup" class="btn btn-success">
+                        <i class="fas fa-download me-2"></i>Yedekleme Yönet
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sistem Parametreleri -->
+        <div class="col-md-4 mb-4">
+            <div class="card h-100 report-card">
+                <div class="card-body text-center">
+                    <div class="report-icon text-warning">
+                        <i class="fas fa-sliders-h"></i>
+                    </div>
+                    <h5 class="card-title">Sistem Parametreleri</h5>
+                    <p class="text-muted">Çalışma saatleri, tolerans süreleri ve diğer parametreler</p>
+                    <a asp-action="SystemParameters" class="btn btn-warning">
+                        <i class="fas fa-edit me-2"></i>Parametreleri Düzenle
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Kullanıcı Yetkileri -->
+        <div class="col-md-4 mb-4">
+            <div class="card h-100 report-card">
+                <div class="card-body text-center">
+                    <div class="report-icon text-info">
+                        <i class="fas fa-user-shield"></i>
+                    </div>
+                    <h5 class="card-title">Kullanıcı Yetkileri</h5>
+                    <p class="text-muted">Kullanıcı rolleri ve erişim yetkilerini düzenleyin</p>
+                    <a asp-action="UserPermissions" class="btn btn-info">
+                        <i class="fas fa-key me-2"></i>Yetkileri Yönet
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Veri Kurtarma -->
+        <div class="col-md-4 mb-4">
+            <div class="card h-100 report-card">
+                <div class="card-body text-center">
+                    <div class="report-icon text-danger">
+                        <i class="fas fa-trash-restore"></i>
+                    </div>
+                    <h5 class="card-title">Veri Kurtarma</h5>
+                    <p class="text-muted">Silinen kayıtları geri getirin</p>
+                    <a asp-action="DataRecovery" class="btn btn-danger">
+                        <i class="fas fa-undo me-2"></i>Kurtarma İşlemleri
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Otomatik Veri Transferi -->
+        <div class="col-md-4 mb-4">
+            <div class="card h-100 report-card">
+                <div class="card-body text-center">
+                    <div class="report-icon text-secondary">
+                        <i class="fas fa-sync-alt"></i>
+                    </div>
+                    <h5 class="card-title">Otomatik Veri Transferi</h5>
+                    <p class="text-muted">Cihazlardan otomatik veri çekme ayarları</p>
+                    <a asp-action="AutoDataTransfer" class="btn btn-secondary">
+                        <i class="fas fa-clock me-2"></i>Transfer Ayarları
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Görsel Ayarlar -->
+        <div class="col-md-4 mb-4">
+            <div class="card h-100 report-card">
+                <div class="card-body text-center">
+                    <div class="report-icon text-purple">
+                        <i class="fas fa-palette"></i>
+                    </div>
+                    <h5 class="card-title">Görsel Ayarlar</h5>
+                    <p class="text-muted">Tema, yazı boyutu ve görünüm ayarları</p>
+                    <a asp-action="Appearance" class="btn btn-purple">
+                        <i class="fas fa-paint-brush me-2"></i>Görünümü Özelleştir
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Yazılım Güncellemesi -->
+        <div class="col-md-4 mb-4">
+            <div class="card h-100 report-card">
+                <div class="card-body text-center">
+                    <div class="report-icon text-dark">
+                        <i class="fas fa-cloud-download-alt"></i>
+                    </div>
+                    <h5 class="card-title">Yazılım Güncellemesi</h5>
+                    <p class="text-muted">Sistem güncellemelerini kontrol edin</p>
+                    <a asp-action="CheckUpdate" class="btn btn-dark">
+                        <i class="fas fa-download me-2"></i>Güncelleme Kontrol
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Lisans Yönetimi -->
+        <div class="col-md-4 mb-4">
+            <div class="card h-100 report-card">
+                <div class="card-body text-center">
+                    <div class="report-icon" style="color: #764ba2;">
+                        <i class="fas fa-certificate"></i>
+                    </div>
+                    <h5 class="card-title">Lisans Yönetimi</h5>
+                    <p class="text-muted">Yazılım lisans bilgileri ve yenileme</p>
+                    <a asp-action="License" class="btn" style="background: #764ba2; color: white;">
+                        <i class="fas fa-id-card me-2"></i>Lisans Bilgileri
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hızlı Bilgiler -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-gradient" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+                    <h5 class="mb-0">
+                        <i class="fas fa-info-circle me-2"></i>Sistem Bilgileri
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3 mb-3">
+                            <div class="d-flex align-items-center">
+                                <div class="me-3" style="font-size: 2rem; color: #667eea;">
+                                    <i class="fas fa-code-branch"></i>
+                                </div>
+                                <div>
+                                    <small class="text-muted">Versiyon</small>
+                                    <h5 class="mb-0">1.0.0</h5>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <div class="d-flex align-items-center">
+                                <div class="me-3" style="font-size: 2rem; color: #28a745;">
+                                    <i class="fas fa-check-circle"></i>
+                                </div>
+                                <div>
+                                    <small class="text-muted">Lisans Durumu</small>
+                                    <h5 class="mb-0 text-success">Aktif</h5>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <div class="d-flex align-items-center">
+                                <div class="me-3" style="font-size: 2rem; color: #ffc107;">
+                                    <i class="fas fa-server"></i>
+                                </div>
+                                <div>
+                                    <small class="text-muted">Veritabanı</small>
+                                    <h5 class="mb-0">Postgre SQL Server</h5>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <div class="d-flex align-items-center">
+                                <div class="me-3" style="font-size: 2rem; color: #17a2b8;">
+                                    <i class="fas fa-calendar-alt"></i>
+                                </div>
+                                <div>
+                                    <small class="text-muted">Son Yedekleme</small>
+                                    <h5 class="mb-0">@DateTime.Now.AddDays(-1).ToString("dd.MM.yyyy")</h5>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Özellikler Kartı -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-star me-2"></i> PDKS Özellikler
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <ul class="list-unstyled">
+                                <li class="mb-2">
+                                    <i class="fas fa-check-circle text-success me-2"></i>
+                                    Otomatik mail gönderme sistemi
+                                </li>
+                                <li class="mb-2">
+                                    <i class="fas fa-check-circle text-success me-2"></i>
+                                    Otomatik yedekleme ve kurtarma
+                                </li>
+                                <li class="mb-2">
+                                    <i class="fas fa-check-circle text-success me-2"></i>
+                                    Cihazlardan otomatik veri transferi
+                                </li>
+                                <li class="mb-2">
+                                    <i class="fas fa-check-circle text-success me-2"></i>
+                                    Kullanıcı yetkilendirme sistemi
+                                </li>
+                                <li class="mb-2">
+                                    <i class="fas fa-check-circle text-success me-2"></i>
+                                    Elle müdahale takip sistemi
+                                </li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <ul class="list-unstyled">
+                                <li class="mb-2">
+                                    <i class="fas fa-check-circle text-success me-2"></i>
+                                    Excel ve PDF rapor çıktıları
+                                </li>
+                                <li class="mb-2">
+                                    <i class="fas fa-check-circle text-success me-2"></i>
+                                    Görsel değişiklik ve özelleştirme
+                                </li>
+                                <li class="mb-2">
+                                    <i class="fas fa-check-circle text-success me-2"></i>
+                                    Veri kurtarma özelliği
+                                </li>
+                                <li class="mb-2">
+                                    <i class="fas fa-check-circle text-success me-2"></i>
+                                    Çoklu para birimi desteği (TL, USD, EUR)
+                                </li>
+                                <li class="mb-2">
+                                    <i class="fas fa-check-circle text-success me-2"></i>
+                                    Web üzerinden erişim imkanı
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .btn-purple {
+        background: #764ba2;
+        color: white;
+        border: none;
+    }
+
+        .btn-purple:hover {
+            background: #5a3779;
+            color: white;
+        }
+
+    .text-purple {
+        color: #764ba2;
+    }
+</style>

@@ -1,5 +1,201 @@
-﻿@*
-    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
-*@
+﻿@model List<PDKS.Business.DTOs.KartUnutanlarRaporDTO>
 @{
+    ViewData["Title"] = "Kart Unutanlar Raporu";
+    var filtre = ViewBag.Filtre as PDKS.Business.DTOs.RaporFiltreDTO;
+}
+
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2>
+                <i class="fas fa-id-card-alt text-warning"></i>
+                Kart Unutanlar Raporu
+            </h2>
+            <p class="text-muted">Kartını unutup elle giriş yapan personellerin listesi</p>
+        </div>
+    </div>
+
+    <!-- Filtre -->
+    <div class="card report-filter-card mb-4">
+        <div class="card-body">
+            <form asp-action="KartUnutanlar" method="post">
+                <div class="row g-3 align-items-end">
+                    <div class="col-md-4">
+                        <label class="form-label">
+                            <i class="fas fa-calendar-alt me-1"></i> Başlangıç Tarihi
+                        </label>
+                        <input type="date" name="BaslangicTarihi" class="form-control"
+                               value="@(filtre?.BaslangicTarihi.ToString("yyyy-MM-dd") ?? DateTime.Now.AddMonths(-1).ToString("yyyy-MM-dd"))"
+                               required />
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">
+                            <i class="fas fa-calendar-alt me-1"></i> Bitiş Tarihi
+                        </label>
+                        <input type="date" name="BitisTarihi" class="form-control"
+                               value="@(filtre?.BitisTarihi.ToString("yyyy-MM-dd") ?? DateTime.Now.ToString("yyyy-MM-dd"))"
+                               required />
+                    </div>
+                    <div class="col-md-4">
+                        <button type="submit" class="btn btn-light w-100">
+                            <i class="fas fa-search me-2"></i> Raporu Getir
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    @if (Model != null && Model.Any())
+    {
+        <!-- Özet -->
+        <div class="row mb-4">
+            <div class="col-md-4">
+                <div class="report-summary-card">
+                    <div class="summary-label">Toplam Kayıt</div>
+                    <div class="summary-value text-warning">@Model.Count</div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="report-summary-card">
+                    <div class="summary-label">Farklı Personel</div>
+                    <div class="summary-value text-info">
+                        @Model.Select(k => k.PersonelId).Distinct().Count()
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="report-summary-card">
+                    <div class="summary-label">En Çok Unutan</div>
+                    <div class="summary-value text-danger">
+                        @Model.GroupBy(k => k.PersonelAdi).OrderByDescending(g => g.Count()).First().Key
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Export Butonları -->
+        <div class="card mb-3">
+            <div class="card-body">
+                <div class="btn-group">
+                    <button class="btn btn-excel" onclick="exportToExcel()">
+                        <i class="fas fa-file-excel me-2"></i> Excel
+                    </button>
+                    <button class="btn btn-pdf" onclick="exportToPDF()">
+                        <i class="fas fa-file-pdf me-2"></i> PDF
+                    </button>
+                    <button class="btn btn-print" onclick="window.print()">
+                        <i class="fas fa-print me-2"></i> Yazdır
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tablo -->
+        <div class="card">
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table report-table" id="kartTable">
+                        <thead>
+                            <tr>
+                                <th>Tarih</th>
+                                <th>Sicil No</th>
+                                <th>Personel</th>
+                                <th>Departman</th>
+                                <th>Giriş Saati</th>
+                                <th>Çıkış Saati</th>
+                                <th>Not</th>
+                                <th>Onaylayan</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var kayit in Model)
+                            {
+                                <tr>
+                                    <td>@kayit.Tarih.ToString("dd.MM.yyyy")</td>
+                                    <td><strong>@kayit.SicilNo</strong></td>
+                                    <td>@kayit.PersonelAdi</td>
+                                    <td>@kayit.Departman</td>
+                                    <td>@kayit.GirisSaati?.ToString("HH:mm")</td>
+                                    <td>@kayit.CikisSaati?.ToString("HH:mm")</td>
+                                    <td><small>@kayit.Not</small></td>
+                                    <td>@kayit.OnaylayanAdi</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- İstatistikler -->
+                <div class="card mt-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">Personel Bazında İstatistikler</h5>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="kartChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="alert alert-info">
+            <i class="fas fa-info-circle me-2"></i>
+            Seçilen tarih aralığında kartını unutan personel kaydı bulunamadı.
+        </div>
+    }
+</div>
+
+@section Scripts {
+    <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap5.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <script>
+        $(document).ready(function() {
+            $('#kartTable').DataTable({
+                language: { url: '//cdn.datatables.net/plug-ins/1.11.5/i18n/tr.json' },
+                order: [[0, 'desc']]
+            });
+
+        @if (Model != null && Model.Any())
+        {
+            var gruplu = @Html.Raw(Json.Serialize(
+                Model.GroupBy(k => k.PersonelAdi)
+                    .Select(g => new { Ad = g.Key, Sayi = g.Count() })
+                    .OrderByDescending(x => x.Sayi)
+                    .Take(10)
+            ));
+
+            <text>
+                    new Chart(document.getElementById('kartChart'), {
+                        type: 'bar',
+                        data: {
+                            labels: gruplu.map(x => x.Ad),
+                            datasets: [{
+                                label: 'Kart Unutma Sayısı',
+                                data: gruplu.map(x => x.Sayi),
+                                backgroundColor: 'rgba(255, 193, 7, 0.8)'
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            scales: { y: { beginAtZero: true } }
+                        }
+                    });
+            </text>
+        }
+        });
+
+        function exportToExcel() {
+            const wb = XLSX.utils.table_to_book(document.getElementById('kartTable'));
+            XLSX.writeFile(wb, 'KartUnutanlar_' + new Date().toISOString().slice(0,10) + '.xlsx');
+        }
+
+        function exportToPDF() {
+            window.print();
+        }
+    </script>
 }

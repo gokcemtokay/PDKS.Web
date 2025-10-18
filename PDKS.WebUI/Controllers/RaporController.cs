@@ -56,9 +56,10 @@ namespace PDKS.WebUI.Controllers
                 filtre.BaslangicTarihi,
                 filtre.BitisTarihi);
 
+            ViewBag.Rapor = rapor;
             ViewBag.Filtre = filtre;
             await LoadViewBagData();
-            return View(rapor);
+            return View(filtre);
         }
 
         [HttpGet]
@@ -80,9 +81,10 @@ namespace PDKS.WebUI.Controllers
                 rapor = rapor.Where(r => r.Departman == filtre.Departman).ToList();
             }
 
+            ViewBag.Rapor = rapor;
             ViewBag.Filtre = filtre;
             await LoadViewBagData();
-            return View(rapor);
+            return View(filtre);
         }
 
         #endregion
@@ -111,9 +113,10 @@ namespace PDKS.WebUI.Controllers
                 filtre.BaslangicTarihi,
                 filtre.BitisTarihi);
 
+            ViewBag.Rapor = rapor;
             ViewBag.Filtre = filtre;
             await LoadViewBagData();
-            return View(rapor);
+            return View(filtre);
         }
 
         [HttpGet]
@@ -135,9 +138,10 @@ namespace PDKS.WebUI.Controllers
                 rapor = rapor.Where(r => r.Departman == filtre.Departman).ToList();
             }
 
+            ViewBag.Rapor = rapor;
             ViewBag.Filtre = filtre;
             await LoadViewBagData();
-            return View(rapor);
+            return View(filtre);
         }
 
         #endregion
@@ -166,9 +170,10 @@ namespace PDKS.WebUI.Controllers
                 filtre.BaslangicTarihi,
                 filtre.BitisTarihi);
 
+            ViewBag.Rapor = rapor;
             ViewBag.Filtre = filtre;
             await LoadViewBagData();
-            return View(rapor);
+            return View(filtre);
         }
 
         [HttpGet]
@@ -190,9 +195,10 @@ namespace PDKS.WebUI.Controllers
                 rapor = rapor.Where(r => r.Departman == filtre.Departman).ToList();
             }
 
+            ViewBag.Rapor = rapor;
             ViewBag.Filtre = filtre;
             await LoadViewBagData();
-            return View(rapor);
+            return View(filtre);
         }
 
         #endregion
@@ -210,25 +216,26 @@ namespace PDKS.WebUI.Controllers
         [HttpPost]
         public async Task<IActionResult> MesaiyeKalanlar(RaporFiltreDTO filtre)
         {
-            //var rapor = await _reportService.MesaiyeKalanlarRaporu(
-            //    filtre.BaslangicTarihi,
-            //    filtre.BitisTarihi);
+            var rapor = await _reportService.MesaiyeKalanlarRaporu(
+                filtre.BaslangicTarihi,
+                filtre.BitisTarihi);
 
-            //if (!string.IsNullOrEmpty(filtre.Departman))
-            //{
-            //    rapor = rapor.Where(r => r.Departman == filtre.Departman).ToList();
-            //}
-
-            var viewModel = new MesaiyeKalanlarViewModel
+            if (!string.IsNullOrEmpty(filtre.Departman))
             {
-                Filtre = filtre, // Kullanıcının formda doldurduğu filtre
-                RaporSonuclari = await _reportService.MesaiyeKalanlarRaporu(filtre.BaslangicTarihi,
-                filtre.BitisTarihi)
-            };
+                rapor = rapor.Where(r => r.Departman == filtre.Departman).ToList();
+            }
 
-            //ViewBag.Filtre = filtre;
-            //await LoadViewBagData();
-            return View(viewModel);
+            //var viewModel = new MesaiyeKalanlarViewModel
+            //{
+            //    Filtre = filtre, // Kullanıcının formda doldurduğu filtre
+            //    RaporSonuclari = await _reportService.MesaiyeKalanlarRaporu(filtre.BaslangicTarihi,
+            //    filtre.BitisTarihi)
+            //};
+
+            ViewBag.Rapor = rapor;
+            ViewBag.Filtre = filtre;
+            await LoadViewBagData();
+            return View(filtre);
         }
 
         [HttpGet]
@@ -250,9 +257,10 @@ namespace PDKS.WebUI.Controllers
                 rapor = rapor.Where(r => r.Departman == filtre.Departman).ToList();
             }
 
+            ViewBag.Rapor = rapor;
             ViewBag.Filtre = filtre;
             await LoadViewBagData();
-            return View(rapor);
+            return View(filtre);
         }
 
         [HttpGet]
@@ -274,9 +282,10 @@ namespace PDKS.WebUI.Controllers
                 rapor = rapor.Where(r => r.Departman == filtre.Departman).ToList();
             }
 
+            ViewBag.Rapor = rapor;
             ViewBag.Filtre = filtre;
             await LoadViewBagData();
-            return View(rapor);
+            return View(filtre);
         }
 
         [HttpGet]
@@ -293,9 +302,10 @@ namespace PDKS.WebUI.Controllers
                 filtre.BaslangicTarihi,
                 filtre.BitisTarihi);
 
+            ViewBag.Rapor = rapor;
             ViewBag.Filtre = filtre;
             await LoadViewBagData();
-            return View(rapor);
+            return View(filtre);
         }
 
         [HttpGet]
@@ -312,9 +322,10 @@ namespace PDKS.WebUI.Controllers
                 filtre.BaslangicTarihi,
                 filtre.BitisTarihi);
 
+            ViewBag.Rapor = rapor;
             ViewBag.Filtre = filtre;
             await LoadViewBagData();
-            return View(rapor);
+            return View(filtre);
         }
 
         [HttpGet]
@@ -331,9 +342,10 @@ namespace PDKS.WebUI.Controllers
                 filtre.BaslangicTarihi,
                 filtre.BitisTarihi);
 
+            ViewBag.Rapor = rapor;
             ViewBag.Filtre = filtre;
             await LoadViewBagData();
-            return View(rapor);
+            return View(filtre);
         }
 
         [HttpGet]
@@ -350,9 +362,10 @@ namespace PDKS.WebUI.Controllers
                 filtre.BaslangicTarihi,
                 filtre.BitisTarihi);
 
+            ViewBag.Rapor = rapor;
             ViewBag.Filtre = filtre;
             await LoadViewBagData();
-            return View(rapor);
+            return View(filtre);
         }
 
         [HttpGet]
@@ -369,9 +382,10 @@ namespace PDKS.WebUI.Controllers
                 filtre.BaslangicTarihi,
                 filtre.BitisTarihi);
 
+            ViewBag.Rapor = rapor;
             ViewBag.Filtre = filtre;
             await LoadViewBagData();
-            return View(rapor);
+            return View(filtre);
         }
 
         [HttpGet]
@@ -388,9 +402,10 @@ namespace PDKS.WebUI.Controllers
                 filtre.BaslangicTarihi,
                 filtre.BitisTarihi);
 
+            ViewBag.Rapor = rapor;
             ViewBag.Filtre = filtre;
             await LoadViewBagData();
-            return View(rapor);
+            return View(filtre);
         }
 
         #endregion
@@ -419,9 +434,10 @@ namespace PDKS.WebUI.Controllers
                 filtre.Yil.Value,
                 filtre.Ay.Value);
 
+            ViewBag.Rapor = rapor;
             ViewBag.Filtre = filtre;
             await LoadViewBagData();
-            return View(rapor);
+            return View(filtre);
         }
 
         [HttpGet]
@@ -445,9 +461,10 @@ namespace PDKS.WebUI.Controllers
                 filtre.Yil.Value,
                 filtre.Ay.Value);
 
+            ViewBag.Rapor = rapor;
             ViewBag.Filtre = filtre;
             await LoadViewBagData();
-            return View(rapor);
+            return View(filtre);
         }
 
         [HttpGet]
@@ -464,9 +481,10 @@ namespace PDKS.WebUI.Controllers
                 filtre.BaslangicTarihi,
                 filtre.BitisTarihi);
 
+            ViewBag.Rapor = rapor;
             ViewBag.Filtre = filtre;
             await LoadViewBagData();
-            return View(rapor);
+            return View(filtre);
         }
 
         [HttpGet]
@@ -491,9 +509,10 @@ namespace PDKS.WebUI.Controllers
                 filtre.Yil.Value,
                 filtre.Ay.Value);
 
+            ViewBag.Rapor = rapor;
             ViewBag.Filtre = filtre;
             await LoadViewBagData();
-            return View(rapor);
+            return View(filtre);
         }
 
         [HttpGet]
@@ -517,9 +536,10 @@ namespace PDKS.WebUI.Controllers
                 filtre.Yil.Value,
                 filtre.Ay.Value);
 
+            ViewBag.Rapor = rapor;
             ViewBag.Filtre = filtre;
             await LoadViewBagData();
-            return View(rapor);
+            return View(filtre);
         }
 
         [HttpGet]
@@ -544,9 +564,10 @@ namespace PDKS.WebUI.Controllers
                 filtre.Yil.Value,
                 filtre.Ay.Value);
 
+            ViewBag.Rapor = rapor;
             ViewBag.Filtre = filtre;
             await LoadViewBagData();
-            return View(rapor);
+            return View(filtre);
         }
 
         #endregion
@@ -586,9 +607,9 @@ namespace PDKS.WebUI.Controllers
                 worksheet.Cell(row, 2).Value = item.PersonelAdi;
                 worksheet.Cell(row, 3).Value = item.SicilNo;
                 worksheet.Cell(row, 4).Value = item.Departman;
-                worksheet.Cell(row, 5).Value = item.GirisZamani?.ToString("HH:mm") ?? "-";
-                worksheet.Cell(row, 6).Value = item.CikisZamani?.ToString("HH:mm") ?? "-";
-                worksheet.Cell(row, 7).Value = item.CalismaSuresiText;
+                worksheet.Cell(row, 5).Value = item.GirisSaati?.ToString("HH:mm") ?? "-";
+                worksheet.Cell(row, 6).Value = item.CikisSaati?.ToString("HH:mm") ?? "-";
+                worksheet.Cell(row, 7).Value = item.ToplamCalismaSuresi;
                 worksheet.Cell(row, 8).Value = item.Durum;
                 row++;
             }

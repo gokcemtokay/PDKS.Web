@@ -1,172 +1,234 @@
-﻿@* Rapor/KisiBazindaGirisCikis.cshtml *@
-@model IEnumerable<PDKS.Business.DTOs.GirisCikisRaporDTO>
+﻿@model PDKS.Business.DTOs.RaporFiltreDTO
 @{
     ViewData["Title"] = "Kişi Bazında Giriş-Çıkış Raporu";
-    var filtre = ViewBag.Filtre as PDKS.Business.DTOs.RaporFiltreDTO;
+    var rapor = ViewBag.Rapor as List<PDKS.Business.DTOs.GirisCikisRaporDTO>;
 }
 
-<div class="row mb-3">
-    <div class="col-md-8">
-        <form method="post" asp-action="KisiBazindaGirisCikis" class="row g-3">
-            <div class="col-md-4">
-                <label class="form-label">Personel <span class="text-danger">*</span></label>
-                <select name="PersonelId" class="form-select" asp-items="ViewBag.Personeller" required>
-                    <option value="">Personel Seçiniz</option>
-                </select>
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2>
+                <i class="fas fa-user text-primary"></i>
+                Kişi Bazında Giriş-Çıkış Raporu
+            </h2>
+            <p class="text-muted">Personel bazlı detaylı giriş-çıkış raporu</p>
+        </div>
+    </div>
+
+    <!-- Filtre Kartı -->
+    <div class="card report-filter-card mb-4">
+        <div class="card-body">
+            <form asp-action="KisiBazindaGirisCikis" method="post">
+                <div class="row g-3 align-items-end">
+                    <div class="col-md-3">
+                        <label class="form-label">
+                            <i class="fas fa-user me-1"></i> Personel
+                        </label>
+                        <select name="PersonelId" class="form-select" required>
+                            <option value="">Personel Seçin</option>
+                            @if (ViewBag.Personeller != null)
+                            {
+                                @foreach (var personel in ViewBag.Personeller)
+                                {
+                                    <option value="@personel.Value" selected="@(personel.Value == Model?.PersonelId?.ToString())">
+                                        @personel.Text
+                                    </option>
+                                }
+                            }
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">
+                            <i class="fas fa-calendar-alt me-1"></i> Başlangıç Tarihi
+                        </label>
+                        <input type="date" name="BaslangicTarihi" class="form-control"
+                               value="@(Model?.BaslangicTarihi.ToString("yyyy-MM-dd") ?? DateTime.Now.AddMonths(-1).ToString("yyyy-MM-dd"))"
+                               required />
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">
+                            <i class="fas fa-calendar-alt me-1"></i> Bitiş Tarihi
+                        </label>
+                        <input type="date" name="BitisTarihi" class="form-control"
+                               value="@(Model?.BitisTarihi.ToString("yyyy-MM-dd") ?? DateTime.Now.ToString("yyyy-MM-dd"))"
+                               required />
+                    </div>
+                    <div class="col-md-3">
+                        <button type="submit" class="btn btn-light w-100">
+                            <i class="fas fa-search me-2"></i> Raporu Getir
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    @if (rapor != null && rapor.Any())
+    {
+        <!-- Özet Kartlar -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="report-summary-card">
+                    <div class="summary-label">Toplam Gün</div>
+                    <div class="summary-value text-primary">@rapor.Count</div>
+                </div>
             </div>
             <div class="col-md-3">
-                <label class="form-label">Başlangıç</label>
-                <input type="date" name="BaslangicTarihi" class="form-control"
-                       value="@(filtre?.BaslangicTarihi.ToString("yyyy-MM-dd") ?? DateTime.Today.AddMonths(-1).ToString("yyyy-MM-dd"))">
+                <div class="report-summary-card">
+                    <div class="summary-label">Toplam Çalışma</div>
+                    <div class="summary-value text-success">
+                        @TimeSpan.FromMinutes(rapor.Sum(r => r.ToplamCalismaDakika)).ToString(@"hh\:mm")
+                    </div>
+                </div>
             </div>
             <div class="col-md-3">
-                <label class="form-label">Bitiş</label>
-                <input type="date" name="BitisTarihi" class="form-control"
-                       value="@(filtre?.BitisTarihi.ToString("yyyy-MM-dd") ?? DateTime.Today.ToString("yyyy-MM-dd"))">
+                <div class="report-summary-card">
+                    <div class="summary-label">Geç Kalma</div>
+                    <div class="summary-value text-warning">
+                        @rapor.Count(r => r.GecKalma > 0) Gün
+                    </div>
+                </div>
             </div>
-            <div class="col-md-2">
-                <label class="form-label">&nbsp;</label>
-                <button type="submit" class="btn btn-primary w-100">
-                    <i class="fas fa-search"></i> Görüntüle
-                </button>
+            <div class="col-md-3">
+                <div class="report-summary-card">
+                    <div class="summary-label">Erken Çıkış</div>
+                    <div class="summary-value text-danger">
+                        @rapor.Count(r => r.ErkenCikis > 0) Gün
+                    </div>
+                </div>
             </div>
-        </form>
-    </div>
-    <div class="col-md-4 text-end">
-        <a asp-action="Index" class="btn btn-secondary">
-            <i class="fas fa-arrow-left"></i> Raporlar
-        </a>
-    </div>
+        </div>
+
+        <!-- Export Butonları -->
+        <div class="card mb-3">
+            <div class="card-body">
+                <div class="btn-group">
+                    <button class="btn btn-excel" onclick="exportToExcel()">
+                        <i class="fas fa-file-excel me-2"></i> Excel'e Aktar
+                    </button>
+                    <button class="btn btn-pdf" onclick="exportToPDF()">
+                        <i class="fas fa-file-pdf me-2"></i> PDF'e Aktar
+                    </button>
+                    <button class="btn btn-print" onclick="window.print()">
+                        <i class="fas fa-print me-2"></i> Yazdır
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Rapor Tablosu -->
+        <div class="card">
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table report-table" id="raporTable">
+                        <thead>
+                            <tr>
+                                <th>Tarih</th>
+                                <th>Giriş Saati</th>
+                                <th>Çıkış Saati</th>
+                                <th>Çalışma Süresi</th>
+                                <th>Geç Kalma</th>
+                                <th>Erken Çıkış</th>
+                                <th>Durum</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var kayit in rapor)
+                            {
+                                <tr>
+                                    <td>@kayit.Tarih.ToString("dd.MM.yyyy - dddd")</td>
+                                    <td>
+                                        @if (kayit.GirisSaati.HasValue)
+                                        {
+                                            <strong>@kayit.GirisSaati.Value.ToString("HH:mm")</strong>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">-</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        @if (kayit.CikisSaati.HasValue)
+                                        {
+                                            <strong>@kayit.CikisSaati.Value.ToString("HH:mm")</strong>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">-</span>
+                                        }
+                                    </td>
+                                    <td>@TimeSpan.FromMinutes(kayit.ToplamCalismaDakika).ToString(@"hh\:mm")</td>
+                                    <td>
+                                        @if (kayit.GecKalma > 0)
+                                        {
+                                            <span class="badge bg-warning">@kayit.GecKalma dk</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">-</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        @if (kayit.ErkenCikis > 0)
+                                        {
+                                            <span class="badge bg-danger">@kayit.ErkenCikis dk</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">-</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        @if (kayit.GirisSaati == null && kayit.CikisSaati == null)
+                                        {
+                                            <span class="badge bg-secondary">Kayıt Yok</span>
+                                        }
+                                        else if (kayit.GecKalma > 0 || kayit.ErkenCikis > 0)
+                                        {
+                                            <span class="badge bg-warning">Uyarı</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-success">Normal</span>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    }
+    else if (Model != null && Model.PersonelId.HasValue)
+    {
+        <div class="alert alert-info">
+            <i class="fas fa-info-circle me-2"></i>
+            Seçilen kriterlere uygun kayıt bulunamadı.
+        </div>
+    }
 </div>
 
-@if (Model != null && Model.Any())
-{
-    var personel = Model.First();
-    <div class="card">
-        <div class="card-header bg-primary text-white">
-            <i class="fas fa-user-circle me-2"></i> @personel.PersonelAdi - Giriş-Çıkış Raporu
-            <span class="badge bg-light text-dark ms-2">@Model.Count() Kayıt</span>
-        </div>
-        <div class="card-body">
-            <!-- Stats -->
-            <div class="row mb-4">
-                <div class="col-md-3">
-                    <div class="card bg-success text-white">
-                        <div class="card-body text-center">
-                            <h4>@Model.Count(r => r.Durum == "Normal")</h4>
-                            <small>Normal Giriş</small>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="card bg-warning">
-                        <div class="card-body text-center">
-                            <h4>@Model.Count(r => r.GecKalmaSuresi > 0)</h4>
-                            <small>Geç Kalma</small>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="card bg-info text-white">
-                        <div class="card-body text-center">
-                            <h4>@Model.Count(r => r.ErkenCikisSuresi > 0)</h4>
-                            <small>Erken Çıkış</small>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="card bg-primary text-white">
-                        <div class="card-body text-center">
-                            <h4>@Model.Sum(r => r.CalismaSuresi / 60) s</h4>
-                            <small>Toplam Çalışma</small>
-                        </div>
-                    </div>
-                </div>
-            </div>
+@section Scripts {
+    <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap5.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
-            <div class="table-responsive">
-                <table class="table table-hover table-sm">
-                    <thead>
-                        <tr>
-                            <th>Tarih</th>
-                            <th>Gün</th>
-                            <th>Giriş</th>
-                            <th>Çıkış</th>
-                            <th>Çalışma</th>
-                            <th>Geç Kalma</th>
-                            <th>Erken Çıkış</th>
-                            <th>Fazla Mesai</th>
-                            <th>Durum</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var item in Model)
-                        {
-                            <tr>
-                                <td>@item.Tarih.ToString("dd.MM.yyyy")</td>
-                                <td>@item.Tarih.ToString("ddd")</td>
-                                <td>@item.GirisZamani?.ToString("HH:mm")</td>
-                                <td>@item.CikisZamani?.ToString("HH:mm")</td>
-                                <td>@item.CalismaSuresiText</td>
-                                <td>
-                                    @if (item.GecKalmaSuresi > 0)
-                                    {
-                                        <span class="text-warning">@item.GecKalmaSuresi dk</span>
-                                    }
-                                    else
-                                    {
-                                        <span class="text-muted">-</span>
-                                    }
-                                </td>
-                                <td>
-                                    @if (item.ErkenCikisSuresi > 0)
-                                    {
-                                        <span class="text-info">@item.ErkenCikisSuresi dk</span>
-                                    }
-                                    else
-                                    {
-                                        <span class="text-muted">-</span>
-                                    }
-                                </td>
-                                <td>
-                                    @if (item.FazlaMesaiSuresi > 0)
-                                    {
-                                        <span class="text-primary">@item.FazlaMesaiSuresi dk</span>
-                                    }
-                                    else
-                                    {
-                                        <span class="text-muted">-</span>
-                                    }
-                                </td>
-                                <td>
-                                    @if (item.Durum == "Normal")
-                                    {
-                                        <span class="badge bg-success">Normal</span>
-                                    }
-                                    else if (item.Durum == "Geç Kalmış")
-                                    {
-                                        <span class="badge bg-warning">Geç</span>
-                                    }
-                                    else
-                                    {
-                                        <span class="badge bg-info">@item.Durum</span>
-                                    }
-                                </td>
-                            </tr>
-                        }
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-}
-else
-{
-    <div class="card">
-        <div class="card-body text-center py-5">
-            <i class="fas fa-user-clock fa-4x text-muted mb-3"></i>
-            <h5>Raporu Görüntüle</h5>
-            <p class="text-muted">Personel ve tarih seçerek raporu görüntüleyin.</p>
-        </div>
-    </div>
+    <script>
+        $(document).ready(function() {
+            $('#raporTable').DataTable({
+                language: { url: '//cdn.datatables.net/plug-ins/1.11.5/i18n/tr.json' },
+                order: [[0, 'desc']]
+            });
+        });
+
+        function exportToExcel() {
+            const wb = XLSX.utils.table_to_book(document.getElementById('raporTable'));
+            XLSX.writeFile(wb, 'KisiBazindaGirisCikis_' + new Date().toISOString().slice(0,10) + '.xlsx');
+        }
+
+        function exportToPDF() {
+            window.print();
+        }
+    </script>
 }

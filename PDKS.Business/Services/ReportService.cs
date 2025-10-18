@@ -27,13 +27,13 @@ namespace PDKS.Business.Services
                 PersonelAdi = personel.AdSoyad,
                 SicilNo = personel.SicilNo,
                 Departman = personel.Departman?.Ad,  // ✅ DÜZELTILDI
-                GirisZamani = k.GirisZamani,
-                CikisZamani = k.CikisZamani,
-                CalismaSuresi = CalculateWorkMinutes(k.GirisZamani, k.CikisZamani),
+                GirisSaati = k.GirisZamani,
+                CikisSaati = k.CikisZamani,
+                ToplamCalismaDakika = CalculateWorkMinutes(k.GirisZamani, k.CikisZamani),
                 Durum = k.Durum,
-                GecKalmaSuresi = k.GecKalmaSuresi ?? 0,
-                ErkenCikisSuresi = k.ErkenCikisSuresi ?? 0,
-                FazlaMesaiSuresi = k.FazlaMesaiSuresi ?? 0
+                GecKalma = k.GecKalmaSuresi ?? 0,
+                ErkenCikis = k.ErkenCikisSuresi ?? 0,
+                FazlaMesaiDakika = k.FazlaMesaiSuresi ?? 0
             }).OrderBy(r => r.Tarih).ToList();
         }
 
@@ -53,13 +53,13 @@ namespace PDKS.Business.Services
                     PersonelAdi = personel.AdSoyad,
                     SicilNo = personel.SicilNo,
                     Departman = personel.Departman?.Ad,  // ✅ DÜZELTILDI
-                    GirisZamani = kayit.GirisZamani,
-                    CikisZamani = kayit.CikisZamani,
-                    CalismaSuresi = CalculateWorkMinutes(kayit.GirisZamani, kayit.CikisZamani),
+                    GirisSaati = kayit.GirisZamani,
+                    CikisSaati = kayit.CikisZamani,
+                    ToplamCalismaDakika = CalculateWorkMinutes(kayit.GirisZamani, kayit.CikisZamani),
                     Durum = kayit.Durum,
-                    GecKalmaSuresi = kayit.GecKalmaSuresi ?? 0,
-                    ErkenCikisSuresi = kayit.ErkenCikisSuresi ?? 0,
-                    FazlaMesaiSuresi = kayit.FazlaMesaiSuresi ?? 0
+                    GecKalma = kayit.GecKalmaSuresi ?? 0,
+                    ErkenCikis = kayit.ErkenCikisSuresi ?? 0,
+                    FazlaMesaiDakika = kayit.FazlaMesaiSuresi ?? 0
                 });
             }
 
@@ -503,8 +503,8 @@ namespace PDKS.Business.Services
                     Tarih = kayit.GirisZamani?.Date ?? DateTime.UtcNow,
                     PersonelAdi = personel.AdSoyad,
                     SicilNo = personel.SicilNo,
-                    Departman = personel.Departman?.Ad,  // ✅ DÜZELTILDI
-                    GirisZamani = kayit.GirisZamani,
+                    Departman = personel.Departman?.Ad,  
+                    GirisZamani = kayit.GirisZamani.GetValueOrDefault(),
                     CikisZamani = kayit.CikisZamani,
                     Not = kayit.Not,
                     OlusturmaTarihi = kayit.OlusturmaTarihi

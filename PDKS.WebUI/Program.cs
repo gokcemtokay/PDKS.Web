@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using PDKS.Business.Services;
 using PDKS.Data.Context;
 using PDKS.Data.Repositories;
+using PDKS.WebUI.BackgroundServices;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -10,6 +11,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllersWithViews();
 
 // Database Context - PostgreSQL
+// Program.cs veya Startup.cs'de
 builder.Services.AddDbContext<PDKSDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
@@ -27,7 +29,9 @@ builder.Services.AddScoped<IKullaniciService, KullaniciService>();
 builder.Services.AddScoped<IDepartmanService, DepartmanService>();
 builder.Services.AddScoped<IMesaiService, MesaiService>();
 builder.Services.AddScoped<IVardiyaService, VardiyaService>();  
-builder.Services.AddScoped<IIzinService, IzinService>();  
+builder.Services.AddScoped<IIzinService, IzinService>();
+builder.Services.AddScoped<IExportAndEmailService, ExportAndEmailService>();
+builder.Services.AddScoped<IBackupService, BackupService>();
 
 
 
@@ -56,10 +60,12 @@ builder.Services.AddAuthorization(options =>
 // Session
 builder.Services.AddSession(options =>
 {
-    options.IdleTimeout = TimeSpan.FromHours(2);
+    options.IdleTimeout = TimeSpan.FromHours(30);
     options.Cookie.HttpOnly = true;
     options.Cookie.IsEssential = true;
 });
+
+builder.Services.AddMemoryCache();
 
 // Add HttpContextAccessor
 builder.Services.AddHttpContextAccessor();

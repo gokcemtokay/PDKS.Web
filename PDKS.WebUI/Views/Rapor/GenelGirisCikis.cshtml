@@ -79,7 +79,7 @@
                 <div class="col-md-3">
                     <div class="card bg-warning text-white">
                         <div class="card-body text-center">
-                            <h3>@Model.Count(r => r.GecKalmaSuresi > 0)</h3>
+                            <h3>@Model.Count(r => r.GecKalma > 0)</h3>
                             <small>Geç Kalma</small>
                         </div>
                     </div>
@@ -87,7 +87,7 @@
                 <div class="col-md-3">
                     <div class="card bg-info text-white">
                         <div class="card-body text-center">
-                            <h3>@Model.Count(r => r.FazlaMesaiSuresi > 0)</h3>
+                            <h3>@Model.Count(r => r.FazlaMesaiDakika > 0)</h3>
                             <small>Fazla Mesai</small>
                         </div>
                     </div>
@@ -119,11 +119,11 @@
                                 <td>@item.PersonelAdi</td>
                                 <td><strong>@item.SicilNo</strong></td>
                                 <td>@item.Departman</td>
-                                <td>@item.GirisZamani?.ToString("HH:mm")</td>
-                                <td>@item.CikisZamani?.ToString("HH:mm")</td>
-                                <td>@item.CalismaSuresiText</td>
+                                <td>@item.GirisSaati?.ToString("HH:mm")</td>
+                                <td>@item.CikisSaati?.ToString("HH:mm")</td>
+                                <td>@item.ToplamCalismaSuresi</td>
                                 <td>
-                                    @if (item.GecKalmaSuresi > 0)
+                                    @if (item.GecKalma > 0)
                                     {
                                         <span class="text-warning">@item.GecKalmaSuresi dk</span>
                                     }
@@ -133,7 +133,7 @@
                                     }
                                 </td>
                                 <td>
-                                    @if (item.ErkenCikisSuresi > 0)
+                                    @if (item.ErkenCikis > 0)
                                     {
                                         <span class="text-info">@item.ErkenCikisSuresi dk</span>
                                     }
@@ -143,9 +143,9 @@
                                     }
                                 </td>
                                 <td>
-                                    @if (item.FazlaMesaiSuresi > 0)
+                                    @if (item.FazlaMesaiDakika > 0)
                                     {
-                                        <span class="text-primary">@item.FazlaMesaiSuresi dk</span>
+                                        <span class="text-primary">@item.FazlaMesaiDakika dk</span>
                                     }
                                     else
                                     {
