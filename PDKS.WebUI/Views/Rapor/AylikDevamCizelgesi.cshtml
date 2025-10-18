@@ -1,188 +1,260 @@
 ﻿@* ============================================ *@
 @* Rapor/AylikDevamCizelgesi.cshtml *@
 
-@model PDKS.Business.DTOs.AylikDevamCizelgesiDTO
+@model PDKS.Business.DTOs.RaporFiltreDTO
 @{
     ViewData["Title"] = "Aylık Devam Çizelgesi";
-    var filtre = ViewBag.Filtre as PDKS.Business.DTOs.RaporFiltreDTO;
+    var rapor = ViewBag.Rapor as PDKS.Business.DTOs.AylikDevamCizelgesiDTO;
 }
 
-<div class="row mb-3">
-    <div class="col-md-8">
-        <form method="post" asp-action="AylikDevamCizelgesi" class="row g-3">
-            <div class="col-md-4">
-                <label class="form-label">Personel <span class="text-danger">*</span></label>
-                <select name="PersonelId" class="form-select" asp-items="ViewBag.Personeller" required>
-                    <option value="">Personel Seçiniz</option>
-                </select>
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2>
+                <i class="fas fa-calendar-alt text-info"></i>
+                Aylık Devam Çizelgesi
+            </h2>
+            <p class="text-muted">Kişi bazında aylık devam durumu</p>
+        </div>
+    </div>
+
+    <!-- Filtre Kartı -->
+    <div class="card report-filter-card mb-4">
+        <div class="card-body">
+            <form asp-action="AylikDevamCizelgesi" method="post">
+                <div class="row g-3 align-items-end">
+                    <div class="col-md-4">
+                        <label class="form-label">
+                            <i class="fas fa-user me-1"></i> Personel
+                        </label>
+                        <select name="PersonelId" class="form-select" required>
+                            <option value="">Personel Seçin</option>
+                            @if (ViewBag.Personeller != null)
+                            {
+                                @foreach (var personel in ViewBag.Personeller)
+                                {
+                                    <option value="@personel.Value" selected="@(personel.Value == Model?.PersonelId?.ToString())">
+                                        @personel.Text
+                                    </option>
+                                }
+                            }
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">
+                            <i class="fas fa-calendar me-1"></i> Yıl
+                        </label>
+                        <select name="Yil" class="form-select" required>
+                            <option value="">Yıl Seçiniz</option>
+                            @for (int y = DateTime.Now.Year; y >= DateTime.Now.Year - 5; y--)
+                            {
+                                <option value="@y" selected="@(Model?.Yil == y)">@y</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">
+                            <i class="fas fa-calendar-alt me-1"></i> Ay
+                        </label>
+                        <select name="Ay" class="form-select" required>
+                            <option value="">Ay Seçiniz</option>
+                            @for (int m = 1; m <= 12; m++)
+                            {
+                                <option value="@m" selected="@(Model?.Ay == m)">@m</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <button type="submit" class="btn btn-info w-100">
+                            <i class="fas fa-search me-2"></i> Getir
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    @if (rapor != null)
+    {
+        <!-- Personel Bilgileri -->
+        <div class="card mb-4">
+            <div class="card-header bg-info text-white">
+                <i class="fas fa-user me-2"></i> Personel Bilgileri
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3">
+                        <strong>Ad Soyad:</strong>
+                        <p>@rapor.PersonelAdi</p>
+                    </div>
+                    <div class="col-md-3">
+                        <strong>Sicil No:</strong>
+                        <p>@rapor.SicilNo</p>
+                    </div>
+                    <div class="col-md-3">
+                        <strong>Departman:</strong>
+                        <p>@rapor.Departman</p>
+                    </div>
+                    <div class="col-md-3">
+                        <strong>Dönem:</strong>
+                        <p>@rapor.Donem</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Özet Kartlar -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="report-summary-card">
+                    <div class="summary-label">Çalışma Günü</div>
+                    <div class="summary-value text-success">@rapor.ToplamCalismaGunu</div>
+                </div>
             </div>
             <div class="col-md-3">
-                <label class="form-label">Yıl</label>
-                <select name="Yil" class="form-select" asp-items="ViewBag.Yillar" required>
-                    <option value="">Yıl</option>
-                </select>
+                <div class="report-summary-card">
+                    <div class="summary-label">Devamsızlık</div>
+                    <div class="summary-value text-danger">@rapor.ToplamDevamsizGun</div>
+                </div>
             </div>
             <div class="col-md-3">
-                <label class="form-label">Ay</label>
-                <select name="Ay" class="form-select" asp-items="ViewBag.Aylar" required>
-                    <option value="">Ay</option>
-                </select>
+                <div class="report-summary-card">
+                    <div class="summary-label">İzin</div>
+                    <div class="summary-value text-warning">@rapor.ToplamIzinGun</div>
+                </div>
             </div>
-            <div class="col-md-2">
-                <label class="form-label">&nbsp;</label>
-                <button type="submit" class="btn btn-primary w-100">
-                    <i class="fas fa-calendar"></i> Görüntüle
+            <div class="col-md-3">
+                <div class="report-summary-card">
+                    <div class="summary-label">Toplam Saat</div>
+                    <div class="summary-value text-primary">@rapor.ToplamCalismaSaati</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Devam Çizelgesi -->
+        <div class="card">
+            <div class="card-header bg-info text-white">
+                <i class="fas fa-calendar-check me-2"></i> Aylık Devam Detayı
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-bordered table-sm">
+                        <thead>
+                            <tr>
+                                <th>Tarih</th>
+                                <th>Gün</th>
+                                <th>Giriş</th>
+                                <th>Çıkış</th>
+                                <th>Çalışma Süresi</th>
+                                <th>Durum</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var gun in rapor.Gunler)
+                            {
+                                <tr>
+                                    <td>@gun.Tarih.ToString("dd.MM.yyyy")</td>
+                                    <td>
+                                        <small>@gun.Tarih.ToString("dddd", new System.Globalization.CultureInfo("tr-TR"))</small>
+                                    </td>
+                                    <td>
+                                        @if (gun.GirisZamani.HasValue)
+                                        {
+                                            <span class="badge bg-success">@gun.GirisZamani.Value.ToString("HH:mm")</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">-</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        @if (gun.CikisZamani.HasValue)
+                                        {
+                                            <span class="badge bg-info">@gun.CikisZamani.Value.ToString("HH:mm")</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">-</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        @if (gun.CalismaSuresi > 0)
+                                        {
+                                            @TimeSpan.FromMinutes(gun.CalismaSuresi).ToString(@"hh\:mm")
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">-</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        @if (gun.Durum == "Normal" || gun.Durum == "Çalıştı")
+                                        {
+                                            <span class="badge bg-success">@gun.Durum</span>
+                                        }
+                                        else if (gun.Durum == "Devamsız")
+                                        {
+                                            <span class="badge bg-danger">@gun.Durum</span>
+                                        }
+                                        else if (gun.Durum.Contains("İzinli"))
+                                        {
+                                            <span class="badge bg-warning">@gun.Durum</span>
+                                        }
+                                        else if (gun.Durum == "Tatil" || gun.Durum == "Hafta Sonu")
+                                        {
+                                            <span class="badge bg-secondary">@gun.Durum</span>
+                                        }
+                                        else if (gun.Durum == "Geç Kalma")
+                                        {
+                                            <span class="badge bg-warning">@gun.Durum</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-info">@gun.Durum</span>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Export Buttons -->
+        <div class="row mt-3">
+            <div class="col-12 text-end">
+                <button type="button" class="btn btn-success" onclick="exportToExcel()">
+                    <i class="fas fa-file-excel me-2"></i>Excel'e Aktar
+                </button>
+                <button type="button" class="btn btn-danger" onclick="window.print()">
+                    <i class="fas fa-print me-2"></i>Yazdır
                 </button>
             </div>
-        </form>
-    </div>
-    <div class="col-md-4 text-end">
-        <a asp-action="Index" class="btn btn-secondary">
-            <i class="fas fa-arrow-left"></i> Raporlar
-        </a>
-    </div>
+        </div>
+    }
+    else if (Model != null && Model.PersonelId.HasValue && Model.Yil.HasValue && Model.Ay.HasValue)
+    {
+        <div class="alert alert-warning">
+            <i class="fas fa-exclamation-triangle me-2"></i>
+            Seçilen dönem için devam çizelgesi bulunamadı.
+        </div>
+    }
+    else
+    {
+        <div class="alert alert-info">
+            <i class="fas fa-info-circle"></i> Lütfen personel, yıl ve ay seçerek devam çizelgesini görüntüleyin.
+        </div>
+    }
 </div>
 
-@if (Model != null)
-{
-    <div class="card">
-        <div class="card-header bg-info text-white">
-            <i class="fas fa-calendar-alt me-2"></i> Aylık Devam Çizelgesi
-            <span class="badge bg-light text-dark ms-2">@Model.Donem</span>
-        </div>
-        <div class="card-body">
-            <!-- Personel Bilgisi -->
-            <div class="mb-4">
-                <h5>@Model.PersonelAdi</h5>
-                <p class="text-muted mb-0">
-                    Sicil: <strong>@Model.SicilNo</strong> |
-                    Departman: <strong>@Model.Departman</strong>
-                </p>
-            </div>
+@section Scripts {
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
-            <!-- İstatistikler -->
-            <div class="row mb-4">
-                <div class="col-md-3">
-                    <div class="card bg-success text-white">
-                        <div class="card-body text-center">
-                            <h3>@Model.ToplamCalismaGunu</h3>
-                            <small>Çalışma Günü</small>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="card bg-danger text-white">
-                        <div class="card-body text-center">
-                            <h3>@Model.ToplamDevamsizGun</h3>
-                            <small>Devamsız Gün</small>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="card bg-warning">
-                        <div class="card-body text-center">
-                            <h3>@Model.ToplamIzinGun</h3>
-                            <small>İzinli Gün</small>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="card bg-primary text-white">
-                        <div class="card-body text-center">
-                            <h3>@Model.ToplamCalismaSaati</h3>
-                            <small>Toplam Saat</small>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Çizelge -->
-            <div class="table-responsive">
-                <table class="table table-bordered table-sm">
-                    <thead class="table-secondary">
-                        <tr>
-                            <th>Tarih</th>
-                            <th>Gün</th>
-                            <th>Giriş</th>
-                            <th>Çıkış</th>
-                            <th>Çalışma Süresi</th>
-                            <th>Durum</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var gun in Model.Gunler)
-                        {
-                            <tr class="@(gun.Durum == "Devamsız" ? "table-danger" : "")
-                                       @(gun.Durum.Contains("İzinli") ? "table-warning" : "")
-                                       @(gun.Durum == "Tatil" || gun.Durum == "Hafta Sonu" ? "table-secondary" : "")">
-                                <td>@gun.Tarih.ToString("dd.MM")</td>
-                                <td>@gun.Tarih.ToString("ddd")</td>
-                                <td>
-                                    @if (gun.GirisZamani.HasValue)
-                                    {
-                                        @gun.GirisZamani.Value.ToString("HH:mm")
-                                    }
-                                    else
-                                    {
-                                        <span class="text-muted">-</span>
-                                    }
-                                </td>
-                                <td>
-                                    @if (gun.CikisZamani.HasValue)
-                                    {
-                                        @gun.CikisZamani.Value.ToString("HH:mm")
-                                    }
-                                    else
-                                    {
-                                        <span class="text-muted">-</span>
-                                    }
-                                </td>
-                                <td>@gun.CalismaSuresiText</td>
-                                <td>
-                                    @if (gun.Durum == "Normal")
-                                    {
-                                        <span class="badge bg-success">@gun.Durum</span>
-                                    }
-                                    else if (gun.Durum == "Geç Kalmış")
-                                    {
-                                        <span class="badge bg-warning">@gun.Durum</span>
-                                    }
-                                    else if (gun.Durum == "Devamsız")
-                                    {
-                                        <span class="badge bg-danger">@gun.Durum</span>
-                                    }
-                                    else if (gun.Durum.Contains("İzinli"))
-                                    {
-                                        <span class="badge bg-warning">@gun.Durum</span>
-                                    }
-                                    else if (gun.Durum == "Tatil" || gun.Durum == "Hafta Sonu")
-                                    {
-                                        <span class="badge bg-secondary">@gun.Durum</span>
-                                    }
-                                    else if (gun.Durum == "Fazla Mesai")
-                                    {
-                                        <span class="badge bg-primary">@gun.Durum</span>
-                                    }
-                                    else
-                                    {
-                                        <span class="badge bg-info">@gun.Durum</span>
-                                    }
-                                </td>
-                            </tr>
-                        }
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-}
-else
-{
-    <div class="card">
-        <div class="card-body text-center py-5">
-            <i class="fas fa-calendar-alt fa-4x text-muted mb-3"></i>
-            <h5>Devam Çizelgesini Görüntüle</h5>
-            <p class="text-muted">Personel, yıl ve ay seçerek aylık devam çizelgesini görüntüleyin.</p>
-        </div>
-    </div>
+    <script>
+        function exportToExcel() {
+            const wb = XLSX.utils.table_to_book(document.querySelector('table'));
+            XLSX.writeFile(wb, 'DevamCizelgesi_' + new Date().toISOString().slice(0,10) + '.xlsx');
+        }
+    </script>
 }

@@ -1,130 +1,193 @@
 ﻿@* ============================================ *@
 @* Rapor/GenelGecKalanlar.cshtml *@
 
-@model IEnumerable<PDKS.Business.DTOs.GecKalanlarRaporDTO>
+@model PDKS.Business.DTOs.RaporFiltreDTO
 @{
     ViewData["Title"] = "Genel Geç Kalanlar Raporu";
-    var filtre = ViewBag.Filtre as PDKS.Business.DTOs.RaporFiltreDTO;
+    var rapor = ViewBag.Rapor as List<PDKS.Business.DTOs.GecKalanlarRaporDTO>;
 }
 
-<div class="row mb-3">
-    <div class="col-md-8">
-        <form method="post" asp-action="GenelGecKalanlar" class="row g-3">
-            <div class="col-md-4">
-                <label class="form-label">Başlangıç Tarihi</label>
-                <input type="date" name="BaslangicTarihi" class="form-control"
-                       value="@(filtre?.BaslangicTarihi.ToString("yyyy-MM-dd") ?? DateTime.Today.AddDays(-7).ToString("yyyy-MM-dd"))">
-            </div>
-            <div class="col-md-4">
-                <label class="form-label">Bitiş Tarihi</label>
-                <input type="date" name="BitisTarihi" class="form-control"
-                       value="@(filtre?.BitisTarihi.ToString("yyyy-MM-dd") ?? DateTime.Today.ToString("yyyy-MM-dd"))">
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2>
+                <i class="fas fa-clock text-warning"></i>
+                Genel Geç Kalanlar Raporu
+            </h2>
+            <p class="text-muted">Mesai başlangıç saatine geç kalan personellerin raporu</p>
+        </div>
+    </div>
+
+    <!-- Filtre Kartı -->
+    <div class="card report-filter-card mb-4">
+        <div class="card-body">
+            <form asp-action="GenelGecKalanlar" method="post">
+                <div class="row g-3 align-items-end">
+                    <div class="col-md-3">
+                        <label class="form-label">
+                            <i class="fas fa-calendar-alt me-1"></i> Başlangıç Tarihi
+                        </label>
+                        <input type="date" name="BaslangicTarihi" class="form-control"
+                               value="@(Model?.BaslangicTarihi.ToString("yyyy-MM-dd") ?? DateTime.Now.AddMonths(-1).ToString("yyyy-MM-dd"))"
+                               required />
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">
+                            <i class="fas fa-calendar-alt me-1"></i> Bitiş Tarihi
+                        </label>
+                        <input type="date" name="BitisTarihi" class="form-control"
+                               value="@(Model?.BitisTarihi.ToString("yyyy-MM-dd") ?? DateTime.Now.ToString("yyyy-MM-dd"))"
+                               required />
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">
+                            <i class="fas fa-building me-1"></i> Departman
+                        </label>
+                        <select name="Departman" class="form-select" asp-items="ViewBag.Departmanlar">
+                            <option value="">Tüm Departmanlar</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <button type="submit" class="btn btn-warning w-100">
+                            <i class="fas fa-search me-2"></i> Raporu Getir
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    @if (rapor != null && rapor.Any())
+    {
+        <!-- Özet Kartlar -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="report-summary-card">
+                    <div class="summary-label">Toplam Geç Kalma</div>
+                    <div class="summary-value text-warning">@rapor.Count</div>
+                </div>
             </div>
             <div class="col-md-3">
-                <label class="form-label">Departman</label>
-                <select name="Departman" class="form-select" asp-items="ViewBag.Departmanlar">
-                    <option value="">Tümü</option>
-                </select>
+                <div class="report-summary-card">
+                    <div class="summary-label">Toplam Dakika</div>
+                    <div class="summary-value text-danger">
+                        @rapor.Sum(r => r.GecKalmaSuresi) dk
+                    </div>
+                </div>
             </div>
-            <div class="col-md-1">
-                <label class="form-label">&nbsp;</label>
-                <button type="submit" class="btn btn-primary w-100">
-                    <i class="fas fa-filter"></i>
+            <div class="col-md-3">
+                <div class="report-summary-card">
+                    <div class="summary-label">Ort. Geç Kalma</div>
+                    <div class="summary-value text-info">
+                        @Math.Round(rapor.Average(r => r.GecKalmaSuresi), 1) dk
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="report-summary-card">
+                    <div class="summary-label">En Fazla Geç Kalan</div>
+                    <div class="summary-value text-primary">
+                        @rapor.Max(r => r.GecKalmaSuresi) dk
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tablo -->
+        <div class="card">
+            <div class="card-header bg-warning text-dark">
+                <i class="fas fa-clock me-2"></i> Geç Kalan Personeller
+                <span class="badge bg-dark ms-2">@rapor.Count Kayıt</span>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover" id="raporTable">
+                        <thead>
+                            <tr>
+                                <th>Tarih</th>
+                                <th>Personel</th>
+                                <th>Sicil No</th>
+                                <th>Departman</th>
+                                <th>Planlı Giriş</th>
+                                <th>Gerçek Giriş</th>
+                                <th>Geç Kalma</th>
+                                <th>Durum</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var kayit in rapor)
+                            {
+                                <tr>
+                                    <td>@kayit.Tarih.ToString("dd.MM.yyyy")</td>
+                                    <td>
+                                        <i class="fas fa-user-circle text-warning me-1"></i>
+                                        @kayit.PersonelAdi
+                                    </td>
+                                    <td><strong>@kayit.SicilNo</strong></td>
+                                    <td>@kayit.Departman</td>
+                                    <td>
+                                        <span class="badge bg-secondary">@kayit.BeklenenGiris</span>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-warning">@kayit.GercekGiris</span>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-danger">
+                                            <i class="fas fa-exclamation-triangle"></i> @kayit.GecKalmaSuresi dk
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-warning">Geç Kalmış</span>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Export Buttons -->
+        <div class="row mt-3">
+            <div class="col-12 text-end">
+                <button type="button" class="btn btn-success" onclick="exportToExcel()">
+                    <i class="fas fa-file-excel me-2"></i>Excel'e Aktar
+                </button>
+                <button type="button" class="btn btn-danger" onclick="exportToPDF()">
+                    <i class="fas fa-file-pdf me-2"></i>PDF'e Aktar
                 </button>
             </div>
-        </form>
-    </div>
-    <div class="col-md-4 text-end">
-        <a asp-action="Index" class="btn btn-secondary">
-            <i class="fas fa-arrow-left"></i> Raporlar
-        </a>
-    </div>
+        </div>
+    }
+    else if (Model != null && Model.BaslangicTarihi != DateTime.MinValue)
+    {
+        <div class="alert alert-info">
+            <i class="fas fa-info-circle me-2"></i>
+            Seçilen kriterlere uygun geç kalma kaydı bulunamadı.
+        </div>
+    }
 </div>
 
-@if (Model != null && Model.Any())
-{
-    <div class="card">
-        <div class="card-header bg-warning">
-            <i class="fas fa-clock me-2"></i> Geç Kalanlar Raporu
-            <span class="badge bg-dark ms-2">@Model.Count() Kayıt</span>
-        </div>
-        <div class="card-body">
-            <!-- Summary -->
-            <div class="row mb-4">
-                <div class="col-md-4">
-                    <div class="card bg-warning">
-                        <div class="card-body text-center">
-                            <h3>@Model.Count()</h3>
-                            <small>Geç Kalma Sayısı</small>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="card bg-danger text-white">
-                        <div class="card-body text-center">
-                            <h3>@(Model.Sum(g => g.GecKalmaSuresi) / 60) saat</h3>
-                            <small>Toplam Geç Kalma</small>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="card bg-info text-white">
-                        <div class="card-body text-center">
-                            <h3>@Model.Select(g => g.PersonelAdi).Distinct().Count()</h3>
-                            <small>Farklı Personel</small>
-                        </div>
-                    </div>
-                </div>
-            </div>
+@section Scripts {
+    <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap5.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
-            <div class="table-responsive">
-                <table class="table table-hover">
-                    <thead>
-                        <tr>
-                            <th>Tarih</th>
-                            <th>Personel</th>
-                            <th>Sicil No</th>
-                            <th>Departman</th>
-                            <th>Beklenen Giriş</th>
-                            <th>Gerçek Giriş</th>
-                            <th>Geç Kalma</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var item in Model)
-                        {
-                            <tr>
-                                <td>@item.Tarih.ToString("dd.MM.yyyy")</td>
-                                <td>
-                                    <i class="fas fa-user-circle text-warning me-2"></i>
-                                    @item.PersonelAdi
-                                </td>
-                                <td><strong>@item.SicilNo</strong></td>
-                                <td>@item.Departman</td>
-                                <td>@item.BeklenenGiris</td>
-                                <td>
-                                    <span class="text-danger fw-bold">@item.GercekGiris</span>
-                                </td>
-                                <td>
-                                    <span class="badge bg-warning fs-6">
-                                        @item.GecKalmaSuresiText
-                                    </span>
-                                </td>
-                            </tr>
-                        }
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-}
-else
-{
-    <div class="card">
-        <div class="card-body text-center py-5">
-            <i class="fas fa-check-circle fa-4x text-success mb-3"></i>
-            <h5>Harika!</h5>
-            <p class="text-muted">Seçilen tarih aralığında geç kalma kaydı bulunmamaktadır.</p>
-        </div>
-    </div>
+    <script>
+        $(document).ready(function() {
+            $('#raporTable').DataTable({
+                language: { url: '//cdn.datatables.net/plug-ins/1.11.5/i18n/tr.json' },
+                order: [[0, 'desc']]
+            });
+        });
+
+        function exportToExcel() {
+            const wb = XLSX.utils.table_to_book(document.getElementById('raporTable'));
+            XLSX.writeFile(wb, 'GecKalanlar_' + new Date().toISOString().slice(0,10) + '.xlsx');
+        }
+
+        function exportToPDF() {
+            window.print();
+        }
+    </script>
 }

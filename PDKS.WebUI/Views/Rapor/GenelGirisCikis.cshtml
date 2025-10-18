@@ -1,10 +1,10 @@
 ﻿@* ============================================ *@
 @* Rapor/GenelGirisCikis.cshtml *@
 
-@model IEnumerable<PDKS.Business.DTOs.GirisCikisRaporDTO>
+@model PDKS.Business.DTOs.RaporFiltreDTO
 @{
     ViewData["Title"] = "Genel Giriş-Çıkış Raporu";
-    var filtre = ViewBag.Filtre as PDKS.Business.DTOs.RaporFiltreDTO;
+    var rapor = ViewBag.Rapor as List<PDKS.Business.DTOs.GirisCikisRaporDTO>;
 }
 
 <div class="row mb-3">
@@ -13,12 +13,12 @@
             <div class="col-md-4">
                 <label class="form-label">Başlangıç Tarihi</label>
                 <input type="date" name="BaslangicTarihi" class="form-control"
-                       value="@(filtre?.BaslangicTarihi.ToString("yyyy-MM-dd") ?? DateTime.Today.AddMonths(-1).ToString("yyyy-MM-dd"))">
+                       value="@(Model?.BaslangicTarihi.ToString("yyyy-MM-dd") ?? DateTime.Today.AddMonths(-1).ToString("yyyy-MM-dd"))">
             </div>
             <div class="col-md-4">
                 <label class="form-label">Bitiş Tarihi</label>
                 <input type="date" name="BitisTarihi" class="form-control"
-                       value="@(filtre?.BitisTarihi.ToString("yyyy-MM-dd") ?? DateTime.Today.ToString("yyyy-MM-dd"))">
+                       value="@(Model?.BitisTarihi.ToString("yyyy-MM-dd") ?? DateTime.Today.ToString("yyyy-MM-dd"))">
             </div>
             <div class="col-md-3">
                 <label class="form-label">Departman</label>
@@ -35,13 +35,13 @@
         </form>
     </div>
     <div class="col-md-4 text-end">
-        @if (Model != null && Model.Any())
+        @if (rapor != null && rapor.Any())
         {
             <label class="form-label">&nbsp;</label>
             <form method="post" asp-action="ExportGirisCikisExcel">
-                <input type="hidden" name="BaslangicTarihi" value="@filtre?.BaslangicTarihi" />
-                <input type="hidden" name="BitisTarihi" value="@filtre?.BitisTarihi" />
-                <input type="hidden" name="Departman" value="@filtre?.Departman" />
+                <input type="hidden" name="BaslangicTarihi" value="@Model?.BaslangicTarihi" />
+                <input type="hidden" name="BitisTarihi" value="@Model?.BitisTarihi" />
+                <input type="hidden" name="Departman" value="@Model?.Departman" />
                 <button type="submit" class="btn btn-success d-block">
                     <i class="fas fa-file-excel"></i> Excel'e Aktar
                 </button>
@@ -50,12 +50,12 @@
     </div>
 </div>
 
-@if (Model != null && Model.Any())
+@if (rapor != null && rapor.Any())
 {
     <div class="card">
         <div class="card-header">
             <i class="fas fa-chart-line me-2"></i> Genel Giriş-Çıkış Raporu
-            <span class="badge bg-light text-dark ms-2">@Model.Count() Kayıt</span>
+            <span class="badge bg-light text-dark ms-2">@rapor.Count() Kayıt</span>
         </div>
         <div class="card-body">
             <!-- Summary Stats -->
@@ -63,7 +63,7 @@
                 <div class="col-md-3">
                     <div class="card bg-primary text-white">
                         <div class="card-body text-center">
-                            <h3>@Model.Count()</h3>
+                            <h3>@rapor.Count()</h3>
                             <small>Toplam Kayıt</small>
                         </div>
                     </div>
@@ -71,7 +71,7 @@
                 <div class="col-md-3">
                     <div class="card bg-success text-white">
                         <div class="card-body text-center">
-                            <h3>@Model.Count(r => r.Durum == "Normal")</h3>
+                            <h3>@rapor.Count(r => r.Durum == "Normal")</h3>
                             <small>Normal Giriş</small>
                         </div>
                     </div>
@@ -79,7 +79,7 @@
                 <div class="col-md-3">
                     <div class="card bg-warning text-white">
                         <div class="card-body text-center">
-                            <h3>@Model.Count(r => r.GecKalma > 0)</h3>
+                            <h3>@rapor.Count(r => r.GecKalma > 0)</h3>
                             <small>Geç Kalma</small>
                         </div>
                     </div>
@@ -87,7 +87,7 @@
                 <div class="col-md-3">
                     <div class="card bg-info text-white">
                         <div class="card-body text-center">
-                            <h3>@Model.Count(r => r.FazlaMesaiDakika > 0)</h3>
+                            <h3>@rapor.Count(r => r.FazlaMesaiDakika > 0)</h3>
                             <small>Fazla Mesai</small>
                         </div>
                     </div>
@@ -112,20 +112,20 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach (var item in Model)
+                        @foreach (var item in rapor)
                         {
                             <tr>
                                 <td>@item.Tarih.ToString("dd.MM.yyyy")</td>
                                 <td>@item.PersonelAdi</td>
-                                <td><strong>@item.SicilNo</strong></td>
+                                <td>@item.SicilNo</td>
                                 <td>@item.Departman</td>
-                                <td>@item.GirisSaati?.ToString("HH:mm")</td>
-                                <td>@item.CikisSaati?.ToString("HH:mm")</td>
+                                <td>@item.GirisSaati</td>
+                                <td>@item.CikisSaati</td>
                                 <td>@item.ToplamCalismaSuresi</td>
                                 <td>
                                     @if (item.GecKalma > 0)
                                     {
-                                        <span class="text-warning">@item.GecKalmaSuresi dk</span>
+                                        <span class="badge bg-warning">@item.GecKalma dk</span>
                                     }
                                     else
                                     {
@@ -135,7 +135,7 @@
                                 <td>
                                     @if (item.ErkenCikis > 0)
                                     {
-                                        <span class="text-info">@item.ErkenCikisSuresi dk</span>
+                                        <span class="badge bg-danger">@item.ErkenCikis dk</span>
                                     }
                                     else
                                     {
@@ -145,7 +145,7 @@
                                 <td>
                                     @if (item.FazlaMesaiDakika > 0)
                                     {
-                                        <span class="text-primary">@item.FazlaMesaiDakika dk</span>
+                                        <span class="badge bg-success">@item.FazlaMesaiDakika dk</span>
                                     }
                                     else
                                     {
@@ -157,21 +157,13 @@
                                     {
                                         <span class="badge bg-success">Normal</span>
                                     }
-                                    else if (item.Durum == "Geç Kalmış")
+                                    else if (item.Durum == "Geç Kalma")
                                     {
                                         <span class="badge bg-warning">Geç</span>
                                     }
-                                    else if (item.Durum == "Erken Çıkmış")
-                                    {
-                                        <span class="badge bg-info">Erken</span>
-                                    }
-                                    else if (item.Durum == "Fazla Mesai")
-                                    {
-                                        <span class="badge bg-primary">F.Mesai</span>
-                                    }
                                     else
                                     {
-                                        <span class="badge bg-secondary">@item.Durum</span>
+                                        <span class="badge bg-danger">@item.Durum</span>
                                     }
                                 </td>
                             </tr>
@@ -184,11 +176,7 @@
 }
 else
 {
-    <div class="card">
-        <div class="card-body text-center py-5">
-            <i class="fas fa-chart-line fa-4x text-muted mb-3"></i>
-            <h5>Raporu Görüntülemek İçin Filtre Uygulayın</h5>
-            <p class="text-muted">Tarih aralığını seçin ve "Filtrele" butonuna tıklayın.</p>
-        </div>
+    <div class="alert alert-info">
+        <i class="fas fa-info-circle"></i> Lütfen rapor kriterlerini seçip "Filtrele" butonuna tıklayın.
     </div>
 }

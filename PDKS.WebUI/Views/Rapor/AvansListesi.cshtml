@@ -1,18 +1,20 @@
-﻿@model List<PDKS.Business.DTOs.AvansListDTO>
+﻿@* ============================================ *@
+@* Rapor/AvansListesi.cshtml *@
+
+@model PDKS.Business.DTOs.RaporFiltreDTO
 @{
     ViewData["Title"] = "Avans Listesi";
-    var filtre = ViewBag.Filtre as PDKS.Business.DTOs.RaporFiltreDTO;
+    var rapor = ViewBag.Rapor as List<PDKS.Business.DTOs.AvansListDTO>;
 }
 
 <div class="container-fluid">
-    <!-- Başlık -->
     <div class="row mb-4">
         <div class="col-12">
             <h2>
                 <i class="fas fa-hand-holding-usd text-warning"></i>
-                Avans Listesi Raporu
+                Avans Listesi
             </h2>
-            <p class="text-muted">Personellere verilen avansların detaylı listesi</p>
+            <p class="text-muted">Verilen avansların listesi</p>
         </div>
     </div>
 
@@ -21,36 +23,24 @@
         <div class="card-body">
             <form asp-action="AvansListesi" method="post">
                 <div class="row g-3 align-items-end">
-                    <div class="col-md-3">
+                    <div class="col-md-4">
                         <label class="form-label">
                             <i class="fas fa-calendar-alt me-1"></i> Başlangıç Tarihi
                         </label>
                         <input type="date" name="BaslangicTarihi" class="form-control"
-                               value="@(filtre?.BaslangicTarihi.ToString("yyyy-MM-dd") ?? DateTime.Now.AddMonths(-1).ToString("yyyy-MM-dd"))"
+                               value="@(Model?.BaslangicTarihi.ToString("yyyy-MM-dd") ?? DateTime.Now.AddMonths(-1).ToString("yyyy-MM-dd"))"
                                required />
                     </div>
-                    <div class="col-md-3">
+                    <div class="col-md-4">
                         <label class="form-label">
                             <i class="fas fa-calendar-alt me-1"></i> Bitiş Tarihi
                         </label>
                         <input type="date" name="BitisTarihi" class="form-control"
-                               value="@(filtre?.BitisTarihi.ToString("yyyy-MM-dd") ?? DateTime.Now.ToString("yyyy-MM-dd"))"
+                               value="@(Model?.BitisTarihi.ToString("yyyy-MM-dd") ?? DateTime.Now.ToString("yyyy-MM-dd"))"
                                required />
                     </div>
-                    <div class="col-md-3">
-                        <label class="form-label">
-                            <i class="fas fa-filter me-1"></i> Durum
-                        </label>
-                        <select name="Durum" class="form-select">
-                            <option value="">Tümü</option>
-                            <option value="Beklemede">Beklemede</option>
-                            <option value="Onaylandı">Onaylandı</option>
-                            <option value="Reddedildi">Reddedildi</option>
-                            <option value="Ödendi">Ödendi</option>
-                        </select>
-                    </div>
-                    <div class="col-md-3">
-                        <button type="submit" class="btn btn-light w-100">
+                    <div class="col-md-4">
+                        <button type="submit" class="btn btn-warning w-100">
                             <i class="fas fa-search me-2"></i> Raporu Getir
                         </button>
                     </div>
@@ -59,71 +49,55 @@
         </div>
     </div>
 
-    @if (Model != null && Model.Any())
+    @if (rapor != null && rapor.Any())
     {
         <!-- Özet Kartlar -->
         <div class="row mb-4">
             <div class="col-md-3">
                 <div class="report-summary-card">
                     <div class="summary-label">Toplam Avans</div>
-                    <div class="summary-value text-primary">@Model.Count</div>
+                    <div class="summary-value text-warning">@rapor.Count</div>
                 </div>
             </div>
             <div class="col-md-3">
                 <div class="report-summary-card">
                     <div class="summary-label">Toplam Tutar</div>
-                    <div class="summary-value text-success">
-                        @Model.Sum(a => a.Tutar).ToString("N2") ₺
+                    <div class="summary-value text-danger">
+                        @rapor.Sum(r => r.Tutar).ToString("C")
                     </div>
                 </div>
             </div>
             <div class="col-md-3">
                 <div class="report-summary-card">
-                    <div class="summary-label">Onaylanan</div>
-                    <div class="summary-value text-info">
-                        @Model.Count(a => a.Durum == "Onaylandı" || a.Durum == "Ödendi")
+                    <div class="summary-label">Ödenen</div>
+                    <div class="summary-value text-success">
+                        @rapor.Count(r => r.Durum == "Ödendi")
                     </div>
                 </div>
             </div>
             <div class="col-md-3">
                 <div class="report-summary-card">
                     <div class="summary-label">Bekleyen</div>
-                    <div class="summary-value text-warning">
-                        @Model.Count(a => a.Durum == "Beklemede")
+                    <div class="summary-value text-info">
+                        @rapor.Count(r => r.Durum == "Beklemede")
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Export Butonları -->
-        <div class="card mb-3">
-            <div class="card-body">
-                <div class="btn-group" role="group">
-                    <button type="button" class="btn btn-excel" onclick="exportToExcel()">
-                        <i class="fas fa-file-excel me-2"></i> Excel'e Aktar
-                    </button>
-                    <button type="button" class="btn btn-pdf" onclick="exportToPDF()">
-                        <i class="fas fa-file-pdf me-2"></i> PDF'e Aktar
-                    </button>
-                    <button type="button" class="btn btn-print" onclick="window.print()">
-                        <i class="fas fa-print me-2"></i> Yazdır
-                    </button>
-                    <button type="button" class="btn btn-email" data-bs-toggle="modal" data-bs-target="#emailModal">
-                        <i class="fas fa-envelope me-2"></i> E-posta Gönder
-                    </button>
-                </div>
-            </div>
-        </div>
-
-        <!-- Rapor Tablosu -->
+        <!-- Tablo -->
         <div class="card">
+            <div class="card-header bg-warning text-dark">
+                <i class="fas fa-hand-holding-usd me-2"></i> Avans Detayları
+                <span class="badge bg-dark ms-2">@rapor.Count Kayıt</span>
+            </div>
             <div class="card-body">
                 <div class="table-responsive">
-                    <table class="table report-table table-hover" id="avansTable">
+                    <table class="table table-hover" id="raporTable">
                         <thead>
                             <tr>
-                                <th>Sicil No</th>
                                 <th>Personel</th>
+                                <th>Sicil No</th>
                                 <th>Tutar</th>
                                 <th>Talep Tarihi</th>
                                 <th>Ödeme Tarihi</th>
@@ -133,17 +107,24 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @foreach (var avans in Model)
+                            @foreach (var kayit in rapor)
                             {
                                 <tr>
-                                    <td><strong>@avans.SicilNo</strong></td>
-                                    <td>@avans.PersonelAdi</td>
-                                    <td><strong class="text-success">@avans.Tutar.ToString("N2") ₺</strong></td>
-                                    <td>@avans.TalepTarihi.ToString("dd.MM.yyyy")</td>
                                     <td>
-                                        @if (avans.OdemeTarihi.HasValue)
+                                        <i class="fas fa-user-circle text-warning me-1"></i>
+                                        @kayit.PersonelAdi
+                                    </td>
+                                    <td><strong>@kayit.SicilNo</strong></td>
+                                    <td>
+                                        <strong class="text-danger">@kayit.Tutar.ToString("C")</strong>
+                                    </td>
+                                    <td>@kayit.TalepTarihi.ToString("dd.MM.yyyy")</td>
+                                    <td>
+                                        @if (kayit.OdemeTarihi.HasValue)
                                         {
-                                            @avans.OdemeTarihi.Value.ToString("dd.MM.yyyy")
+                                            <span class="badge bg-success">
+                                                @kayit.OdemeTarihi.Value.ToString("dd.MM.yyyy")
+                                            </span>
                                         }
                                         else
                                         {
@@ -151,28 +132,39 @@
                                         }
                                     </td>
                                     <td>
-                                        @if (avans.Durum == "Ödendi")
+                                        @if (kayit.Durum == "Ödendi")
                                         {
-                                            <span class="badge bg-success">@avans.Durum</span>
+                                            <span class="badge bg-success">
+                                                <i class="fas fa-check-circle"></i> Ödendi
+                                            </span>
                                         }
-                                        else if (avans.Durum == "Onaylandı")
+                                        else if (kayit.Durum == "Beklemede")
                                         {
-                                            <span class="badge bg-info">@avans.Durum</span>
-                                        }
-                                        else if (avans.Durum == "Beklemede")
-                                        {
-                                            <span class="badge bg-warning">@avans.Durum</span>
+                                            <span class="badge bg-warning">
+                                                <i class="fas fa-clock"></i> Bekliyor
+                                            </span>
                                         }
                                         else
                                         {
-                                            <span class="badge bg-danger">@avans.Durum</span>
+                                            <span class="badge bg-danger">
+                                                <i class="fas fa-times-circle"></i> İptal
+                                            </span>
                                         }
                                     </td>
-                                    <td>@(avans.OnaylayanAdi ?? "-")</td>
                                     <td>
-                                        @if (!string.IsNullOrEmpty(avans.Aciklama))
+                                        @if (!string.IsNullOrEmpty(kayit.OnaylayanAdi))
                                         {
-                                            <small>@avans.Aciklama</small>
+                                            <small class="text-muted">@kayit.OnaylayanAdi</small>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">-</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        @if (!string.IsNullOrEmpty(kayit.Aciklama))
+                                        {
+                                            <small class="text-muted">@kayit.Aciklama</small>
                                         }
                                         else
                                         {
@@ -184,119 +176,57 @@
                         </tbody>
                         <tfoot>
                             <tr class="table-active">
-                                <th colspan="2" class="text-end">GENEL TOPLAM:</th>
-                                <th class="text-success">@Model.Sum(a => a.Tutar).ToString("N2") ₺</th>
-                                <th colspan="5"></th>
+                                <td colspan="2"><strong>TOPLAM:</strong></td>
+                                <td><strong class="text-danger">@rapor.Sum(r => r.Tutar).ToString("C")</strong></td>
+                                <td colspan="5"></td>
                             </tr>
                         </tfoot>
                     </table>
                 </div>
             </div>
         </div>
+
+        <!-- Export Buttons -->
+        <div class="row mt-3">
+            <div class="col-12 text-end">
+                <button type="button" class="btn btn-success" onclick="exportToExcel()">
+                    <i class="fas fa-file-excel me-2"></i>Excel'e Aktar
+                </button>
+                <button type="button" class="btn btn-danger" onclick="exportToPDF()">
+                    <i class="fas fa-file-pdf me-2"></i>PDF'e Aktar
+                </button>
+            </div>
+        </div>
     }
-    else
+    else if (Model != null && Model.BaslangicTarihi != DateTime.MinValue)
     {
         <div class="alert alert-info">
             <i class="fas fa-info-circle me-2"></i>
-            Seçilen kriterlere uygun avans kaydı bulunamadı. Lütfen filtreleri değiştirerek tekrar deneyin.
+            Seçilen tarih aralığında avans kaydı bulunamadı.
         </div>
     }
-</div>
-
-<!-- Email Modal -->
-<div class="modal fade" id="emailModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Raporu E-posta ile Gönder</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <div class="mb-3">
-                    <label class="form-label">E-posta Adresi</label>
-                    <input type="email" class="form-control" id="emailAddress" placeholder="ornek@sirket.com">
-                </div>
-                <div class="mb-3">
-                    <label class="form-label">Mesaj (Opsiyonel)</label>
-                    <textarea class="form-control" rows="3" id="emailMessage"></textarea>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
-                <button type="button" class="btn btn-primary" onclick="sendEmail()">Gönder</button>
-            </div>
-        </div>
-    </div>
 </div>
 
 @section Scripts {
     <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
     <script src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap5.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
 
     <script>
         $(document).ready(function() {
-            $('#avansTable').DataTable({
-                language: {
-                    url: '//cdn.datatables.net/plug-ins/1.11.5/i18n/tr.json'
-                },
-                dom: 'Bfrtip',
-                pageLength: 25,
+            $('#raporTable').DataTable({
+                language: { url: '//cdn.datatables.net/plug-ins/1.11.5/i18n/tr.json' },
                 order: [[3, 'desc']]
             });
         });
 
         function exportToExcel() {
-            const table = document.getElementById('avansTable');
-            const wb = XLSX.utils.table_to_book(table, {sheet: "Avans Listesi"});
+            const wb = XLSX.utils.table_to_book(document.getElementById('raporTable'));
             XLSX.writeFile(wb, 'AvansListesi_' + new Date().toISOString().slice(0,10) + '.xlsx');
         }
 
         function exportToPDF() {
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF('l', 'mm', 'a4');
-
-            doc.setFont('helvetica', 'bold');
-            doc.setFontSize(16);
-            doc.text('Avans Listesi Raporu', 14, 15);
-
-            doc.autoTable({
-                html: '#avansTable',
-                startY: 25,
-                theme: 'grid',
-                styles: { font: 'helvetica', fontSize: 8 },
-                headStyles: { fillColor: [102, 126, 234] }
-            });
-
-            doc.save('AvansListesi_' + new Date().toISOString().slice(0,10) + '.pdf');
-        }
-
-        function sendEmail() {
-            const email = document.getElementById('emailAddress').value;
-            const message = document.getElementById('emailMessage').value;
-
-            if (!email) {
-                alert('Lütfen e-posta adresi girin');
-                return;
-            }
-
-            // AJAX ile backend'e gönderme (implementasyon gerekli)
-            alert('E-posta gönderme özelliği yakında eklenecek');
-            $('#emailModal').modal('hide');
+            window.print();
         }
     </script>
 }
-
-<style>
-    @@media print {
-        .report-filter-card, .btn-group, .sidebar, .navbar {
-            display: none !important;
-        }
-
-        .container-fluid {
-            padding: 0;
-        }
-    }
-</style>

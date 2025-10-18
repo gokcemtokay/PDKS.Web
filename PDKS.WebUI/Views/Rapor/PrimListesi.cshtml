@@ -1,18 +1,20 @@
-﻿@model List<PDKS.Business.DTOs.PrimListDTO>
+﻿@* ============================================ *@
+@* Rapor/PrimListesi.cshtml *@
+
+@model PDKS.Business.DTOs.RaporFiltreDTO
 @{
     ViewData["Title"] = "Prim Listesi";
-    var filtre = ViewBag.Filtre as PDKS.Business.DTOs.RaporFiltreDTO;
+    var rapor = ViewBag.Rapor as List<PDKS.Business.DTOs.PrimListDTO>;
 }
 
 <div class="container-fluid">
-    <!-- Başlık -->
     <div class="row mb-4">
         <div class="col-12">
             <h2>
                 <i class="fas fa-certificate text-primary"></i>
-                Prim Listesi Raporu
+                Prim Listesi
             </h2>
-            <p class="text-muted">Personellere ödenen primlerin detaylı listesi</p>
+            <p class="text-muted">Ödenen primlerin listesi</p>
         </div>
     </div>
 
@@ -21,33 +23,33 @@
         <div class="card-body">
             <form asp-action="PrimListesi" method="post">
                 <div class="row g-3 align-items-end">
-                    <div class="col-md-4">
+                    <div class="col-md-5">
                         <label class="form-label">
-                            <i class="fas fa-calendar-alt me-1"></i> Yıl
+                            <i class="fas fa-calendar me-1"></i> Yıl
                         </label>
                         <select name="Yil" class="form-select" required>
+                            <option value="">Yıl Seçiniz</option>
                             @for (int y = DateTime.Now.Year; y >= DateTime.Now.Year - 5; y--)
                             {
-                                <option value="@y" selected="@(y == DateTime.Now.Year)">@y</option>
+                                <option value="@y" selected="@(Model?.Yil == y)">@y</option>
                             }
                         </select>
                     </div>
-                    <div class="col-md-4">
+                    <div class="col-md-5">
                         <label class="form-label">
                             <i class="fas fa-calendar-alt me-1"></i> Ay
                         </label>
                         <select name="Ay" class="form-select" required>
+                            <option value="">Ay Seçiniz</option>
                             @for (int m = 1; m <= 12; m++)
                             {
-                                <option value="@m" selected="@(m == DateTime.Now.Month)">
-                                    @(new DateTime(2000, m, 1).ToString("MMMM"))
-                                </option>
+                                <option value="@m" selected="@(Model?.Ay == m)">@m</option>
                             }
                         </select>
                     </div>
-                    <div class="col-md-4">
-                        <button type="submit" class="btn btn-light w-100">
-                            <i class="fas fa-search me-2"></i> Raporu Getir
+                    <div class="col-md-2">
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="fas fa-search me-2"></i> Getir
                         </button>
                     </div>
                 </div>
@@ -55,102 +57,112 @@
         </div>
     </div>
 
-    @if (Model != null && Model.Any())
+    @if (rapor != null && rapor.Any())
     {
         <!-- Özet Kartlar -->
         <div class="row mb-4">
             <div class="col-md-3">
                 <div class="report-summary-card">
-                    <div class="summary-label">Toplam Personel</div>
-                    <div class="summary-value text-primary">@Model.Count</div>
+                    <div class="summary-label">Toplam Prim Sayısı</div>
+                    <div class="summary-value text-primary">@rapor.Count</div>
                 </div>
             </div>
             <div class="col-md-3">
                 <div class="report-summary-card">
-                    <div class="summary-label">Toplam Prim</div>
+                    <div class="summary-label">Toplam Tutar</div>
                     <div class="summary-value text-success">
-                        @Model.Sum(p => p.ToplamPrim).ToString("N2") ₺
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="report-summary-card">
-                    <div class="summary-label">Performans Primi</div>
-                    <div class="summary-value text-info">
-                        @Model.Sum(p => p.PerformansPrimi).ToString("N2") ₺
+                        @rapor.Sum(r => r.Tutar).ToString("C")
                     </div>
                 </div>
             </div>
             <div class="col-md-3">
                 <div class="report-summary-card">
                     <div class="summary-label">Ortalama Prim</div>
+                    <div class="summary-value text-info">
+                        @rapor.Average(r => r.Tutar).ToString("C")
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="report-summary-card">
+                    <div class="summary-label">En Yüksek Prim</div>
                     <div class="summary-value text-warning">
-                        @((Model.Sum(p => p.ToplamPrim) / Model.Count).ToString("N2")) ₺
+                        @rapor.Max(r => r.Tutar).ToString("C")
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Export Butonları -->
-        <div class="card mb-3">
-            <div class="card-body">
-                <div class="btn-group" role="group">
-                    <button type="button" class="btn btn-excel" onclick="exportToExcel()">
-                        <i class="fas fa-file-excel me-2"></i> Excel'e Aktar
-                    </button>
-                    <button type="button" class="btn btn-pdf" onclick="exportToPDF()">
-                        <i class="fas fa-file-pdf me-2"></i> PDF'e Aktar
-                    </button>
-                    <button type="button" class="btn btn-print" onclick="window.print()">
-                        <i class="fas fa-print me-2"></i> Yazdır
-                    </button>
-                    <button type="button" class="btn btn-email" data-bs-toggle="modal" data-bs-target="#emailModal">
-                        <i class="fas fa-envelope me-2"></i> E-posta Gönder
-                    </button>
-                </div>
-            </div>
-        </div>
-
-        <!-- Rapor Tablosu -->
+        <!-- Tablo -->
         <div class="card">
+            <div class="card-header bg-primary text-white">
+                <i class="fas fa-certificate me-2"></i> Prim Detayları
+                <span class="badge bg-light text-dark ms-2">@Model?.Ay/@Model?.Yil</span>
+            </div>
             <div class="card-body">
                 <div class="table-responsive">
-                    <table class="table report-table table-hover" id="primTable">
+                    <table class="table table-hover" id="raporTable">
                         <thead>
                             <tr>
-                                <th>Sicil No</th>
                                 <th>Personel</th>
-                                <th>Departman</th>
-                                <th>Performans Primi</th>
-                                <th>Satış Primi</th>
-                                <th>Üretim Primi</th>
-                                <th>Diğer Primler</th>
-                                <th>Toplam Prim</th>
+                                <th>Sicil No</th>
+                                <th>Dönem</th>
+                                <th>Prim Tipi</th>
+                                <th>Tutar</th>
+                                <th>Açıklama</th>
                             </tr>
                         </thead>
                         <tbody>
-                            @foreach (var prim in Model)
+                            @foreach (var kayit in rapor.OrderByDescending(r => r.Tutar))
                             {
                                 <tr>
-                                    <td><strong>@prim.SicilNo</strong></td>
-                                    <td>@prim.PersonelAdi</td>
-                                    <td>@prim.Departman</td>
-                                    <td class="text-end">@prim.PerformansPrimi.ToString("N2") ₺</td>
-                                    <td class="text-end">@prim.SatisPrimi.ToString("N2") ₺</td>
-                                    <td class="text-end">@prim.UretimPrimi.ToString("N2") ₺</td>
-                                    <td class="text-end">@prim.DigerPrimler.ToString("N2") ₺</td>
-                                    <td class="text-end"><strong class="text-success">@prim.ToplamPrim.ToString("N2") ₺</strong></td>
+                                    <td>
+                                        <i class="fas fa-user-circle text-primary me-1"></i>
+                                        @kayit.PersonelAdi
+                                    </td>
+                                    <td><strong>@kayit.SicilNo</strong></td>
+                                    <td>
+                                        <span class="badge bg-secondary">@kayit.Donem</span>
+                                    </td>
+                                    <td>
+                                        @if (kayit.PrimTipi == "Performans")
+                                        {
+                                            <span class="badge bg-success">@kayit.PrimTipi</span>
+                                        }
+                                        else if (kayit.PrimTipi == "Satış")
+                                        {
+                                            <span class="badge bg-info">@kayit.PrimTipi</span>
+                                        }
+                                        else if (kayit.PrimTipi == "Üretim")
+                                        {
+                                            <span class="badge bg-warning">@kayit.PrimTipi</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-primary">@kayit.PrimTipi</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        <strong class="text-success">@kayit.Tutar.ToString("C")</strong>
+                                    </td>
+                                    <td>
+                                        @if (!string.IsNullOrEmpty(kayit.Aciklama))
+                                        {
+                                            <small class="text-muted">@kayit.Aciklama</small>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">-</span>
+                                        }
+                                    </td>
                                 </tr>
                             }
                         </tbody>
                         <tfoot>
                             <tr class="table-active">
-                                <th colspan="3" class="text-end">GENEL TOPLAM:</th>
-                                <th class="text-end">@Model.Sum(p => p.PerformansPrimi).ToString("N2") ₺</th>
-                                <th class="text-end">@Model.Sum(p => p.SatisPrimi).ToString("N2") ₺</th>
-                                <th class="text-end">@Model.Sum(p => p.UretimPrimi).ToString("N2") ₺</th>
-                                <th class="text-end">@Model.Sum(p => p.DigerPrimler).ToString("N2") ₺</th>
-                                <th class="text-end text-success"><strong>@Model.Sum(p => p.ToplamPrim).ToString("N2") ₺</strong></th>
+                                <td colspan="4"><strong>TOPLAM:</strong></td>
+                                <td><strong class="text-success">@rapor.Sum(r => r.Tutar).ToString("C")</strong></td>
+                                <td></td>
                             </tr>
                         </tfoot>
                     </table>
@@ -158,158 +170,53 @@
             </div>
         </div>
 
-        <!-- Grafik -->
-        <div class="card mt-4">
-            <div class="card-header">
-                <h5><i class="fas fa-chart-pie me-2"></i>Prim Dağılımı</h5>
+        <!-- Export Buttons -->
+        <div class="row mt-3">
+            <div class="col-12 text-end">
+                <button type="button" class="btn btn-success" onclick="exportToExcel()">
+                    <i class="fas fa-file-excel me-2"></i>Excel'e Aktar
+                </button>
+                <button type="button" class="btn btn-danger" onclick="exportToPDF()">
+                    <i class="fas fa-file-pdf me-2"></i>PDF'e Aktar
+                </button>
             </div>
-            <div class="card-body">
-                <canvas id="primChart" height="100"></canvas>
-            </div>
+        </div>
+    }
+    else if (Model != null && Model.Yil.HasValue && Model.Ay.HasValue)
+    {
+        <div class="alert alert-info">
+            <i class="fas fa-info-circle me-2"></i>
+            Seçilen dönem için prim kaydı bulunamadı.
         </div>
     }
     else
     {
         <div class="alert alert-info">
-            <i class="fas fa-info-circle me-2"></i>
-            Seçilen döneme ait prim kaydı bulunamadı.
+            <i class="fas fa-info-circle"></i> Lütfen yıl ve ay seçerek prim listesini görüntüleyin.
         </div>
     }
-</div>
-
-<!-- Email Modal -->
-<div class="modal fade" id="emailModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Raporu E-posta ile Gönder</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <div class="mb-3">
-                    <label class="form-label">E-posta Adresi</label>
-                    <input type="email" class="form-control" id="emailAddress" placeholder="ornek@sirket.com">
-                </div>
-                <div class="mb-3">
-                    <label class="form-label">Mesaj (Opsiyonel)</label>
-                    <textarea class="form-control" rows="3" id="emailMessage"></textarea>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
-                <button type="button" class="btn btn-primary" onclick="sendEmail()">Gönder</button>
-            </div>
-        </div>
-    </div>
 </div>
 
 @section Scripts {
     <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
     <script src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap5.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <script>
         $(document).ready(function() {
-            $('#primTable').DataTable({
-                language: {
-                    url: '//cdn.datatables.net/plug-ins/1.11.5/i18n/tr.json'
-                },
-                pageLength: 25,
-                order: [[7, 'desc']]
+            $('#raporTable').DataTable({
+                language: { url: '//cdn.datatables.net/plug-ins/1.11.5/i18n/tr.json' },
+                paging: false
             });
-
-            // Grafik oluştur
-        @if (Model != null && Model.Any())
-        {
-            <text>
-                    const ctx = document.getElementById('primChart').getContext('2d');
-                    new Chart(ctx, {
-                        type: 'bar',
-                        data: {
-                            labels: @Html.Raw(Json.Serialize(Model.Select(p => p.PersonelAdi).Take(10))),
-                            datasets: [{
-                                label: 'Performans Primi',
-                                data: @Html.Raw(Json.Serialize(Model.Select(p => p.PerformansPrimi).Take(10))),
-                                backgroundColor: 'rgba(54, 162, 235, 0.8)'
-                            }, {
-                                label: 'Satış Primi',
-                                data: @Html.Raw(Json.Serialize(Model.Select(p => p.SatisPrimi).Take(10))),
-                                backgroundColor: 'rgba(255, 206, 86, 0.8)'
-                            }, {
-                                label: 'Üretim Primi',
-                                data: @Html.Raw(Json.Serialize(Model.Select(p => p.UretimPrimi).Take(10))),
-                                backgroundColor: 'rgba(75, 192, 192, 0.8)'
-                            }]
-                        },
-                        options: {
-                            responsive: true,
-                            scales: {
-                                y: {
-                                    beginAtZero: true,
-                                    ticks: {
-                                        callback: function(value) {
-                                            return value.toLocaleString('tr-TR') + ' ₺';
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    });
-            </text>
-        }
         });
 
         function exportToExcel() {
-            const table = document.getElementById('primTable');
-            const wb = XLSX.utils.table_to_book(table, {sheet: "Prim Listesi"});
+            const wb = XLSX.utils.table_to_book(document.getElementById('raporTable'));
             XLSX.writeFile(wb, 'PrimListesi_' + new Date().toISOString().slice(0,10) + '.xlsx');
         }
 
         function exportToPDF() {
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF('l', 'mm', 'a4');
-
-            doc.setFont('helvetica', 'bold');
-            doc.setFontSize(16);
-            doc.text('Prim Listesi Raporu', 14, 15);
-
-            doc.autoTable({
-                html: '#primTable',
-                startY: 25,
-                theme: 'grid',
-                styles: { font: 'helvetica', fontSize: 8 },
-                headStyles: { fillColor: [102, 126, 234] }
-            });
-
-            doc.save('PrimListesi_' + new Date().toISOString().slice(0,10) + '.pdf');
-        }
-
-        function sendEmail() {
-            const email = document.getElementById('emailAddress').value;
-            const message = document.getElementById('emailMessage').value;
-
-            if (!email) {
-                alert('Lütfen e-posta adresi girin');
-                return;
-            }
-
-            alert('E-posta gönderme özelliği yakında eklenecek');
-            $('#emailModal').modal('hide');
+            window.print();
         }
     </script>
 }
-
-<style>
-    @@media print {
-        .report-filter-card, .btn-group, .sidebar, .navbar {
-            display: none !important;
-        }
-
-        .container-fluid {
-            padding: 0;
-        }
-    }
-</style>

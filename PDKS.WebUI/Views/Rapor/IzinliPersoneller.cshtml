@@ -1,5 +1,213 @@
-﻿@*
-    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
-*@
+﻿@* ============================================ *@
+@* Rapor/IzinliPersoneller.cshtml *@
+
+@model PDKS.Business.DTOs.RaporFiltreDTO
 @{
+    ViewData["Title"] = "İzinli Personeller Raporu";
+    var rapor = ViewBag.Rapor as List<PDKS.Business.DTOs.IzinliPersonelRaporDTO>;
+}
+
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2>
+                <i class="fas fa-umbrella-beach text-success"></i>
+                İzinli Personeller Raporu
+            </h2>
+            <p class="text-muted">İzin kullanan personellerin raporu</p>
+        </div>
+    </div>
+
+    <!-- Filtre Kartı -->
+    <div class="card report-filter-card mb-4">
+        <div class="card-body">
+            <form asp-action="IzinliPersoneller" method="post">
+                <div class="row g-3 align-items-end">
+                    <div class="col-md-3">
+                        <label class="form-label">
+                            <i class="fas fa-calendar-alt me-1"></i> Başlangıç Tarihi
+                        </label>
+                        <input type="date" name="BaslangicTarihi" class="form-control"
+                               value="@(Model?.BaslangicTarihi.ToString("yyyy-MM-dd") ?? DateTime.Now.AddMonths(-1).ToString("yyyy-MM-dd"))"
+                               required />
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">
+                            <i class="fas fa-calendar-alt me-1"></i> Bitiş Tarihi
+                        </label>
+                        <input type="date" name="BitisTarihi" class="form-control"
+                               value="@(Model?.BitisTarihi.ToString("yyyy-MM-dd") ?? DateTime.Now.ToString("yyyy-MM-dd"))"
+                               required />
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">
+                            <i class="fas fa-building me-1"></i> Departman
+                        </label>
+                        <select name="Departman" class="form-select" asp-items="ViewBag.Departmanlar">
+                            <option value="">Tüm Departmanlar</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <button type="submit" class="btn btn-success w-100">
+                            <i class="fas fa-search me-2"></i> Raporu Getir
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    @if (rapor != null && rapor.Any())
+    {
+        <!-- Özet Kartlar -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="report-summary-card">
+                    <div class="summary-label">Toplam İzin</div>
+                    <div class="summary-value text-success">@rapor.Count</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="report-summary-card">
+                    <div class="summary-label">İzinli Personel</div>
+                    <div class="summary-value text-info">
+                        @rapor.Select(r => r.PersonelAdi).Distinct().Count()
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="report-summary-card">
+                    <div class="summary-label">Toplam Gün</div>
+                    <div class="summary-value text-warning">
+                        @rapor.Sum(r => r.GunSayisi) gün
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="report-summary-card">
+                    <div class="summary-label">Yıllık İzin</div>
+                    <div class="summary-value text-primary">
+                        @rapor.Count(r => r.IzinTipi == "Yıllık İzin")
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tablo -->
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <i class="fas fa-umbrella-beach me-2"></i> İzin Detayları
+                <span class="badge bg-light text-dark ms-2">@rapor.Count Kayıt</span>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover" id="raporTable">
+                        <thead>
+                            <tr>
+                                <th>Personel</th>
+                                <th>Sicil No</th>
+                                <th>Departman</th>
+                                <th>İzin Türü</th>
+                                <th>Başlangıç</th>
+                                <th>Bitiş</th>
+                                <th>Süre</th>
+                                <th>Açıklama</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var kayit in rapor)
+                            {
+                                <tr>
+                                    <td>
+                                        <i class="fas fa-user-circle text-success me-1"></i>
+                                        @kayit.PersonelAdi
+                                    </td>
+                                    <td><strong>@kayit.SicilNo</strong></td>
+                                    <td>@kayit.Departman</td>
+                                    <td>
+                                        @if (kayit.IzinTipi == "Yıllık İzin")
+                                        {
+                                            <span class="badge bg-primary">@kayit.IzinTipi</span>
+                                        }
+                                        else if (kayit.IzinTipi == "Mazeret İzni")
+                                        {
+                                            <span class="badge bg-info">@kayit.IzinTipi</span>
+                                        }
+                                        else if (kayit.IzinTipi == "Hastalık İzni")
+                                        {
+                                            <span class="badge bg-danger">@kayit.IzinTipi</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-secondary">@kayit.IzinTipi</span>
+                                        }
+                                    </td>
+                                    <td>@kayit.BaslangicTarihi.ToString("dd.MM.yyyy")</td>
+                                    <td>@kayit.BitisTarihi.ToString("dd.MM.yyyy")</td>
+                                    <td>
+                                        <span class="badge bg-success">
+                                            <i class="fas fa-calendar-day"></i> @kayit.GunSayisi gün
+                                        </span>
+                                    </td>
+                                    <td>
+                                        @if (!string.IsNullOrEmpty(kayit.Aciklama))
+                                        {
+                                            <small class="text-muted">@kayit.Aciklama</small>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">-</span>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Export Buttons -->
+        <div class="row mt-3">
+            <div class="col-12 text-end">
+                <button type="button" class="btn btn-success" onclick="exportToExcel()">
+                    <i class="fas fa-file-excel me-2"></i>Excel'e Aktar
+                </button>
+                <button type="button" class="btn btn-danger" onclick="exportToPDF()">
+                    <i class="fas fa-file-pdf me-2"></i>PDF'e Aktar
+                </button>
+            </div>
+        </div>
+    }
+    else if (Model != null && Model.BaslangicTarihi != DateTime.MinValue)
+    {
+        <div class="alert alert-info">
+            <i class="fas fa-info-circle me-2"></i>
+            Seçilen tarih aralığında izin kaydı bulunamadı.
+        </div>
+    }
+</div>
+
+@section Scripts {
+    <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap5.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+    <script>
+        $(document).ready(function() {
+            $('#raporTable').DataTable({
+                language: { url: '//cdn.datatables.net/plug-ins/1.11.5/i18n/tr.json' },
+                order: [[4, 'desc']]
+            });
+        });
+
+        function exportToExcel() {
+            const wb = XLSX.utils.table_to_book(document.getElementById('raporTable'));
+            XLSX.writeFile(wb, 'IzinliPersoneller_' + new Date().toISOString().slice(0,10) + '.xlsx');
+        }
+
+        function exportToPDF() {
+            window.print();
+        }
+    </script>
 }
