@@ -1,34 +1,29 @@
-﻿using System.ComponentModel.DataAnnotations.Schema;
-using System.ComponentModel.DataAnnotations;
+﻿using System;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace PDKS.Data.Entities
 {
-    [Table("cihaz_loglari")]
     public class CihazLog
     {
-        [Key]
-        [Column("id")]
         public int Id { get; set; }
-
-        [Required]
-        [Column("cihaz_id")]
         public int CihazId { get; set; }
+        public Cihaz Cihaz { get; set; }
 
-        [ForeignKey(nameof(CihazId))]
-        public Cihaz Cihaz { get; set; }  
+        [Column("log_tarihi")]
+        public DateTime Tarih { get; set; }
 
-        [MaxLength(100)]
-        [Column("islem")]
-        public string Islem { get; set; }
+        [Column("log_mesaji")]
+        public string Mesaj { get; set; }
 
-        [Column("basarili")]
-        public bool Basarili { get; set; }
+        [Column("log_tipi")]
+        public string Tip { get; set; }
 
-        [Column("detay")]
+        // --- Eski View'ların derleme hatasını gidermek için ---
+        [NotMapped]
         public string Detay { get; set; }
-
-        [Column("tarih")]
-        public DateTime Tarih { get; set; } = DateTime.UtcNow;
-
+        [NotMapped]
+        public string Islem { get; set; }
+        [NotMapped]
+        public bool Basarili => Tip != "Hata";
     }
 }

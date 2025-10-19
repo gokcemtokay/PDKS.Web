@@ -1,39 +1,16 @@
-﻿using System.ComponentModel.DataAnnotations.Schema;
-using System.ComponentModel.DataAnnotations;
+﻿using System;
 
 namespace PDKS.Data.Entities
 {
-    [Table("loglar")]
     public class Log
     {
-        [Key]
-        [Column("id")]
         public int Id { get; set; }
-
-        [Column("kullanici_id")]
+        public DateTime Tarih { get; set; }
         public int? KullaniciId { get; set; }
-
-        [Required]
-        [MaxLength(100)]
-        [Column("islem")]
-        public string Islem { get; set; }
-
-        [MaxLength(200)]
-        [Column("modul")]
-        public string Modul { get; set; }
-
-        [Column("detay")]
-        public string Detay { get; set; }
-
-        [MaxLength(50)]
-        [Column("ip_adres")]
-        public string IpAdres { get; set; }
-
-        [Column("tarih")]
-        public DateTime Tarih { get; set; } = DateTime.UtcNow;
-
-        // Navigation Properties
-        [ForeignKey("KullaniciId")]
-        public virtual Kullanici Kullanici { get; set; }
+        public Kullanici Kullanici { get; set; }
+        public string Islem { get; set; } // "Create", "Update", "Login" vb. (IslemTuru -> Islem)
+        public string Aciklama { get; set; } // What was done (Detay -> Aciklama)
+        public string IpAdresi { get; set; } // (IpAdres -> IpAdresi)
+        public string LogLevel { get; set; } // "Info", "Warning", "Error"
     }
 }

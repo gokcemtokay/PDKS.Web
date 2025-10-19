@@ -1,195 +1,116 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
 using PDKS.Business.DTOs;
 using PDKS.Business.Services;
-using PDKS.Data.Repositories;
-
+using System;
+using System.Threading.Tasks;
 
 namespace PDKS.WebUI.Controllers
 {
     [Authorize(Roles = "Admin")]
-    public class KullaniciController : Controller
+    [ApiController]
+    [Route("api/[controller]")]
+    public class KullaniciController : ControllerBase
     {
         private readonly IKullaniciService _kullaniciService;
-        private readonly IUnitOfWork _unitOfWork;
+        private readonly IAuthService _authService;
 
-        public KullaniciController(IKullaniciService kullaniciService, IUnitOfWork unitOfWork)
+        public KullaniciController(IKullaniciService kullaniciService, IAuthService authService)
         {
             _kullaniciService = kullaniciService;
-            _unitOfWork = unitOfWork;
+            _authService = authService;
         }
 
-        public async Task<IActionResult> Index()
-        {
-            var kullanicilar = await _kullaniciService.GetAllAsync();
-            return View(kullanicilar);
-        }
-
-        public async Task<IActionResult> Create()
-        {
-            await LoadSelectLists();
-            return View();
-        }
-
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create(KullaniciCreateDTO dto)
+        // GET: api/Kullanici
+        [HttpGet]
+        public async Task<IActionResult> GetKullanicilar()
         {
             try
             {
-                if (!ModelState.IsValid)
-                {
-                    await LoadSelectLists(dto.PersonelId, dto.RolId);
-                    return View(dto);
-                }
-
-                await _kullaniciService.CreateAsync(dto);
-                await LogAction("Ekleme", "Kullanıcı", $"{dto.KullaniciAdi} kullanıcısı eklendi");
-
-                TempData["Success"] = "Kullanıcı başarıyla eklendi";
-                return RedirectToAction(nameof(Index));
+                var kullanicilar = await _kullaniciService.GetAllAsync();
+                return Ok(kullanicilar);
             }
             catch (Exception ex)
             {
-                TempData["Error"] = ex.Message;
-                await LoadSelectLists(dto.PersonelId, dto.RolId);
-                return View(dto);
+                return StatusCode(500, $"Internal Server Error: {ex.Message}");
             }
         }
 
-        public async Task<IActionResult> Edit(int id)
+        // GET: api/Kullanici/5
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetKullaniciById(int id)
         {
             try
             {
                 var kullanici = await _kullaniciService.GetByIdAsync(id);
-                var dto = new KullaniciUpdateDTO
+                if (kullanici == null)
                 {
-                    Id = kullanici.Id,
-                    KullaniciAdi = kullanici.KullaniciAdi,
-                    PersonelId = kullanici.PersonelId,
-                    RolId = kullanici.RolId,
-                    Aktif = kullanici.Aktif
-                };
-
-                await LoadSelectLists(dto.PersonelId, dto.RolId);
-                return View(dto);
+                    return NotFound($"Kullanıcı with ID {id} not found.");
+                }
+                return Ok(kullanici);
             }
             catch (Exception ex)
             {
-                TempData["Error"] = ex.Message;
-                return RedirectToAction(nameof(Index));
+                return StatusCode(500, $"Internal Server Error: {ex.Message}");
             }
         }
 
+        // POST: api/Kullanici
         [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(KullaniciUpdateDTO dto)
+        public async Task<IActionResult> CreateKullanici([FromBody] KullaniciCreateDTO dto)
         {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
             try
             {
-                if (!ModelState.IsValid)
+                // Şifreyi hash'leyerek DTO'yu servise gönder
+                dto.Sifre = _authService.HashPassword(dto.Sifre);
+                var newId = await _kullaniciService.CreateAsync(dto);
+                var createdUser = await _kullaniciService.GetByIdAsync(newId);
+                return CreatedAtAction(nameof(GetKullaniciById), new { id = newId }, createdUser);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Internal Server Error: {ex.Message}");
+            }
+        }
+
+        // PUT: api/Kullanici/5
+        [HttpPut("{id}")]
+        public async Task<IActionResult> UpdateKullanici(int id, [FromBody] KullaniciUpdateDTO dto)
+        {
+            if (id != dto.Id)
+            {
+                return BadRequest("Kullanıcı ID mismatch.");
+            }
+
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            try
+            {
+                // Eğer yeni bir şifre gönderildiyse hash'le, değilse mevcut şifreyi koru.
+                if (!string.IsNullOrEmpty(dto.YeniSifre))
                 {
-                    await LoadSelectLists(dto.PersonelId, dto.RolId);
-                    return View(dto);
+                    dto.Sifre = _authService.HashPassword(dto.YeniSifre);
                 }
 
                 await _kullaniciService.UpdateAsync(dto);
-                await LogAction("Güncelleme", "Kullanıcı", $"{dto.KullaniciAdi} kullanıcısı güncellendi");
-
-                TempData["Success"] = "Kullanıcı başarıyla güncellendi";
-                return RedirectToAction(nameof(Index));
+                return NoContent();
             }
             catch (Exception ex)
             {
-                TempData["Error"] = ex.Message;
-                await LoadSelectLists(dto.PersonelId, dto.RolId);
-                return View(dto);
-            }
-        }
-
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Delete(int id)
-        {
-            try
-            {
-                var kullanici = await _kullaniciService.GetByIdAsync(id);
-                await _kullaniciService.DeleteAsync(id);
-                await LogAction("Silme", "Kullanıcı", $"{kullanici.KullaniciAdi} kullanıcısı silindi");
-
-                TempData["Success"] = "Kullanıcı başarıyla silindi";
-                return RedirectToAction(nameof(Index));
-            }
-            catch (Exception ex)
-            {
-                TempData["Error"] = ex.Message;
-                return RedirectToAction(nameof(Index));
-            }
-        }
-
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> SifreDegistir(int id, string yeniSifre)
-        {
-            try
-            {
-                if (string.IsNullOrWhiteSpace(yeniSifre) || yeniSifre.Length < 6)
+                if (ex.Message.Contains("bulunamadı"))
                 {
-                    TempData["Error"] = "Şifre en az 6 karakter olmalıdır";
-                    return RedirectToAction(nameof(Index));
+                    return NotFound(ex.Message);
                 }
-
-                await _kullaniciService.SifreDegistirAsync(id, yeniSifre);
-
-                var kullanici = await _kullaniciService.GetByIdAsync(id);
-                await LogAction("Şifre Değiştirme", "Kullanıcı", $"{kullanici.KullaniciAdi} kullanıcısının şifresi değiştirildi");
-
-                TempData["Success"] = "Şifre başarıyla değiştirildi";
-                return RedirectToAction(nameof(Index));
+                return StatusCode(500, $"Internal Server Error: {ex.Message}");
             }
-            catch (Exception ex)
-            {
-                TempData["Error"] = ex.Message;
-                return RedirectToAction(nameof(Index));
-            }
-        }
-
-        private async Task LoadSelectLists(int? selectedPersonelId = null, int? selectedRolId = null)
-        {
-            var personeller = await _unitOfWork.Personeller.GetAllAsync();
-            var roller = await _unitOfWork.Roller.GetAllAsync();
-
-            // Sadece henüz kullanıcısı olmayan personeller
-            var kullanicilar = await _unitOfWork.Kullanicilar.GetAllAsync();
-            var personelIdsWithUser = kullanicilar.Where(k => k.PersonelId.HasValue).Select(k => k.PersonelId.Value).ToList();
-
-            var availablePersoneller = personeller.Where(p =>
-                !personelIdsWithUser.Contains(p.Id) || p.Id == selectedPersonelId);
-
-            ViewBag.Personeller = new SelectList(
-                availablePersoneller.Select(p => new { p.Id, DisplayText = $"{p.AdSoyad} ({p.SicilNo})" }),
-                "Id",
-                "DisplayText",
-                selectedPersonelId
-            );
-
-            ViewBag.Roller = new SelectList(roller, "Id", "RolAdi", selectedRolId);
-        }
-
-        private async Task LogAction(string islem, string modul, string detay)
-        {
-            var kullaniciId = int.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? "0");
-            await _unitOfWork.Loglar.AddAsync(new PDKS.Data.Entities.Log
-            {
-                KullaniciId = kullaniciId,
-                Islem = islem,
-                Modul = modul,
-                Detay = detay,
-                IpAdres = HttpContext.Connection.RemoteIpAddress?.ToString(),
-                Tarih = DateTime.UtcNow
-            });
-            await _unitOfWork.SaveChangesAsync();
         }
     }
 }

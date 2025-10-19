@@ -1,59 +1,29 @@
-﻿using System.ComponentModel.DataAnnotations.Schema;
-using System.ComponentModel.DataAnnotations;
+﻿using PDKS.Data.Entities;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace PDKS.Data.Entities
 {
-    [Table("giris_cikislar")]
     public class GirisCikis
     {
-        [Key]
-        [Column("id")]
         public int Id { get; set; }
 
-        [Required]
-        [Column("personel_id")]
         public int PersonelId { get; set; }
+        public Personel Personel { get; set; }
 
-        [Column("giris_zamani")]
+        public int? CihazId { get; set; }
+        public Cihaz Cihaz { get; set; }
+
         public DateTime? GirisZamani { get; set; }
-
-        [Column("cikis_zamani")]
         public DateTime? CikisZamani { get; set; }
 
-        [MaxLength(100)]
-        [Column("kaynak")]
-        public string Kaynak { get; set; } // Cihaz adı
+        public string Durum { get; set; } // Örn: Normal, Geç Kalmış, Erken Çıkmış, Fazla Mesai
+        public int? GecKalmaSuresi { get; set; } // dakika
+        public int? ErkenCikisSuresi { get; set; } // dakika
+        public int? FazlaMesaiSuresi { get; set; } // dakika
 
-        [Column("cihaz_id")]
-        public int? CihazId { get; set; }
-
-        [Column("fazla_mesai_suresi")]
-        public int? FazlaMesaiSuresi { get; set; } // Dakika cinsinden
-
-        [Column("gec_kalma_suresi")]
-        public int? GecKalmaSuresi { get; set; } // Dakika cinsinden
-
-        [Column("erken_cikis_suresi")]
-        public int? ErkenCikisSuresi { get; set; } // Dakika cinsinden
-
-        [MaxLength(50)]
-        [Column("durum")]
-        public string Durum { get; set; } = "Normal";// Normal, Geç Kalmış, Erken Çıkmış, vb.
-
-        [Column("elle_giris")]
         public bool ElleGiris { get; set; } = false;
-
-        [MaxLength(500)]
-        [Column("not")]
         public string Not { get; set; }
-
-        [Column("olusturma_tarihi")]
-        public DateTime OlusturmaTarihi { get; set; } = DateTime.UtcNow;
-
-        [ForeignKey(nameof(PersonelId))]
-        public virtual Personel Personel { get; set; }
-
-        [ForeignKey(nameof(CihazId))]
-        public virtual Cihaz Cihaz { get; set; }
+        public DateTime OlusturmaTarihi { get; set; }
+        public DateTime? GuncellemeTarihi { get; set; } // YENİ EKLENEN SATIR
     }
 }

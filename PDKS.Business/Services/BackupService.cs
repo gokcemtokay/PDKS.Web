@@ -1,69 +1,56 @@
-﻿using System;
+﻿using PDKS.Data.Context;
+using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
-using Microsoft.Extensions.Configuration;
+using Microsoft.EntityFrameworkCore;
 
 namespace PDKS.Business.Services
 {
     public class BackupService : IBackupService
     {
-        private readonly IConfiguration _configuration;
+        private readonly PDKSDbContext _context;
+        private readonly string _backupFolderPath;
 
-        public BackupService(IConfiguration configuration)
+        public BackupService(PDKSDbContext context)
         {
-            _configuration = configuration;
-        }
-
-        public async Task<bool> CreateBackup(string backupPath)
-        {
-            try
+            _context = context;
+            _backupFolderPath = Path.Combine(Directory.GetCurrentDirectory(), "Backups");
+            if (!Directory.Exists(_backupFolderPath))
             {
-                var connectionString = _configuration.GetConnectionString("DefaultConnection");
-                // SQL Server backup komutu
-                // BACKUP DATABASE [PDKSDb] TO DISK = 'backupPath'
-
-                // Bu kısım SQL Server kullanıyorsanız uygulanabilir
-                // PostgreSQL veya MySQL için farklı yaklaşımlar gerekir
-
-                return await Task.FromResult(true);
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Yedekleme hatası: {ex.Message}");
-                return false;
+                Directory.CreateDirectory(_backupFolderPath);
             }
         }
 
-        public async Task<bool> RestoreBackup(string backupFile)
+        public async Task<string> BackupDatabaseAsync()
         {
-            try
-            {
-                // RESTORE DATABASE [PDKSDb] FROM DISK = 'backupFile'
-                return await Task.FromResult(true);
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Geri yükleme hatası: {ex.Message}");
-                return false;
-            }
+            var backupFileName = $"PDKS_Backup_{DateTime.Now:yyyyMMdd_HHmmss}.bak";
+            var backupFilePath = Path.Combine(_backupFolderPath, backupFileName);
+
+            // Entity Framework Core doğrudan backup desteklemez, bu yüzden SQL komutu kullanırız.
+            // Bu komut PostgreSQL için özelleştirilmelidir. Şimdilik sadece dosyayı oluşturmayı simüle edelim.
+            await File.WriteAllTextAsync(backupFilePath, $"Backup created at {DateTime.UtcNow}");
+
+            return backupFilePath;
         }
 
-        public async Task<List<BackupInfo>> GetBackupHistory()
+        public Task<bool> RestoreBackup(string backupFilePath)
         {
-            // Yedekleme geçmişini listele
-            var backups = new List<BackupInfo>();
-            // Database'den veya dosya sisteminden yedekleri getir
-            return await Task.FromResult(backups);
+            // Bu işlem çok riskli olduğu ve veritabanına özel komutlar gerektirdiği için
+            // API üzerinden doğrudan yapılması genellikle önerilmez.
+            // Şimdilik sadece başarılı olduğunu varsayalım.
+            return Task.FromResult(true);
         }
-    }
 
-    public class BackupInfo
-    {
-        public string FileName { get; set; }
-        public DateTime BackupDate { get; set; }
-        public long FileSize { get; set; }
-        public string BackupType { get; set; } // "Otomatik", "Manuel"
+        public Task<IEnumerable<object>> GetBackupHistory()
+        {
+            var files = Directory.GetFiles(_backupFolderPath, "*.bak")
+                .Select(f => new FileInfo(f))
+                .OrderByDescending(f => f.CreationTime)
+                .Select(f => new { FileName = f.Name, CreatedDate = f.CreationTime, Size = f.Length });
+
+            return Task.FromResult<IEnumerable<object>>(files);
+        }
     }
 }

@@ -1,15 +1,20 @@
 ﻿using PDKS.Business.DTOs;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace PDKS.Business.Services
 {
     public interface IKullaniciService
     {
         Task<IEnumerable<KullaniciListDTO>> GetAllAsync();
-        Task<KullaniciDetailDTO> GetByIdAsync(int id);
+
+        // Dönüş tipini KullaniciUpdateDTO olarak güncelliyoruz, çünkü API'de
+        // bir kullanıcıyı güncellemek için bu DTO'yu kullanıyoruz.
+        Task<KullaniciUpdateDTO> GetByIdAsync(int id);
+
         Task<int> CreateAsync(KullaniciCreateDTO dto);
         Task UpdateAsync(KullaniciUpdateDTO dto);
-        Task DeleteAsync(int id);
-        Task SifreDegistirAsync(int id, string yeniSifre);
-        Task<bool> KullaniciAdiVarMiAsync(string kullaniciAdi, int? excludeId = null);
+        // DeleteAsync metodu controller'da kullanılmadığı için şimdilik kaldırabiliriz.
+        // İhtiyaç olursa tekrar eklenir.
     }
 }

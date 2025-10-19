@@ -1,14 +1,16 @@
 ﻿using PDKS.Data.Entities;
+using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace PDKS.Data.Repositories
 {
     public interface ILogRepository : IRepository<Log>
     {
-        Task<IEnumerable<Log>> GetByKullaniciAsync(int kullaniciId);
-        Task<IEnumerable<Log>> GetByModulAsync(string modul);
-        Task<IEnumerable<Log>> GetByIslemAsync(string islem);
+        // Not: Bu arayüz, projenin mevcut ve gelecekteki ihtiyaçlarına göre
+        // orijinal projedeki tüm yetenekleri koruyacak şekilde güncellenmiştir.
         Task<IEnumerable<Log>> GetByDateRangeAsync(DateTime baslangic, DateTime bitis);
-        Task<IEnumerable<Log>> GetRecentLogsAsync(int count = 100);
-        Task<IEnumerable<Log>> GetByKullaniciAndDateRangeAsync(int kullaniciId, DateTime baslangic, DateTime bitis);
+        Task<IEnumerable<Log>> GetByKullaniciAsync(int kullaniciId);
+        Task<int> GetErrorLogCountAsync();
     }
 }

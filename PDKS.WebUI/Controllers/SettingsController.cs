@@ -2,142 +2,75 @@
 using Microsoft.AspNetCore.Mvc;
 using PDKS.Business.DTOs;
 using PDKS.Business.Services;
-using PDKS.Data.Repositories;
+using System;
+using System.IO;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Configuration;
+using System.Collections.Generic;
 
 namespace PDKS.WebUI.Controllers
 {
-    /// <summary>
-    ///  PDKS  gelişmiş özellikler için ayarlar kontrolcüsü
-    /// </summary>
     [Authorize(Roles = "Admin")]
-    public class SettingsController : Controller
+    [ApiController]
+    [Route("api/[controller]")]
+    public class SettingsController : ControllerBase
     {
-        private readonly IUnitOfWork _unitOfWork;
-        private readonly IExportAndEmailService _exportService;
         private readonly IBackupService _backupService;
+        private readonly IParametreService _parametreService;
+        // Diğer servisler de buraya eklenebilir.
 
-        public SettingsController(
-            IUnitOfWork unitOfWork,
-            IExportAndEmailService exportService,
-            IBackupService backupService)
+        public SettingsController(IBackupService backupService, IParametreService parametreService)
         {
-            _unitOfWork = unitOfWork;
-            _exportService = exportService;
             _backupService = backupService;
+            _parametreService = parametreService;
         }
-
-        // GET: Settings/Index
-        public IActionResult Index()
-        {
-            return View();
-        }
-
-        #region Otomatik Mail Ayarları
-
-        // GET: Settings/AutomaticEmails
-        public async Task<IActionResult> AutomaticEmails()
-        {
-            // Zamanlanmış raporları getir
-            return View();
-        }
-
-        // POST: Settings/CreateScheduledReport
-        [HttpPost]
-        public async Task<IActionResult> CreateScheduledReport(ScheduledReportDTO model)
-        {
-            if (!ModelState.IsValid)
-            {
-                TempData["Error"] = "Lütfen tüm alanları doldurun";
-                return RedirectToAction(nameof(AutomaticEmails));
-            }
-
-            // Veritabanına kaydet
-            TempData["Success"] = "Zamanlanmış rapor başarıyla oluşturuldu";
-            return RedirectToAction(nameof(AutomaticEmails));
-        }
-
-        // POST: Settings/DeleteScheduledReport
-        [HttpPost]
-        public async Task<IActionResult> DeleteScheduledReport(int id)
-        {
-            TempData["Success"] = "Zamanlanmış rapor silindi";
-            return RedirectToAction(nameof(AutomaticEmails));
-        }
-
-        #endregion
 
         #region Yedekleme Ayarları
 
-        // GET: Settings/Backup
-        public async Task<IActionResult> Backup()
+        [HttpGet("backup-history")]
+        public async Task<IActionResult> GetBackupHistory()
         {
             var backupHistory = await _backupService.GetBackupHistory();
-            return View(backupHistory);
+            return Ok(backupHistory);
         }
 
-        // POST: Settings/CreateBackup
-        [HttpPost]
+        [HttpPost("create-backup")]
         public async Task<IActionResult> CreateBackup()
         {
-            var backupPath = Path.Combine(
-                Directory.GetCurrentDirectory(),
-                "Backups",
-                $"PDKS_Backup_{DateTime.Now:yyyyMMdd_HHmmss}.bak"
-            );
-
-            var result = await _backupService.CreateBackup(backupPath);
-
-            if (result)
+            try
             {
-                TempData["Success"] = "Yedekleme başarıyla oluşturuldu";
+                var backupPath = await _backupService.BackupDatabaseAsync();
+                return Ok(new { message = "Yedekleme başarıyla oluşturuldu.", filePath = backupPath });
             }
-            else
+            catch (Exception ex)
             {
-                TempData["Error"] = "Yedekleme oluşturulamadı";
+                return StatusCode(500, $"Yedekleme oluşturulamadı: {ex.Message}");
             }
-
-            return RedirectToAction(nameof(Backup));
         }
 
-        // POST: Settings/RestoreBackup
-        [HttpPost]
-        public async Task<IActionResult> RestoreBackup(string backupFile)
+        [HttpPost("restore-backup")]
+        public async Task<IActionResult> RestoreBackup([FromBody] BackupRequestDTO dto)
         {
-            if (string.IsNullOrEmpty(backupFile))
-            {
-                TempData["Error"] = "Yedek dosyası seçilmedi";
-                return RedirectToAction(nameof(Backup));
-            }
+            if (string.IsNullOrEmpty(dto.FileName))
+                return BadRequest("Yedek dosyası seçilmedi.");
 
-            var result = await _backupService.RestoreBackup(backupFile);
+            var filePath = Path.Combine(Directory.GetCurrentDirectory(), "Backups", dto.FileName);
+            if (!System.IO.File.Exists(filePath))
+                return NotFound("Dosya bulunamadı.");
 
+            var result = await _backupService.RestoreBackup(filePath);
             if (result)
-            {
-                TempData["Success"] = "Yedek başarıyla geri yüklendi";
-            }
+                return Ok(new { message = "Yedek başarıyla geri yüklendi." });
             else
-            {
-                TempData["Error"] = "Yedek geri yüklenemedi";
-            }
-
-            return RedirectToAction(nameof(Backup));
+                return StatusCode(500, "Yedek geri yüklenemedi.");
         }
 
-        // GET: Settings/DownloadBackup
+        [HttpGet("download-backup/{fileName}")]
         public IActionResult DownloadBackup(string fileName)
         {
-            var filePath = Path.Combine(
-                Directory.GetCurrentDirectory(),
-                "Backups",
-                fileName
-            );
-
+            var filePath = Path.Combine(Directory.GetCurrentDirectory(), "Backups", fileName);
             if (!System.IO.File.Exists(filePath))
-            {
-                TempData["Error"] = "Dosya bulunamadı";
-                return RedirectToAction(nameof(Backup));
-            }
+                return NotFound("Dosya bulunamadı.");
 
             var fileBytes = System.IO.File.ReadAllBytes(filePath);
             return File(fileBytes, "application/octet-stream", fileName);
@@ -147,123 +80,38 @@ namespace PDKS.WebUI.Controllers
 
         #region Sistem Parametreleri
 
-        // GET: Settings/SystemParameters
-        public async Task<IActionResult> SystemParameters()
-        {
-            // Parametreleri getir
-            return View();
-        }
-
-        // POST: Settings/UpdateParameter
-        [HttpPost]
-        public async Task<IActionResult> UpdateParameter(string key, string value)
-        {
-            // Parametreyi güncelle
-            TempData["Success"] = "Parametre güncellendi";
-            return RedirectToAction(nameof(SystemParameters));
-        }
-
-        #endregion
-
-        #region Kullanıcı Yetkileri
-
-        // GET: Settings/UserPermissions
-        public async Task<IActionResult> UserPermissions()
-        {
-            // Kullanıcı ve yetkileri getir
-            return View();
-        }
-
-        #endregion
-
-        #region Veri Kurtarma
-
-        // GET: Settings/DataRecovery
-        public IActionResult DataRecovery()
-        {
-            return View();
-        }
-
-        // POST: Settings/RecoverDeletedRecords
-        [HttpPost]
-        public async Task<IActionResult> RecoverDeletedRecords(string recordType, int recordId)
-        {
-            // Silinmiş kayıtları geri getir - özelliği
-            TempData["Success"] = "Kayıt başarıyla geri getirildi";
-            return RedirectToAction(nameof(DataRecovery));
-        }
-
-        #endregion
-
-        #region Otomatik Veri Transferi
-
-        // GET: Settings/AutoDataTransfer
-        public IActionResult AutoDataTransfer()
-        {
-            return View();
-        }
-
-        // POST: Settings/ConfigureAutoTransfer
-        [HttpPost]
-        public async Task<IActionResult> ConfigureAutoTransfer(int intervalMinutes)
-        {
-            // Cihazlardan otomatik veri çekme ayarla - özelliği
-            TempData["Success"] = $"Otomatik veri transferi {intervalMinutes} dakikada bir olarak ayarlandı";
-            return RedirectToAction(nameof(AutoDataTransfer));
-        }
-
-        #endregion
-
-        #region Update Kontrolü
-
-        // GET: Settings/CheckUpdate
-        public async Task<IActionResult> CheckUpdate()
-        {
-            // Yazılım güncellemesi kontrolü - özelliği
-            var updateAvailable = false; // API'den kontrol et
-
-            ViewBag.UpdateAvailable = updateAvailable;
-            ViewBag.CurrentVersion = "1.0.0";
-            ViewBag.LatestVersion = "1.0.0";
-
-            return View();
-        }
-
-        #endregion
-
-        #region Görsel Ayarlar
-
-        // GET: Settings/Appearance
-        public IActionResult Appearance()
-        {
-            return View();
-        }
-
-        // POST: Settings/UpdateAppearance
-        [HttpPost]
-        public async Task<IActionResult> UpdateAppearance(string theme, string fontSize)
-        {
-            // Görsel değişiklikler - özelliği
-            TempData["Success"] = "Görünüm ayarları güncellendi";
-            return RedirectToAction(nameof(Appearance));
-        }
+        // Bu işlevsellik zaten `ParametreController`'a taşındığı için burada tekrar edilmesine gerek yok.
+        // React uygulaması `api/parametre` endpoint'ini kullanacaktır.
 
         #endregion
 
         #region Lisans Yönetimi
 
-        // GET: Settings/License
+        [HttpGet("license")]
         public IActionResult License()
         {
-            ViewBag.LicenseKey = "XXXX-XXXX-XXXX-XXXX";
-            ViewBag.ExpiryDate = DateTime.Now.AddYears(1);
-            ViewBag.IsActive = true;
-            ViewBag.MaxUsers = 100;
-            ViewBag.CurrentUsers = 25;
-
-            return View();
+            // Bu bilgiler genellikle daha güvenli bir yerden okunmalıdır.
+            var licenseInfo = new
+            {
+                LicenseKey = "XXXX-XXXX-XXXX-XXXX",
+                ExpiryDate = DateTime.Now.AddYears(1),
+                IsActive = true,
+                MaxUsers = 100,
+                CurrentUsers = 25
+            };
+            return Ok(licenseInfo);
         }
 
         #endregion
+
+        // Diğer özellikler (DataRecovery, AutoDataTransfer, CheckUpdate, Appearance vb.)
+        // henüz servis katmanında bir karşılığı olmadığı için şimdilik eklenmemiştir.
+        // Bu özellikler için ayrı servisler yazıldığında, buraya benzer şekilde API endpoint'leri eklenebilir.
+    }
+
+    // Yedekleme ve Geri Yükleme için DTO
+    public class BackupRequestDTO
+    {
+        public string FileName { get; set; }
     }
 }

@@ -1,6 +1,10 @@
 ﻿using PDKS.Business.DTOs;
 using PDKS.Data.Entities;
 using PDKS.Data.Repositories;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace PDKS.Business.Services
 {
@@ -13,188 +17,26 @@ namespace PDKS.Business.Services
             _unitOfWork = unitOfWork;
         }
 
-        public async Task<IEnumerable<IzinListDTO>> GetAllAsync()
-        {
-            var izinler = await _unitOfWork.Izinler.GetAllAsync();
-            var personeller = await _unitOfWork.Personeller.GetAllAsync();
-            var kullanicilar = await _unitOfWork.Kullanicilar.GetAllAsync();
-
-            return izinler.Select(i => new IzinListDTO
-            {
-                Id = i.Id,
-                PersonelId = i.PersonelId,
-                PersonelAdi = personeller.FirstOrDefault(p => p.Id == i.PersonelId)?.AdSoyad ?? "",
-                PersonelSicilNo = personeller.FirstOrDefault(p => p.Id == i.PersonelId)?.SicilNo ?? "",
-                IzinTipi = i.IzinTipi,
-                BaslangicTarihi = i.BaslangicTarihi,
-                BitisTarihi = i.BitisTarihi,
-                GunSayisi = i.IzinGunSayisi,
-                OnayDurumu = i.OnayDurumu,
-                OnaylayanKullaniciAdi = i.OnaylayanKullaniciId.HasValue
-                    ? kullanicilar.FirstOrDefault(k => k.Id == i.OnaylayanKullaniciId)?.KullaniciAdi
-                    : null,
-                OnayTarihi = i.OnayTarihi,
-                Aciklama = i.Aciklama,
-                RedNedeni = i.RedNedeni,
-                OlusturmaTarihi = i.OlusturmaTarihi
-            }).OrderByDescending(i => i.BaslangicTarihi);
-        }
-
-        public async Task<IEnumerable<IzinListDTO>> GetBekleyenIzinlerAsync()
-        {
-            var izinler = await _unitOfWork.Izinler.FindAsync(i => i.OnayDurumu == "Beklemede");
-            var personeller = await _unitOfWork.Personeller.GetAllAsync();
-
-            return izinler.Select(i => new IzinListDTO
-            {
-                Id = i.Id,
-                PersonelId = i.PersonelId,
-                PersonelAdi = personeller.FirstOrDefault(p => p.Id == i.PersonelId)?.AdSoyad ?? "",
-                PersonelSicilNo = personeller.FirstOrDefault(p => p.Id == i.PersonelId)?.SicilNo ?? "",
-                IzinTipi = i.IzinTipi,
-                BaslangicTarihi = i.BaslangicTarihi,
-                BitisTarihi = i.BitisTarihi,
-                GunSayisi = i.IzinGunSayisi,
-                OnayDurumu = i.OnayDurumu,
-                Aciklama = i.Aciklama,
-                OlusturmaTarihi = i.OlusturmaTarihi
-            }).OrderBy(i => i.BaslangicTarihi);
-        }
-
-        public async Task<IEnumerable<IzinListDTO>> GetByPersonelAsync(int personelId)
-        {
-            var izinler = await _unitOfWork.Izinler.FindAsync(i => i.PersonelId == personelId);
-            var personel = await _unitOfWork.Personeller.GetByIdAsync(personelId);
-            var kullanicilar = await _unitOfWork.Kullanicilar.GetAllAsync();
-
-            return izinler.Select(i => new IzinListDTO
-            {
-                Id = i.Id,
-                PersonelId = i.PersonelId,
-                PersonelAdi = personel?.AdSoyad ?? "",
-                PersonelSicilNo = personel?.SicilNo ?? "",
-                IzinTipi = i.IzinTipi,
-                BaslangicTarihi = i.BaslangicTarihi,
-                BitisTarihi = i.BitisTarihi,
-                GunSayisi = i.IzinGunSayisi,
-                OnayDurumu = i.OnayDurumu,
-                OnaylayanKullaniciAdi = i.OnaylayanKullaniciId.HasValue
-                    ? kullanicilar.FirstOrDefault(k => k.Id == i.OnaylayanKullaniciId)?.KullaniciAdi
-                    : null,
-                OnayTarihi = i.OnayTarihi,
-                Aciklama = i.Aciklama,
-                RedNedeni = i.RedNedeni,
-                OlusturmaTarihi = i.OlusturmaTarihi
-            }).OrderByDescending(i => i.BaslangicTarihi);
-        }
-
-        public async Task<IzinDetailDTO> GetByIdAsync(int id)
-        {
-            var izin = await _unitOfWork.Izinler.GetByIdAsync(id);
-            if (izin == null)
-                throw new Exception("İzin kaydı bulunamadı");
-
-            var personel = await _unitOfWork.Personeller.GetByIdAsync(izin.PersonelId);
-            Kullanici? onaylayan = null;
-            if (izin.OnaylayanKullaniciId.HasValue)
-            {
-                onaylayan = await _unitOfWork.Kullanicilar.GetByIdAsync(izin.OnaylayanKullaniciId.Value);
-            }
-
-            return new IzinDetailDTO
-            {
-                Id = izin.Id,
-                PersonelId = izin.PersonelId,
-                PersonelAdi = personel?.AdSoyad ?? "",
-                PersonelSicilNo = personel?.SicilNo ?? "",
-                IzinTipi = izin.IzinTipi,
-                BaslangicTarihi = izin.BaslangicTarihi,
-                BitisTarihi = izin.BitisTarihi,
-                GunSayisi = izin.IzinGunSayisi,
-                OnayDurumu = izin.OnayDurumu,
-                OnaylayanKullaniciAdi = onaylayan?.KullaniciAdi,
-                OnayTarihi = izin.OnayTarihi,
-                Aciklama = izin.Aciklama,
-                RedNedeni = izin.RedNedeni,
-                TalepTarihi = izin.TalepTarihi
-            };
-        }
-
         public async Task<int> CreateAsync(IzinCreateDTO dto)
         {
-            // Tarih kontrolü
-            if (dto.BitisTarihi < dto.BaslangicTarihi)
-                throw new Exception("Bitiş tarihi başlangıç tarihinden önce olamaz");
-
-            // Gün sayısı hesaplama
-            var gunSayisi = (dto.BitisTarihi.Date - dto.BaslangicTarihi.Date).Days + 1;
-
-            // Çakışan izin kontrolü
-            var cakisanIzin = await _unitOfWork.Izinler.FirstOrDefaultAsync(i =>
-                i.PersonelId == dto.PersonelId &&
-                i.OnayDurumu != "Reddedildi" &&
-                ((i.BaslangicTarihi <= dto.BaslangicTarihi && i.BitisTarihi >= dto.BaslangicTarihi) ||
-                 (i.BaslangicTarihi <= dto.BitisTarihi && i.BitisTarihi >= dto.BitisTarihi) ||
-                 (i.BaslangicTarihi >= dto.BaslangicTarihi && i.BitisTarihi <= dto.BitisTarihi)));
-
-            if (cakisanIzin != null)
-                throw new Exception("Bu tarihler arasında zaten bir izin kaydı bulunmaktadır");
+            var personel = await _unitOfWork.Personeller.GetByIdAsync(dto.PersonelId);
+            if (personel == null)
+                throw new Exception("Personel bulunamadı");
 
             var izin = new Izin
             {
                 PersonelId = dto.PersonelId,
                 IzinTipi = dto.IzinTipi,
-                BaslangicTarihi = dto.BaslangicTarihi.Date,
-                BitisTarihi = dto.BitisTarihi.Date,
-                IzinGunSayisi = gunSayisi,
-                OnayDurumu = "Beklemede",
+                BaslangicTarihi = dto.BaslangicTarihi,
+                BitisTarihi = dto.BitisTarihi,
                 Aciklama = dto.Aciklama,
-                TalepTarihi = DateTime.UtcNow
+                OnayDurumu = "Beklemede", // Yeni izin talepleri her zaman "Beklemede" başlar.
+                OlusturmaTarihi = DateTime.UtcNow
             };
 
             await _unitOfWork.Izinler.AddAsync(izin);
             await _unitOfWork.SaveChangesAsync();
-
             return izin.Id;
-        }
-
-        public async Task UpdateAsync(IzinUpdateDTO dto)
-        {
-            var izin = await _unitOfWork.Izinler.GetByIdAsync(dto.Id);
-            if (izin == null)
-                throw new Exception("İzin kaydı bulunamadı");
-
-            if (izin.OnayDurumu == "Onaylandı")
-                throw new Exception("Onaylanmış izin kaydı düzenlenemez");
-
-            // Tarih kontrolü
-            if (dto.BitisTarihi < dto.BaslangicTarihi)
-                throw new Exception("Bitiş tarihi başlangıç tarihinden önce olamaz");
-
-            // Gün sayısı hesaplama
-            var gunSayisi = (dto.BitisTarihi.Date - dto.BaslangicTarihi.Date).Days + 1;
-
-            // Çakışan izin kontrolü (kendisi hariç)
-            var cakisanIzin = await _unitOfWork.Izinler.FirstOrDefaultAsync(i =>
-                i.Id != dto.Id &&
-                i.PersonelId == dto.PersonelId &&
-                i.OnayDurumu != "Reddedildi" &&
-                ((i.BaslangicTarihi <= dto.BaslangicTarihi && i.BitisTarihi >= dto.BaslangicTarihi) ||
-                 (i.BaslangicTarihi <= dto.BitisTarihi && i.BitisTarihi >= dto.BitisTarihi) ||
-                 (i.BaslangicTarihi >= dto.BaslangicTarihi && i.BitisTarihi <= dto.BitisTarihi)));
-
-            if (cakisanIzin != null)
-                throw new Exception("Bu tarihler arasında zaten bir izin kaydı bulunmaktadır");
-
-            izin.PersonelId = dto.PersonelId;
-            izin.IzinTipi = dto.IzinTipi;
-            izin.BaslangicTarihi = dto.BaslangicTarihi.Date;
-            izin.BitisTarihi = dto.BitisTarihi.Date;
-            izin.IzinGunSayisi = gunSayisi;
-            izin.Aciklama = dto.Aciklama;
-
-            _unitOfWork.Izinler.Update(izin);
-            await _unitOfWork.SaveChangesAsync();
         }
 
         public async Task DeleteAsync(int id)
@@ -203,47 +45,117 @@ namespace PDKS.Business.Services
             if (izin == null)
                 throw new Exception("İzin kaydı bulunamadı");
 
-            if (izin.OnayDurumu == "Onaylandı")
-                throw new Exception("Onaylanmış izin kaydı silinemez");
-
             _unitOfWork.Izinler.Remove(izin);
             await _unitOfWork.SaveChangesAsync();
         }
 
-        public async Task OnaylaAsync(int id, int onaylayanKullaniciId)
+        public async Task<IEnumerable<IzinListDTO>> GetAllAsync()
+        {
+            var izinler = await _unitOfWork.Izinler.GetAllAsync();
+            return izinler.Select(i => new IzinListDTO
+            {
+                Id = i.Id,
+                PersonelId = i.PersonelId,
+                PersonelAdi = i.Personel?.AdSoyad,
+                IzinTipi = i.IzinTipi,
+                BaslangicTarihi = i.BaslangicTarihi,
+                BitisTarihi = i.BitisTarihi,
+                GunSayisi = i.IzinGunSayisi,
+                OnayDurumu = i.OnayDurumu,
+                OlusturmaTarihi = i.OlusturmaTarihi
+            }).OrderByDescending(i => i.OlusturmaTarihi);
+        }
+
+        public async Task<IEnumerable<IzinListDTO>> GetBekleyenIzinlerAsync()
+        {
+            var izinler = await _unitOfWork.Izinler.FindAsync(i => i.OnayDurumu == "Beklemede");
+            return izinler.Select(i => new IzinListDTO
+            {
+                Id = i.Id,
+                PersonelId = i.PersonelId,
+                PersonelAdi = i.Personel?.AdSoyad,
+                IzinTipi = i.IzinTipi,
+                BaslangicTarihi = i.BaslangicTarihi,
+                BitisTarihi = i.BitisTarihi,
+                GunSayisi = i.IzinGunSayisi,
+                OnayDurumu = i.OnayDurumu,
+                OlusturmaTarihi = i.OlusturmaTarihi
+            }).OrderByDescending(i => i.OlusturmaTarihi);
+        }
+
+        // PDKS.Business/Services/IzinService.cs dosyasının içindeki GetByIdAsync metodunu bulun
+        // ve aşağıdaki kod ile değiştirin.
+
+        public async Task<IzinDetailDTO> GetByIdAsync(int id)
         {
             var izin = await _unitOfWork.Izinler.GetByIdAsync(id);
             if (izin == null)
-                throw new Exception("İzin kaydı bulunamadı");
+                return null;
+
+            var onaylayan = izin.OnaylayanKullaniciId.HasValue
+                ? await _unitOfWork.Kullanicilar.GetByIdAsync(izin.OnaylayanKullaniciId.Value)
+                : null;
+
+            return new IzinDetailDTO
+            {
+                Id = izin.Id,
+                PersonelId = izin.PersonelId,
+                PersonelAdi = izin.Personel?.AdSoyad,
+                IzinTipi = izin.IzinTipi,
+                BaslangicTarihi = izin.BaslangicTarihi,
+                BitisTarihi = izin.BitisTarihi,
+                GunSayisi = izin.IzinGunSayisi,
+                Aciklama = izin.Aciklama,
+                OnayDurumu = izin.OnayDurumu,
+                OnaylayanKullaniciId = izin.OnaylayanKullaniciId,
+                OnaylayanAdi = onaylayan?.Personel?.AdSoyad,
+                OnayTarihi = izin.OnayTarihi,
+                RedNedeni = izin.RedNedeni,
+                OlusturmaTarihi = izin.OlusturmaTarihi,
+
+                // YENİ EKLENEN MAPPING'LER
+                PersonelSicilNo = izin.Personel?.SicilNo,
+                TalepTarihi = izin.OlusturmaTarihi, // TalepTarihi alanını OlusturmaTarihi ile dolduruyoruz.
+                OnaylayanKullaniciAdi = onaylayan?.Personel?.AdSoyad // OnaylayanKullaniciAdi'ni OnaylayanAdi ile dolduruyoruz.
+            };
+        }
+
+        // YENİ EKLENEN METOT
+        public async Task OnaylaReddetAsync(int izinId, string onayDurumu, int onaylayanKullaniciId, string redNedeni)
+        {
+            var izin = await _unitOfWork.Izinler.GetByIdAsync(izinId);
+            if (izin == null)
+                throw new Exception("İzin talebi bulunamadı.");
 
             if (izin.OnayDurumu != "Beklemede")
-                throw new Exception("Sadece bekleyen izin kayıtları onaylanabilir");
+                throw new Exception("Bu izin talebi zaten daha önce işleme alınmış.");
 
-            izin.OnayDurumu = "Onaylandı";
+            if (onayDurumu != "Onaylandı" && onayDurumu != "Reddedildi")
+                throw new ArgumentException("Geçersiz onay durumu. Sadece 'Onaylandı' veya 'Reddedildi' olabilir.");
+
+            if (onayDurumu == "Reddedildi" && string.IsNullOrWhiteSpace(redNedeni))
+                throw new ArgumentException("İzin talebi reddediliyorsa, red nedeni belirtilmelidir.");
+
+            izin.OnayDurumu = onayDurumu;
             izin.OnaylayanKullaniciId = onaylayanKullaniciId;
             izin.OnayTarihi = DateTime.UtcNow;
-            izin.RedNedeni = null;
+            izin.RedNedeni = onayDurumu == "Reddedildi" ? redNedeni : null;
 
             _unitOfWork.Izinler.Update(izin);
             await _unitOfWork.SaveChangesAsync();
         }
 
-        public async Task ReddetAsync(int id, int onaylayanKullaniciId, string redNedeni)
+        public async Task UpdateAsync(IzinUpdateDTO dto)
         {
-            var izin = await _unitOfWork.Izinler.GetByIdAsync(id);
+            var izin = await _unitOfWork.Izinler.GetByIdAsync(dto.Id);
             if (izin == null)
                 throw new Exception("İzin kaydı bulunamadı");
 
-            if (izin.OnayDurumu != "Beklemede")
-                throw new Exception("Sadece bekleyen izin kayıtları reddedilebilir");
-
-            if (string.IsNullOrWhiteSpace(redNedeni))
-                throw new Exception("Red nedeni belirtilmelidir");
-
-            izin.OnayDurumu = "Reddedildi";
-            izin.OnaylayanKullaniciId = onaylayanKullaniciId;
-            izin.OnayTarihi = DateTime.UtcNow;
-            izin.RedNedeni = redNedeni;
+            // Sadece belirli alanların güncellenmesine izin verelim.
+            izin.IzinTipi = dto.IzinTipi;
+            izin.BaslangicTarihi = dto.BaslangicTarihi;
+            izin.BitisTarihi = dto.BitisTarihi;
+            izin.Aciklama = dto.Aciklama;
 
             _unitOfWork.Izinler.Update(izin);
             await _unitOfWork.SaveChangesAsync();

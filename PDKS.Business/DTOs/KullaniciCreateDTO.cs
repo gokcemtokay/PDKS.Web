@@ -4,19 +4,22 @@ namespace PDKS.Business.DTOs
 {
     public class KullaniciCreateDTO
     {
-        [Required(ErrorMessage = "Kullanıcı adı zorunludur")]
-        [StringLength(50, MinimumLength = 3, ErrorMessage = "Kullanıcı adı 3-50 karakter arasında olmalıdır")]
-        public string KullaniciAdi { get; set; }
+        [Required]
+        public int PersonelId { get; set; }
 
-        [Required(ErrorMessage = "Şifre zorunludur")]
-        [StringLength(100, MinimumLength = 6, ErrorMessage = "Şifre en az 6 karakter olmalıdır")]
+        [Required]
+        [EmailAddress]
+        public string Email { get; set; }
+
+        [Required]
         public string Sifre { get; set; }
 
-        public int? PersonelId { get; set; }
-
-        [Required(ErrorMessage = "Rol seçimi zorunludur")]
+        [Required]
         public int RolId { get; set; }
 
         public bool Aktif { get; set; } = true;
+
+        // Eski View için geçici olarak eklendi, API'de kullanılmıyor.
+        public string KullaniciAdi { get; set; }
     }
 }

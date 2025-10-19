@@ -1,6 +1,7 @@
-﻿namespace PDKS.Business.DTOs
+﻿using System;
+
+namespace PDKS.Business.DTOs
 {
-    // Cihaz DTOs
     public class CihazListDTO
     {
         public int Id { get; set; }

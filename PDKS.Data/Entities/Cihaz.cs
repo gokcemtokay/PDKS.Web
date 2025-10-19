@@ -1,5 +1,7 @@
-﻿using System.ComponentModel.DataAnnotations.Schema;
+﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace PDKS.Data.Entities
 {
@@ -32,7 +34,6 @@ namespace PDKS.Data.Entities
         [Column("olusturma_tarihi")]
         public DateTime OlusturmaTarihi { get; set; } = DateTime.UtcNow;
 
-        // Navigation Properties
         public virtual ICollection<CihazLog> CihazLoglari { get; set; }
         public virtual ICollection<GirisCikis> GirisCikislar { get; set; }
     }

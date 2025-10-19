@@ -1,391 +1,168 @@
-﻿// PDKS.WebUI/Controllers/SirketController.cs
-using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
 using PDKS.Business.DTOs;
 using PDKS.Business.Services;
-using PDKS.Data.Repositories;
+using System;
+using System.Linq;
+using System.Security.Claims;
+using System.Threading.Tasks;
 
 namespace PDKS.WebUI.Controllers
 {
-    [Authorize(Roles = "Admin")]
-    public class SirketController : BaseController
+    [Authorize]
+    [ApiController]
+    [Route("api/[controller]")]
+    public class SirketController : ControllerBase
     {
         private readonly ISirketService _sirketService;
 
-        public SirketController(ISirketService sirketService, IUnitOfWork unitOfWork)
-            : base(unitOfWork)
+        public SirketController(ISirketService sirketService)
         {
             _sirketService = sirketService;
         }
 
-        // GET: Sirket/Index
-        public async Task<IActionResult> Index()
+        // GET: api/Sirket
+        [HttpGet]
+        public async Task<IActionResult> GetSirketler()
         {
             try
             {
                 var sirketler = await _sirketService.GetAllSirketlerAsync();
-                return View(sirketler);
+                return Ok(sirketler);
             }
             catch (Exception ex)
             {
-                TempData["Error"] = ex.Message;
-                return View(new List<SirketListDTO>());
+                return StatusCode(500, $"Internal Server Error: {ex.Message}");
             }
         }
 
-        // GET: Sirket/Details/5
-        public async Task<IActionResult> Details(int id)
+        // GET: api/Sirket/5
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetSirketById(int id)
         {
             try
             {
                 var sirket = await _sirketService.GetSirketByIdAsync(id);
                 if (sirket == null)
                 {
-                    TempData["Error"] = "Şirket bulunamadı";
-                    return RedirectToAction(nameof(Index));
+                    return NotFound($"Şirket with ID {id} not found.");
                 }
-                return View(sirket);
+                return Ok(sirket);
             }
             catch (Exception ex)
             {
-                TempData["Error"] = ex.Message;
-                return RedirectToAction(nameof(Index));
+                return StatusCode(500, $"Internal Server Error: {ex.Message}");
             }
         }
 
-        // GET: Sirket/Create
-        [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> Create()
-        {
-            try
-            {
-                // Ana şirketler listesi için SelectList oluştur
-                var anaSirketler = await _sirketService.GetAnaSirketlerAsync();
-                ViewBag.AnaSirketler = new SelectList(anaSirketler, "Id", "Unvan");
-
-                return View();
-            }
-            catch (Exception ex)
-            {
-                TempData["Error"] = ex.Message;
-                return RedirectToAction(nameof(Index));
-            }
-        }
-
-        // POST: Sirket/Create
+        // POST: api/Sirket
         [HttpPost]
-        [ValidateAntiForgeryToken]
         [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> Create(SirketCreateDTO dto)
+        public async Task<IActionResult> CreateSirket([FromBody] SirketCreateDTO dto)
         {
             if (!ModelState.IsValid)
             {
-                // Hata durumunda dropdown'ı tekrar doldur
-                var anaSirketler = await _sirketService.GetAnaSirketlerAsync();
-                ViewBag.AnaSirketler = new SelectList(anaSirketler, "Id", "Unvan", dto.AnaSirketId);
-                return View(dto);
+                return BadRequest(ModelState);
             }
 
             try
             {
-                var sirketId = await _sirketService.CreateSirketAsync(dto);
-                await LogAction("Ekleme", "Sirket", $"{dto.Unvan} şirketi eklendi");
-
-                TempData["Success"] = "Şirket başarıyla eklendi";
-                return RedirectToAction(nameof(Details), new { id = sirketId });
+                var newSirketId = await _sirketService.CreateSirketAsync(dto);
+                var createdSirket = await _sirketService.GetSirketByIdAsync(newSirketId);
+                return CreatedAtAction(nameof(GetSirketById), new { id = newSirketId }, createdSirket);
             }
             catch (Exception ex)
             {
-                TempData["Error"] = ex.Message;
-
-                // Hata durumunda dropdown'ı tekrar doldur
-                var anaSirketler = await _sirketService.GetAnaSirketlerAsync();
-                ViewBag.AnaSirketler = new SelectList(anaSirketler, "Id", "Unvan", dto.AnaSirketId);
-                return View(dto);
+                return StatusCode(500, $"Internal Server Error: {ex.Message}");
             }
         }
 
-        // GET: Sirket/Edit/5
+        // PUT: api/Sirket/5
+        [HttpPut("{id}")]
         [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> Edit(int id)
+        public async Task<IActionResult> UpdateSirket(int id, [FromBody] SirketUpdateDTO dto)
         {
-            try
+            if (id != dto.Id)
             {
-                var sirket = await _sirketService.GetSirketByIdAsync(id);
-
-                if (sirket == null)
-                {
-                    TempData["Error"] = "Şirket bulunamadı";
-                    return RedirectToAction(nameof(Index));
-                }
-
-                // Ana şirketler listesi için SelectList oluştur
-                var anaSirketler = await _sirketService.GetAnaSirketlerAsync();
-                ViewBag.AnaSirketler = new SelectList(
-                    anaSirketler.Where(s => s.Id != id), // Kendisi hariç
-                    "Id",
-                    "Unvan",
-                    sirket.AnaSirketId
-                );
-
-                var updateDto = new SirketUpdateDTO
-                {
-                    Id = sirket.Id,
-                    Unvan = sirket.Unvan,
-                    TicariUnvan = sirket.TicariUnvan,
-                    VergiNo = sirket.VergiNo,
-                    VergiDairesi = sirket.VergiDairesi,
-                    Telefon = sirket.Telefon,
-                    Email = sirket.Email,
-                    Adres = sirket.Adres,
-                    Il = sirket.Il,
-                    Ilce = sirket.Ilce,
-                    PostaKodu = sirket.PostaKodu,
-                    Website = sirket.Website,
-                    LogoUrl = sirket.LogoUrl,
-                    KurulusTarihi = sirket.KurulusTarihi,
-                    Aktif = sirket.Aktif,
-                    ParaBirimi = sirket.ParaBirimi,
-                    Notlar = sirket.Notlar,
-                    AnaSirket = sirket.AnaSirket,
-                    AnaSirketId = sirket.AnaSirketId
-                };
-
-                return View(updateDto);
+                return BadRequest("Sirket ID mismatch.");
             }
-            catch (Exception ex)
-            {
-                TempData["Error"] = ex.Message;
-                return RedirectToAction(nameof(Index));
-            }
-        }
 
-        // POST: Sirket/Edit/5
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> Edit(SirketUpdateDTO dto)
-        {
             if (!ModelState.IsValid)
             {
-                // Hata durumunda dropdown'ı tekrar doldur
-                var anaSirketler = await _sirketService.GetAnaSirketlerAsync();
-                ViewBag.AnaSirketler = new SelectList(
-                    anaSirketler.Where(s => s.Id != dto.Id),
-                    "Id",
-                    "Unvan",
-                    dto.AnaSirketId
-                );
-                return View(dto);
+                return BadRequest(ModelState);
             }
 
             try
             {
                 await _sirketService.UpdateSirketAsync(dto);
-                await LogAction("Güncelleme", "Sirket", $"{dto.Unvan} şirketi güncellendi");
-
-                TempData["Success"] = "Şirket başarıyla güncellendi";
-                return RedirectToAction(nameof(Details), new { id = dto.Id });
+                return NoContent();
             }
             catch (Exception ex)
             {
-                TempData["Error"] = ex.Message;
-
-                // Hata durumunda dropdown'ı tekrar doldur
-                var anaSirketler = await _sirketService.GetAnaSirketlerAsync();
-                ViewBag.AnaSirketler = new SelectList(
-                    anaSirketler.Where(s => s.Id != dto.Id),
-                    "Id",
-                    "Unvan",
-                    dto.AnaSirketId
-                );
-                return View(dto);
-            }
-        }
-
-        // POST: Sirket/Delete/5
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Delete(int id)
-        {
-            try
-            {
-                var sirket = await _sirketService.GetSirketByIdAsync(id);
-                await _sirketService.DeleteSirketAsync(id);
-                await LogAction("Silme", "Şirket", $"{sirket.Unvan} şirketi silindi");
-
-                TempData["Success"] = "Şirket başarıyla silindi";
-                return RedirectToAction(nameof(Index));
-            }
-            catch (Exception ex)
-            {
-                TempData["Error"] = ex.Message;
-                return RedirectToAction(nameof(Index));
-            }
-        }
-
-
-        // POST: Sirket/SelectSirket
-        [HttpPost]
-        [AllowAnonymous]
-        public IActionResult SelectSirket(int sirketId)
-        {
-            HttpContext.Session.SetInt32("CurrentSirketId", sirketId);
-            TempData["Success"] = "Şirket değiştirildi";
-            return RedirectToAction("Index", "Home");
-        }
-
-        // PDKS.WebUI/Controllers/SirketController.cs içine ekle
-
-        // GET: Sirket/BagliSirketler/5
-        [Authorize(Roles = "Admin,IK")]
-        public async Task<IActionResult> BagliSirketler(int id)
-        {
-            try
-            {
-                var anaSirket = await _sirketService.GetSirketByIdAsync(id);
-
-                if (anaSirket == null)
+                if (ex.Message.Contains("bulunamadı"))
                 {
-                    TempData["Error"] = "Şirket bulunamadı";
-                    return RedirectToAction(nameof(Index));
+                    return NotFound(ex.Message);
                 }
-
-                if (!anaSirket.AnaSirket)
-                {
-                    TempData["Error"] = "Bu şirket bir ana şirket değil";
-                    return RedirectToAction(nameof(Details), new { id });
-                }
-
-                var bagliSirketler = await _sirketService.GetBagliSirketlerAsync(id);
-
-                ViewBag.AnaSirketId = id;
-                ViewBag.AnaSirketAdi = anaSirket.Unvan;
-
-                return View(bagliSirketler);
-            }
-            catch (Exception ex)
-            {
-                TempData["Error"] = ex.Message;
-                return RedirectToAction(nameof(Index));
+                return StatusCode(500, $"Internal Server Error: {ex.Message}");
             }
         }
 
-        // PDKS.WebUI/Controllers/SirketController.cs - Ekle
-
-        // GET: Sirket/Switch
-        // PDKS.WebUI/Controllers/SirketController.cs - Switch GET
-        [Authorize]
-        public async Task<IActionResult> Switch()
+        // POST: api/Sirket/transfer
+        [HttpPost("transfer")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> TransferPersonel([FromBody] PersonelTransferDTO dto)
         {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
             try
             {
-                // Kullanıcının erişebileceği şirketleri listele
-                List<SirketListDTO> sirketler;
+                var transferiYapanKullaniciId = GetCurrentUserId();
+                var success = await _sirketService.TransferPersonelAsync(dto, transferiYapanKullaniciId);
 
-                if (User.IsInRole("Admin"))
+                if (success)
                 {
-                    // Admin tüm şirketleri görebilir
-                    sirketler = await _sirketService.GetAllSirketlerAsync();
+                    return Ok(new { message = "Personel başarıyla transfer edildi." });
                 }
                 else
                 {
-                    // Diğer kullanıcılar sadece kendi şirketini görür
-                    var personel = await _unitOfWork.Personeller.GetByIdAsync(CurrentKullaniciId);
-                    if (personel != null)
-                    {
-                        var sirket = await _sirketService.GetSirketByIdAsync(personel.SirketId);
-                        sirketler = new List<SirketListDTO>
-                {
-                    new SirketListDTO
-                    {
-                        Id = sirket.Id,
-                        Unvan = sirket.Unvan,
-                        Aktif = sirket.Aktif,
-                        AnaSirket = sirket.AnaSirket,
-                        PersonelSayisi = sirket.PersonelSayisi
-                    }
-                };
-                    }
-                    else
-                    {
-                        sirketler = new List<SirketListDTO>();
-                    }
+                    return BadRequest("Transfer işlemi başarısız oldu.");
                 }
-
-                ViewBag.CurrentSirketId = CurrentSirketId;  // int olarak gönder
-
-                return View(sirketler);
             }
             catch (Exception ex)
             {
-                TempData["Error"] = ex.Message;
-                return RedirectToAction("Index", "Home");
+                return StatusCode(500, $"Internal Server Error: {ex.Message}");
             }
         }
 
-        // POST: Sirket/Switch
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        [Authorize]
-        public async Task<IActionResult> Switch(int sirketId)
+        // GET: api/Sirket/transfer-history/123  (Personel ID'si)
+        [HttpGet("transfer-history/{personelId}")]
+        [Authorize(Roles = "Admin,IK")]
+        public async Task<IActionResult> GetTransferHistory(int personelId)
         {
             try
             {
-                // Şirket var mı kontrol et
-                var sirket = await _sirketService.GetSirketByIdAsync(sirketId);
-
-                if (sirket == null)
-                {
-                    TempData["Error"] = "Şirket bulunamadı";
-                    return RedirectToAction(nameof(Switch));
-                }
-
-                // Admin değilse, kendi şirketi olmalı
-                if (!User.IsInRole("Admin"))
-                {
-                    var personel = await _unitOfWork.Personeller.GetByIdAsync(CurrentKullaniciId);
-                    if (personel == null || personel.SirketId != sirketId)
-                    {
-                        TempData["Error"] = "Bu şirkete erişim yetkiniz yok";
-                        return RedirectToAction(nameof(Switch));
-                    }
-                }
-
-                // Yeni claim'ler oluştur
-                var identity = (System.Security.Claims.ClaimsIdentity)User.Identity;
-
-                // Eski SirketId ve SirketAdi claim'lerini kaldır
-                var oldSirketIdClaim = identity.FindFirst("SirketId");
-                var oldSirketAdiClaim = identity.FindFirst("SirketAdi");
-
-                if (oldSirketIdClaim != null)
-                    identity.RemoveClaim(oldSirketIdClaim);
-
-                if (oldSirketAdiClaim != null)
-                    identity.RemoveClaim(oldSirketAdiClaim);
-
-                // Yeni claim'leri ekle
-                identity.AddClaim(new System.Security.Claims.Claim("SirketId", sirketId.ToString()));
-                identity.AddClaim(new System.Security.Claims.Claim("SirketAdi", sirket.Unvan));
-
-                // Cookie'yi güncelle
-                await HttpContext.SignInAsync(
-                    Microsoft.AspNetCore.Authentication.Cookies.CookieAuthenticationDefaults.AuthenticationScheme,
-                    new System.Security.Claims.ClaimsPrincipal(identity));
-
-                await LogAction("Şirket Değiştirme", "Sirket", $"{sirket.Unvan} şirketine geçiş yapıldı");
-
-                TempData["Success"] = $"{sirket.Unvan} şirketine geçiş yapıldınız";
-                return RedirectToAction("Index", "Home");
+                var transferGecmisi = await _sirketService.GetPersonelTransferGecmisiAsync(personelId);
+                return Ok(transferGecmisi);
             }
             catch (Exception ex)
             {
-                TempData["Error"] = ex.Message;
-                return RedirectToAction(nameof(Switch));
+                return StatusCode(500, $"Internal Server Error: {ex.Message}");
             }
+        }
+
+        // Helper metot: Token içerisinden o anki kullanıcının ID'sini okur.
+        private int GetCurrentUserId()
+        {
+            var userIdClaim = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier);
+            if (userIdClaim != null && int.TryParse(userIdClaim.Value, out int userId))
+            {
+                return userId;
+            }
+            // Bu durum normalde [Authorize] olduğu için yaşanmamalı.
+            throw new InvalidOperationException("User ID could not be found in token.");
         }
     }
 }

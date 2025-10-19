@@ -1,186 +1,85 @@
-﻿using System;
-using System.Linq;
-using System.Security.Claims;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
+using PDKS.Business.DTOs;
 using PDKS.Business.Services;
+using Microsoft.Extensions.Configuration;
+using Microsoft.IdentityModel.Tokens;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
+using System;
+using System.Threading.Tasks;
 using PDKS.Data.Entities;
-using PDKS.Data.Repositories;
-using static System.Runtime.InteropServices.JavaScript.JSType;
+using Microsoft.AspNetCore.Authorization;
 
 namespace PDKS.WebUI.Controllers
 {
-    public class AuthController : Controller
+    [ApiController]
+    [Route("api/[controller]")]
+    public class AuthController : ControllerBase
     {
         private readonly IAuthService _authService;
-        private readonly IUnitOfWork _unitOfWork;
+        private readonly IConfiguration _configuration;
+        private readonly IKullaniciService _kullaniciService;
 
-        public AuthController(IAuthService authService, IUnitOfWork unitOfWork)
+        public AuthController(IAuthService authService, IConfiguration configuration, IKullaniciService kullaniciService)
         {
             _authService = authService;
-            _unitOfWork = unitOfWork;
+            _configuration = configuration;
+            _kullaniciService = kullaniciService;
         }
 
-        [HttpGet]
-        public IActionResult Login(string returnUrl = null)
+        [HttpPost("login")]
+        public async Task<IActionResult> Login([FromBody] LoginDto loginDto)
         {
-            ViewData["ReturnUrl"] = returnUrl;
-            return View();
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            var kullanici = await _authService.ValidateUserAsync(loginDto.Email, loginDto.Password);
+
+            if (kullanici != null)
+            {
+                var token = GenerateJwtToken(kullanici);
+                return Ok(new { token = token });
+            }
+
+            return Unauthorized("Geçersiz e-posta veya şifre.");
         }
 
-        [HttpPost]
-        public async Task<IActionResult> Login(string email, string password, string returnUrl = null)
+        [HttpPost("logout")]
+        [Authorize] // Sadece token'ı olan bir kullanıcı bu isteği yapabilir.
+        public IActionResult Logout()
         {
-            if (string.IsNullOrEmpty(email) || string.IsNullOrEmpty(password))
+            // JWT stateless olduğu için sunucu tarafında yapılacak bir işlem yoktur.
+            // Token'ın silinmesi ve oturumun sonlandırılması client (React) tarafının sorumluluğundadır.
+            // Bu endpoint, client'a işlemin başarılı olduğunu bildirmek için 200 OK döner.
+            return Ok(new { message = "Çıkış başarılı. Lütfen token'ı client tarafında silin." });
+        }
+
+
+        private string GenerateJwtToken(Kullanici kullanici)
+        {
+            var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]));
+            var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
+
+            var claims = new[]
             {
-                TempData["Error"] = "Email ve şifre alanları zorunludur";
-                return View();
-            }
-
-            var (success, user, message) = await _authService.LoginAsync(email, password);
-
-            if (!success)
-            {
-                TempData["Error"] = message;
-                return View();
-            }
-
-            // Load user details with relations
-            var kullanici = await _unitOfWork.Kullanicilar.GetByIdAsync(user.Id);
-            var personel = kullanici?.PersonelId.HasValue == true
-                ? await _unitOfWork.Personeller.GetByIdAsync(kullanici.PersonelId.Value)
-                : null;
-            var rol = await _unitOfWork.Roller.GetByIdAsync(kullanici.RolId);
-
-            // ⭐ Şirket bilgisini al
-            string sirketAdi = "Şirket Seçilmedi";
-            int sirketId = 0;
-
-            if (personel != null)
-            {
-                sirketId = personel.SirketId;
-                var sirket = await _unitOfWork.Sirketler.GetByIdAsync(personel.SirketId);
-                sirketAdi = sirket?.Unvan ?? "Bilinmeyen Şirket";
-            }
-
-            // Create claims
-            var claims = new List<Claim>
-    {
-        new Claim(ClaimTypes.NameIdentifier, kullanici.Id.ToString()),
-        new Claim(ClaimTypes.Name, personel?.AdSoyad ?? kullanici.KullaniciAdi),
-        new Claim(ClaimTypes.Email, kullanici.Email),
-        new Claim(ClaimTypes.Role, rol.RolAdi),
-        new Claim("PersonelId", personel?.Id.ToString() ?? "0"),
-        new Claim("Departman", personel?.Departman?.Ad ?? ""),
-        new Claim("SirketId", sirketId.ToString()),     
-        new Claim("SirketAdi", sirketAdi)
-    };
-
-            var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
-            var authProperties = new AuthenticationProperties
-            {
-                IsPersistent = true,
-                ExpiresUtc = DateTimeOffset.UtcNow.AddHours(8)
+                new Claim(JwtRegisteredClaimNames.Sub, kullanici.Id.ToString()),
+                new Claim(JwtRegisteredClaimNames.Email, kullanici.Email),
+                new Claim(ClaimTypes.Role, kullanici.Rol.RolAdi),
+                new Claim("personelId", kullanici.PersonelId.ToString()),
+                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
             };
 
-            await HttpContext.SignInAsync(
-                CookieAuthenticationDefaults.AuthenticationScheme,
-                new ClaimsPrincipal(claimsIdentity),
-                authProperties);
+            var token = new JwtSecurityToken(
+                issuer: _configuration["Jwt:Issuer"],
+                audience: _configuration["Jwt:Audience"],
+                claims: claims,
+                expires: DateTime.Now.AddHours(8), // Token geçerlilik süresi
+                signingCredentials: credentials);
 
-            // Log the login
-            await _unitOfWork.Loglar.AddAsync(new Log
-            {
-                KullaniciId = kullanici.Id,
-                Islem = "Giriş",
-                Modul = "Auth",
-                Detay = $"{kullanici.KullaniciAdi} sisteme giriş yaptı",
-                IpAdres = HttpContext.Connection.RemoteIpAddress?.ToString(),
-                Tarih = DateTime.UtcNow
-            });
-            await _unitOfWork.SaveChangesAsync();
-
-            if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
-            {
-                return Redirect(returnUrl);
-            }
-
-            return RedirectToAction("Index", "Home");
-        }
-
-        [HttpPost]
-        [Authorize]
-        public async Task<IActionResult> Logout()
-        {
-            var kullaniciId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
-
-            if (kullaniciId > 0)
-            {
-                await _unitOfWork.Loglar.AddAsync(new Data.Entities.Log
-                {
-                    KullaniciId = kullaniciId,
-                    Islem = "Çıkış",
-                    Modul = "Auth",
-                    Detay = "Kullanıcı sistemden çıkış yaptı",
-                    IpAdres = HttpContext.Connection.RemoteIpAddress?.ToString(),
-                    Tarih = DateTime.UtcNow
-                });
-                await _unitOfWork.SaveChangesAsync();
-            }
-
-            await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
-            return RedirectToAction("Login");
-        }
-
-        [HttpGet]
-        [Authorize]
-        public IActionResult ChangePassword()
-        {
-            return View();
-        }
-
-        [HttpPost]
-        [Authorize]
-        public async Task<IActionResult> ChangePassword(string oldPassword, string newPassword, string confirmPassword)
-        {
-            if (string.IsNullOrWhiteSpace(oldPassword) || string.IsNullOrWhiteSpace(newPassword))
-            {
-                TempData["Error"] = "Tüm alanları doldurunuz";
-                return View();
-            }
-
-            if (newPassword != confirmPassword)
-            {
-                TempData["Error"] = "Yeni şifreler eşleşmiyor";
-                return View();
-            }
-
-            if (newPassword.Length < 6)
-            {
-                TempData["Error"] = "Şifre en az 6 karakter olmalıdır";
-                return View();
-            }
-
-            var kullaniciId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
-            var success = await _authService.ChangePasswordAsync(kullaniciId, oldPassword, newPassword);
-
-            if (!success)
-            {
-                TempData["Error"] = "Mevcut şifre hatalı";
-                return View();
-            }
-
-            TempData["Success"] = "Şifre başarıyla değiştirildi";
-            return RedirectToAction("Index", "Home");
-        }
-
-        [HttpGet]
-        public IActionResult AccessDenied()
-        {
-            return View();
+            return new JwtSecurityTokenHandler().WriteToken(token);
         }
     }
 }

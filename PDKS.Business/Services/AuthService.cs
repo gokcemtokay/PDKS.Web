@@ -1,7 +1,9 @@
-﻿using System.Security.Cryptography;
-using System.Text;
-using PDKS.Data.Entities;
+﻿using PDKS.Data.Entities;
 using PDKS.Data.Repositories;
+using System;
+using System.Security.Cryptography;
+using System.Text;
+using System.Threading.Tasks;
 
 namespace PDKS.Business.Services
 {
@@ -14,79 +16,29 @@ namespace PDKS.Business.Services
             _unitOfWork = unitOfWork;
         }
 
-        public async Task<(bool Success, Kullanici User, string Message)> LoginAsync(string email, string password)
+        public async Task<Kullanici> ValidateUserAsync(string email, string password)
         {
-            var kullanici = await _unitOfWork.Kullanicilar.FirstOrDefaultAsync(k => k.Email == email);
-
-            if (kullanici == null)
-                return (false, null, "Kullanıcı bulunamadı");
-
-            if (!kullanici.Aktif)
-                return (false, null, "Kullanıcı hesabı aktif değil");
-
-            if (!VerifyPassword(password, kullanici.SifreHash))
-                return (false, null, "Şifre hatalı");
-
-            // Update last login
-            kullanici.SonGirisTarihi = DateTime.UtcNow;
-            _unitOfWork.Kullanicilar.Update(kullanici);
-            await _unitOfWork.SaveChangesAsync();
-
-            return (true, kullanici, "Giriş başarılı");
-        }
-
-        public async Task<bool> RegisterAsync(int personelId, string email, string password, int rolId)
-        {
-            // Check if user already exists
-            var exists = await _unitOfWork.Kullanicilar.AnyAsync(k => k.Email == email);
-            if (exists)
-                return false;
-
-            var kullanici = new Kullanici
+            var kullanici = await _unitOfWork.Kullanicilar.FirstOrDefaultAsync(k => k.Email == email && k.Aktif);
+            if (kullanici != null && VerifyPassword(kullanici.SifreHash, password))
             {
-                PersonelId = personelId,
-                Email = email,
-                SifreHash = HashPassword(password),
-                RolId = rolId,
-                Aktif = true,
-                OlusturmaTarihi = DateTime.UtcNow
-            };
-
-            await _unitOfWork.Kullanicilar.AddAsync(kullanici);
-            await _unitOfWork.SaveChangesAsync();
-
-            return true;
-        }
-
-        public async Task<bool> ChangePasswordAsync(int kullaniciId, string oldPassword, string newPassword)
-        {
-            var kullanici = await _unitOfWork.Kullanicilar.GetByIdAsync(kullaniciId);
-            if (kullanici == null)
-                return false;
-
-            if (!VerifyPassword(oldPassword, kullanici.SifreHash))
-                return false;
-
-            kullanici.SifreHash = HashPassword(newPassword);
-            _unitOfWork.Kullanicilar.Update(kullanici);
-            await _unitOfWork.SaveChangesAsync();
-
-            return true;
+                kullanici.Rol = await _unitOfWork.Roller.GetByIdAsync(kullanici.RolId);
+                return kullanici;
+            }
+            return null;
         }
 
         public string HashPassword(string password)
         {
             using (var sha256 = SHA256.Create())
             {
-                var bytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(password));
-                return Convert.ToBase64String(bytes);
+                var hashedBytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(password));
+                return BitConverter.ToString(hashedBytes).Replace("-", "").ToLower();
             }
         }
 
-        public bool VerifyPassword(string password, string hash)
+        public bool VerifyPassword(string hashedPassword, string providedPassword)
         {
-            var passwordHash = HashPassword(password);
-            return passwordHash == hash;
+            return HashPassword(providedPassword) == hashedPassword;
         }
     }
 }

@@ -1,19 +1,59 @@
-using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using PDKS.Business.Services;
 using PDKS.Data.Context;
 using PDKS.Data.Repositories;
-using PDKS.WebUI.BackgroundServices;
+using System.Text;
+using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container
-builder.Services.AddControllersWithViews();
+// --- 1. Servislerin Eklenmesi ---
 
 // Database Context - PostgreSQL
-// Program.cs veya Startup.cs'de
 builder.Services.AddDbContext<PDKSDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+// Add services to the container.
+// MVC yerine API Controller'larýný kullanacaðýmýzý belirtiyoruz.
+builder.Services.AddControllers();
+
+// Swagger (OpenAPI) servisini ekleyerek API'yi test etmek için bir arayüz saðlýyoruz.
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen(c =>
+{
+    // Swagger'a JWT Token ile yetkilendirme yapabilme özelliði ekliyoruz.
+    c.SwaggerDoc("v1", new OpenApiInfo { Title = "PDKS API", Version = "v1" });
+    c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Description = @"JWT Authorization header using the Bearer scheme. <br/> 
+                      Enter 'Bearer' [space] and then your token in the text input below.
+                      <br/> Example: 'Bearer 12345abcdef'",
+        Name = "Authorization",
+        In = ParameterLocation.Header,
+        Type = SecuritySchemeType.ApiKey,
+        Scheme = "Bearer"
+    });
+    c.AddSecurityRequirement(new OpenApiSecurityRequirement()
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                },
+                Scheme = "oauth2",
+                Name = "Bearer",
+                In = ParameterLocation.Header,
+            },
+            new List<string>()
+        }
+    });
+});
+
 
 // Register Repositories
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
@@ -28,28 +68,31 @@ builder.Services.AddScoped<IParametreService, ParametreService>();
 builder.Services.AddScoped<IKullaniciService, KullaniciService>();
 builder.Services.AddScoped<IDepartmanService, DepartmanService>();
 builder.Services.AddScoped<IMesaiService, MesaiService>();
-builder.Services.AddScoped<IVardiyaService, VardiyaService>();  
+builder.Services.AddScoped<IVardiyaService, VardiyaService>();
 builder.Services.AddScoped<IIzinService, IzinService>();
 builder.Services.AddScoped<IExportAndEmailService, ExportAndEmailService>();
 builder.Services.AddScoped<IBackupService, BackupService>();
 builder.Services.AddScoped<ISirketService, SirketService>();
+builder.Services.AddScoped<ICihazService, CihazService>();
 
-
-
-// Authentication
-builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
-    .AddCookie(options =>
+// --- 2. Kimlik Doðrulama (Authentication) Yapýlandýrmasý (Cookie yerine JWT) ---
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
     {
-        options.LoginPath = "/Auth/Login";
-        options.LogoutPath = "/Auth/Logout";
-        options.AccessDeniedPath = "/Auth/AccessDenied";
-        options.ExpireTimeSpan = TimeSpan.FromHours(8);
-        options.SlidingExpiration = true;
-        options.Cookie.HttpOnly = true;
-        options.Cookie.IsEssential = true;
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            ValidIssuer = builder.Configuration["Jwt:Issuer"],
+            ValidAudience = builder.Configuration["Jwt:Audience"],
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]))
+        };
     });
 
-// Authorization Policies
+
+// Yetkilendirme (Authorization) Politikalarý ayný kalabilir.
 builder.Services.AddAuthorization(options =>
 {
     options.AddPolicy("AdminOnly", policy => policy.RequireRole("Admin"));
@@ -57,32 +100,35 @@ builder.Services.AddAuthorization(options =>
     options.AddPolicy("ManagerAccess", policy => policy.RequireRole("Admin", "IK", "Yönetici"));
 });
 
-// Session
-builder.Services.AddSession(options =>
-{
-    options.IdleTimeout = TimeSpan.FromHours(30);
-    options.Cookie.HttpOnly = true;
-    options.Cookie.IsEssential = true;
-});
-
-builder.Services.AddMemoryCache();
-
 // Add HttpContextAccessor
 builder.Services.AddHttpContextAccessor();
 
-// Configure localization for Turkish
-builder.Services.AddLocalization(options => options.ResourcesPath = "Resources");
-builder.Services.Configure<RequestLocalizationOptions>(options =>
+// --- 3. CORS (Cross-Origin Resource Sharing) Yapýlandýrmasý ---
+// React uygulamasýndan gelecek isteklere izin vermek için ekliyoruz.
+builder.Services.AddCors(options =>
 {
-    var supportedCultures = new[] { "tr-TR" };
-    options.SetDefaultCulture("tr-TR");
-    options.AddSupportedCultures(supportedCultures);
-    options.AddSupportedUICultures(supportedCultures);
+    options.AddPolicy("AllowReactApp",
+        policy =>
+        {
+            policy.WithOrigins("http://localhost:3000") // React development sunucusunun adresi
+                  .AllowAnyHeader()
+                  .AllowAnyMethod();
+        });
 });
+
 
 var app = builder.Build();
 
-// Apply migrations automatically (optional - for development)
+// --- 4. HTTP Request Pipeline (Middleware) Yapýlandýrmasý ---
+
+// Development ortamýnda Swagger arayüzünü aktif hale getiriyoruz.
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI();
+}
+
+// Development ortamýnda migration'larý otomatik uygula (opsiyonel)
 if (app.Environment.IsDevelopment())
 {
     using var scope = app.Services.CreateScope();
@@ -98,31 +144,22 @@ if (app.Environment.IsDevelopment())
     }
 }
 
-// Configure the HTTP request pipeline
-if (!app.Environment.IsDevelopment())
-{
-    app.UseExceptionHandler("/Home/Error");
-    app.UseHsts();
-}
-
 app.UseHttpsRedirection();
-app.UseStaticFiles();
+
+// CORS politikasýný aktif hale getiriyoruz. Bu satýr UseRouting'den önce olmalý.
+app.UseCors("AllowReactApp");
 
 app.UseRouting();
 
-// Use Turkish culture
-app.UseRequestLocalization();
-
+// Authentication ve Authorization middleware'lerini ekliyoruz.
 app.UseAuthentication();
 app.UseAuthorization();
 
-app.UseSession();
+// Controller'larý endpoint olarak map'liyoruz.
+app.MapControllers();
 
-app.MapControllerRoute(
-    name: "default",
-    pattern: "{controller=Home}/{action=Index}/{id?}");
 
-// Seed initial data
+// --- Seed Data (Baþlangýç Verisi) - Bu kýsým ayný kalabilir ---
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
@@ -131,14 +168,11 @@ using (var scope = app.Services.CreateScope())
         var context = services.GetRequiredService<PDKSDbContext>();
         var authService = services.GetRequiredService<IAuthService>();
 
-        // Ensure database is created
         context.Database.EnsureCreated();
 
-        // Seed default admin user if not exists
         var adminExists = context.Kullanicilar.Any(k => k.Email == "admin@pdks.com");
         if (!adminExists)
         {
-            // Create admin personel
             var adminPersonel = new PDKS.Data.Entities.Personel
             {
                 AdSoyad = "Sistem Yöneticisi",
@@ -158,7 +192,6 @@ using (var scope = app.Services.CreateScope())
             context.Personeller.Add(adminPersonel);
             context.SaveChanges();
 
-            // Create admin user
             var adminKullanici = new PDKS.Data.Entities.Kullanici
             {
                 PersonelId = adminPersonel.Id,
@@ -182,5 +215,6 @@ using (var scope = app.Services.CreateScope())
         logger.LogError(ex, "Seed data oluþturulurken hata oluþtu");
     }
 }
+
 
 app.Run();

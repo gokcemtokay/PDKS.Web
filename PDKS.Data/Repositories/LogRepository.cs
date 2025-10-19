@@ -1,69 +1,41 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using PDKS.Data.Context;
 using PDKS.Data.Entities;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace PDKS.Data.Repositories
 {
     public class LogRepository : GenericRepository<Log>, ILogRepository
     {
+        private readonly PDKSDbContext _context;
+
         public LogRepository(PDKSDbContext context) : base(context)
         {
+            _context = context;
+        }
+
+        public async Task<IEnumerable<Log>> GetByDateRangeAsync(DateTime baslangic, DateTime bitis)
+        {
+            return await _context.Loglar
+                .Where(l => l.Tarih >= baslangic && l.Tarih <= bitis)
+                .OrderByDescending(l => l.Tarih)
+                .ToListAsync();
         }
 
         public async Task<IEnumerable<Log>> GetByKullaniciAsync(int kullaniciId)
         {
-            return await _dbSet
-                .Include(l => l.Kullanici)
+            return await _context.Loglar
                 .Where(l => l.KullaniciId == kullaniciId)
                 .OrderByDescending(l => l.Tarih)
                 .ToListAsync();
         }
 
-        public async Task<IEnumerable<Log>> GetByModulAsync(string modul)
+        public async Task<int> GetErrorLogCountAsync()
         {
-            return await _dbSet
-                .Include(l => l.Kullanici)
-                .Where(l => l.Modul == modul)
-                .OrderByDescending(l => l.Tarih)
-                .ToListAsync();
-        }
-
-        public async Task<IEnumerable<Log>> GetByIslemAsync(string islem)
-        {
-            return await _dbSet
-                .Include(l => l.Kullanici)
-                .Where(l => l.Islem == islem)
-                .OrderByDescending(l => l.Tarih)
-                .ToListAsync();
-        }
-
-        public async Task<IEnumerable<Log>> GetByDateRangeAsync(DateTime baslangic, DateTime bitis)
-        {
-            return await _dbSet
-                .Include(l => l.Kullanici)
-                .Where(l => l.Tarih.Date >= baslangic.Date && l.Tarih.Date <= bitis.Date)
-                .OrderByDescending(l => l.Tarih)
-                .ToListAsync();
-        }
-
-        public async Task<IEnumerable<Log>> GetRecentLogsAsync(int count = 100)
-        {
-            return await _dbSet
-                .Include(l => l.Kullanici)
-                .OrderByDescending(l => l.Tarih)
-                .Take(count)
-                .ToListAsync();
-        }
-
-        public async Task<IEnumerable<Log>> GetByKullaniciAndDateRangeAsync(int kullaniciId, DateTime baslangic, DateTime bitis)
-        {
-            return await _dbSet
-                .Include(l => l.Kullanici)
-                .Where(l => l.KullaniciId == kullaniciId
-                    && l.Tarih.Date >= baslangic.Date
-                    && l.Tarih.Date <= bitis.Date)
-                .OrderByDescending(l => l.Tarih)
-                .ToListAsync();
+            return await _context.Loglar.CountAsync(l => l.LogLevel == "Error");
         }
     }
 }

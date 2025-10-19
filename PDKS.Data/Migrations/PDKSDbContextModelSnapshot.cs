@@ -282,67 +282,50 @@ namespace PDKS.Data.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
-                        .HasColumnName("id");
+                        .HasColumnType("integer");
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<int?>("CihazId")
-                        .HasColumnType("integer")
-                        .HasColumnName("cihaz_id");
+                        .HasColumnType("integer");
 
                     b.Property<int?>("CihazId1")
                         .HasColumnType("integer");
 
                     b.Property<DateTime?>("CikisZamani")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("cikis_zamani");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Durum")
                         .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)")
-                        .HasColumnName("durum");
+                        .HasColumnType("text");
 
                     b.Property<bool>("ElleGiris")
-                        .HasColumnType("boolean")
-                        .HasColumnName("elle_giris");
+                        .HasColumnType("boolean");
 
                     b.Property<int?>("ErkenCikisSuresi")
-                        .HasColumnType("integer")
-                        .HasColumnName("erken_cikis_suresi");
+                        .HasColumnType("integer");
 
                     b.Property<int?>("FazlaMesaiSuresi")
-                        .HasColumnType("integer")
-                        .HasColumnName("fazla_mesai_suresi");
+                        .HasColumnType("integer");
 
                     b.Property<int?>("GecKalmaSuresi")
-                        .HasColumnType("integer")
-                        .HasColumnName("gec_kalma_suresi");
+                        .HasColumnType("integer");
 
                     b.Property<DateTime?>("GirisZamani")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("giris_zamani");
+                        .HasColumnType("timestamp with time zone");
 
-                    b.Property<string>("Kaynak")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)")
-                        .HasColumnName("kaynak");
+                    b.Property<DateTime?>("GuncellemeTarihi")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Not")
                         .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)")
-                        .HasColumnName("not");
+                        .HasColumnType("text");
 
                     b.Property<DateTime>("OlusturmaTarihi")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("olusturma_tarihi");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<int>("PersonelId")
-                        .HasColumnType("integer")
-                        .HasColumnName("personel_id");
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
@@ -354,7 +337,7 @@ namespace PDKS.Data.Migrations
 
                     b.HasIndex("PersonelId", "GirisZamani");
 
-                    b.ToTable("giris_cikislar");
+                    b.ToTable("GirisCikislar");
                 });
 
             modelBuilder.Entity("PDKS.Data.Entities.Izin", b =>

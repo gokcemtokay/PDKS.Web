@@ -10,7 +10,9 @@ using PDKS.Data.Repositories;
 namespace PDKS.WebUI.Controllers
 {
     [Authorize]
-    public class HomeController : Controller
+    [ApiController]
+    [Route("api/[controller]")]
+    public class HomeController : ControllerBase
     {
         private readonly IUnitOfWork _unitOfWork;
 
@@ -19,109 +21,109 @@ namespace PDKS.WebUI.Controllers
             _unitOfWork = unitOfWork;
         }
 
-        public async Task<IActionResult> Index()
+        [HttpGet("dashboard")]
+        public async Task<IActionResult> GetDashboardData()
         {
-            var dashboard = new DashboardDTO();
-            var today = DateTime.Today;
+            try
+            {
+                var dashboard = new DashboardDTO();
+                var today = DateTime.Today;
 
-            // Aktif personel sayısı
-            dashboard.AktifPersonelSayisi = await _unitOfWork.Personeller.CountAsync(p => p.Durum);
+                // Aktif personel sayısı
+                dashboard.AktifPersonelSayisi = await _unitOfWork.Personeller.CountAsync(p => p.Durum);
 
-            // Bugün giriş yapmayanlar
-            var aktifPersoneller = await _unitOfWork.Personeller.FindAsync(p => p.Durum);
-            var bugunGirisYapanlar = await _unitOfWork.GirisCikislar.FindAsync(g =>
-                g.GirisZamani.HasValue && g.GirisZamani.Value.Date == today);
+                // Bugün giriş yapmayanlar
+                var aktifPersoneller = await _unitOfWork.Personeller.FindAsync(p => p.Durum);
+                var bugunGirisYapanlar = await _unitOfWork.GirisCikislar.FindAsync(g =>
+                    g.GirisZamani.HasValue && g.GirisZamani.Value.Date == today);
 
-            dashboard.BugunGelmeyenler = aktifPersoneller.Count() - bugunGirisYapanlar.Count();
+                dashboard.BugunGelmeyenler = aktifPersoneller.Count() - bugunGirisYapanlar.Count();
 
-            // Geç gelenler
-            dashboard.GecGelenler = await _unitOfWork.GirisCikislar.CountAsync(g =>
-                g.GirisZamani.HasValue &&
-                g.GirisZamani.Value.Date == today &&
-                g.GecKalmaSuresi > 0);
+                // Geç gelenler
+                dashboard.GecGelenler = await _unitOfWork.GirisCikislar.CountAsync(g =>
+                    g.GirisZamani.HasValue &&
+                    g.GirisZamani.Value.Date == today &&
+                    g.GecKalmaSuresi > 0);
 
-            // Erken çıkanlar
-            dashboard.ErkenCikanlar = await _unitOfWork.GirisCikislar.CountAsync(g =>
-                g.GirisZamani.HasValue &&
-                g.GirisZamani.Value.Date == today &&
-                g.ErkenCikisSuresi > 0);
+                // Erken çıkanlar
+                dashboard.ErkenCikanlar = await _unitOfWork.GirisCikislar.CountAsync(g =>
+                    g.GirisZamani.HasValue &&
+                    g.GirisZamani.Value.Date == today &&
+                    g.ErkenCikisSuresi > 0);
 
-            // Mesaiye kalanlar
-            dashboard.MesaiyeKalanlar = await _unitOfWork.GirisCikislar.CountAsync(g =>
-                g.GirisZamani.HasValue &&
-                g.GirisZamani.Value.Date == today &&
-                g.FazlaMesaiSuresi > 0);
+                // Mesaiye kalanlar
+                dashboard.MesaiyeKalanlar = await _unitOfWork.GirisCikislar.CountAsync(g =>
+                    g.GirisZamani.HasValue &&
+                    g.GirisZamani.Value.Date == today &&
+                    g.FazlaMesaiSuresi > 0);
 
-            // İzinli personel
-            dashboard.IzinliPersonel = await _unitOfWork.Izinler.CountAsync(i =>
-                i.BaslangicTarihi <= today &&
-                i.BitisTarihi >= today &&
-                i.OnayDurumu == "Onaylandı");
+                // İzinli personel
+                dashboard.IzinliPersonel = await _unitOfWork.Izinler.CountAsync(i =>
+                    i.BaslangicTarihi <= today &&
+                    i.BitisTarihi >= today &&
+                    i.OnayDurumu == "Onaylandı");
 
-            // Bekleyen izin talepleri
-            dashboard.BekleyenIzinTalepleri = await _unitOfWork.Izinler.CountAsync(i =>
-                i.OnayDurumu == "Beklemede");
+                // Bekleyen izin talepleri
+                dashboard.BekleyenIzinTalepleri = await _unitOfWork.Izinler.CountAsync(i =>
+                    i.OnayDurumu == "Beklemede");
 
-            // Aktif cihaz sayısı
-            dashboard.AktifCihazSayisi = await _unitOfWork.Cihazlar.CountAsync(c => c.Durum);
+                // Aktif cihaz sayısı
+                dashboard.AktifCihazSayisi = await _unitOfWork.Cihazlar.CountAsync(c => c.Durum);
 
-            // Son giriş-çıkışlar (Son 10)
-            var sonGirisCikislar = await _unitOfWork.GirisCikislar.FindAsync(g =>
-                g.GirisZamani.HasValue &&
-                g.GirisZamani.Value.Date == today);
+                // Son giriş-çıkışlar (Son 10)
+                var sonGirisCikislar = await _unitOfWork.GirisCikislar.FindAsync(g =>
+                    g.GirisZamani.HasValue); // Tarih filtresi kaldırıldı, en son hareketleri görmek daha mantıklı olabilir.
 
-            dashboard.SonGirisCikislar = sonGirisCikislar
-                .OrderByDescending(g => g.GirisZamani)
-                .Take(10)
-                .Select(g => new GirisCikisListDTO
-                {
-                    Id = g.Id,
-                    PersonelId = g.PersonelId,
-                    PersonelAdi = g.Personel?.AdSoyad,
-                    SicilNo = g.Personel?.SicilNo,
-                    GirisZamani = g.GirisZamani,
-                    CikisZamani = g.CikisZamani,
-                    Durum = g.Durum,
-                    GecKalmaSuresi = g.GecKalmaSuresi,
-                    FazlaMesaiSuresi = g.FazlaMesaiSuresi
-                })
-                .ToList();
+                dashboard.SonGirisCikislar = sonGirisCikislar
+                    .OrderByDescending(g => g.GirisZamani)
+                    .Take(10)
+                    .Select(g => new GirisCikisListDTO
+                    {
+                        Id = g.Id,
+                        PersonelId = g.PersonelId,
+                        PersonelAdi = g.Personel?.AdSoyad,
+                        SicilNo = g.Personel?.SicilNo,
+                        GirisZamani = g.GirisZamani,
+                        CikisZamani = g.CikisZamani,
+                        Durum = g.Durum,
+                        GecKalmaSuresi = g.GecKalmaSuresi,
+                        FazlaMesaiSuresi = g.FazlaMesaiSuresi
+                    })
+                    .ToList();
 
-            // Bekleyen izinler (Son 5)
-            var bekleyenIzinler = await _unitOfWork.Izinler.FindAsync(i =>
-                i.OnayDurumu == "Beklemede");
+                // Bekleyen izinler (Son 5)
+                var bekleyenIzinler = await _unitOfWork.Izinler.FindAsync(i =>
+                    i.OnayDurumu == "Beklemede");
 
-            dashboard.BekleyenIzinler = bekleyenIzinler
-                .OrderByDescending(i => i.OlusturmaTarihi)
-                .Take(5)
-                .Select(i => new IzinListDTO
-                {
-                    Id = i.Id,
-                    PersonelId = i.PersonelId,
-                    PersonelAdi = i.Personel?.AdSoyad,
-                    IzinTipi = i.IzinTipi,
-                    BaslangicTarihi = i.BaslangicTarihi,
-                    BitisTarihi = i.BitisTarihi,
-                    GunSayisi = i.IzinGunSayisi,
-                    OnayDurumu = i.OnayDurumu,
-                    OlusturmaTarihi = i.OlusturmaTarihi
-                })
-                .ToList();
+                dashboard.BekleyenIzinler = bekleyenIzinler
+                    .OrderByDescending(i => i.OlusturmaTarihi)
+                    .Take(5)
+                    .Select(i => new IzinListDTO
+                    {
+                        Id = i.Id,
+                        PersonelId = i.PersonelId,
+                        PersonelAdi = i.Personel?.AdSoyad,
+                        IzinTipi = i.IzinTipi,
+                        BaslangicTarihi = i.BaslangicTarihi,
+                        BitisTarihi = i.BitisTarihi,
+                        GunSayisi = i.IzinGunSayisi,
+                        OnayDurumu = i.OnayDurumu,
+                        OlusturmaTarihi = i.OlusturmaTarihi
+                    })
+                    .ToList();
 
-            // Kullanıcı bildirimlerini getir
-            var kullaniciId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
-            var okunmamisBildirimler = await _unitOfWork.Bildirimler.CountAsync(b =>
-                b.KullaniciId == kullaniciId && !b.Okundu);
-
-            ViewBag.OkunmamisBildirimler = okunmamisBildirimler;
-
-            return View(dashboard);
+                return Ok(dashboard);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Internal Server Error: {ex.Message}");
+            }
         }
 
-        [HttpGet]
-        public async Task<IActionResult> Bildirimler()
+        [HttpGet("bildirimler")]
+        public async Task<IActionResult> GetBildirimler()
         {
-            var kullaniciId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
+            var kullaniciId = GetCurrentUserId();
             var bildirimler = await _unitOfWork.Bildirimler.FindAsync(b => b.KullaniciId == kullaniciId);
 
             var bildirimList = bildirimler
@@ -137,27 +139,35 @@ namespace PDKS.WebUI.Controllers
                 })
                 .ToList();
 
-            return View(bildirimList);
+            return Ok(bildirimList);
         }
 
-        [HttpPost]
+        [HttpPost("bildirim-okundu/{id}")]
         public async Task<IActionResult> BildirimOkunduIsaretle(int id)
         {
             var bildirim = await _unitOfWork.Bildirimler.GetByIdAsync(id);
-            if (bildirim != null)
+            if (bildirim == null)
             {
-                bildirim.Okundu = true;
-                _unitOfWork.Bildirimler.Update(bildirim);
-                await _unitOfWork.SaveChangesAsync();
+                return NotFound();
             }
 
-            return Json(new { success = true });
+            // Güvenlik kontrolü: Bildirim sadece o kullanıcıya aitse işlem yapılmalı.
+            if (bildirim.KullaniciId != GetCurrentUserId())
+            {
+                return Forbid(); // 403 Forbidden
+            }
+
+            bildirim.Okundu = true;
+            _unitOfWork.Bildirimler.Update(bildirim);
+            await _unitOfWork.SaveChangesAsync();
+
+            return Ok(new { success = true });
         }
 
-        [HttpPost]
+        [HttpPost("tum-bildirimleri-okundu")]
         public async Task<IActionResult> TumBildirimleriOkunduIsaretle()
         {
-            var kullaniciId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
+            var kullaniciId = GetCurrentUserId();
             var bildirimler = await _unitOfWork.Bildirimler.FindAsync(b =>
                 b.KullaniciId == kullaniciId && !b.Okundu);
 
@@ -168,18 +178,19 @@ namespace PDKS.WebUI.Controllers
             }
 
             await _unitOfWork.SaveChangesAsync();
-            return Json(new { success = true });
+            return Ok(new { success = true });
         }
 
-        public IActionResult Privacy()
+        private int GetCurrentUserId()
         {
-            return View();
-        }
-
-        [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
-        public IActionResult Error()
-        {
-            return View();
+            // Bu metodu önceki adımlarda SirketController'a eklemiştik,
+            // daha merkezi bir yere taşımak (örn: bir helper sınıfı) daha iyi bir pratik olacaktır.
+            var userIdClaim = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier || c.Type == "sub");
+            if (userIdClaim != null && int.TryParse(userIdClaim.Value, out int userId))
+            {
+                return userId;
+            }
+            throw new InvalidOperationException("User ID could not be found in token.");
         }
     }
 }
