@@ -10,6 +10,7 @@ namespace PDKS.Business.DTOs
         public string VergiDairesi { get; set; }     
         public string Telefon { get; set; }
         public string Email { get; set; }
+        public string Adres { get; set; }
         public string Il { get; set; }
         public string Ilce { get; set; }             
         public bool Aktif { get; set; }

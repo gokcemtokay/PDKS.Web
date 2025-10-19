@@ -1,6 +1,8 @@
 ﻿// PDKS.WebUI/Controllers/SirketController.cs
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using PDKS.Business.DTOs;
 using PDKS.Business.Services;
 using PDKS.Data.Repositories;
@@ -54,59 +56,81 @@ namespace PDKS.WebUI.Controllers
         }
 
         // GET: Sirket/Create
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Create()
         {
-            // Ana şirket listesi için
-            var anaSirketler = await _sirketService.GetAnaSirketlerAsync();
-            ViewBag.AnaSirketler = anaSirketler;
-            return View();
+            try
+            {
+                // Ana şirketler listesi için SelectList oluştur
+                var anaSirketler = await _sirketService.GetAnaSirketlerAsync();
+                ViewBag.AnaSirketler = new SelectList(anaSirketler, "Id", "Unvan");
+
+                return View();
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = ex.Message;
+                return RedirectToAction(nameof(Index));
+            }
         }
 
         // POST: Sirket/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Create(SirketCreateDTO dto)
         {
+            if (!ModelState.IsValid)
+            {
+                // Hata durumunda dropdown'ı tekrar doldur
+                var anaSirketler = await _sirketService.GetAnaSirketlerAsync();
+                ViewBag.AnaSirketler = new SelectList(anaSirketler, "Id", "Unvan", dto.AnaSirketId);
+                return View(dto);
+            }
+
             try
             {
-                if (!ModelState.IsValid)
-                {
-                    var anaSirketler = await _sirketService.GetAnaSirketlerAsync();
-                    ViewBag.AnaSirketler = anaSirketler;
-                    return View(dto);
-                }
-
                 var sirketId = await _sirketService.CreateSirketAsync(dto);
-                await LogAction("Ekleme", "Şirket", $"{dto.Unvan} şirketi eklendi");
+                await LogAction("Ekleme", "Sirket", $"{dto.Unvan} şirketi eklendi");
 
                 TempData["Success"] = "Şirket başarıyla eklendi";
-                return RedirectToAction(nameof(Index));
+                return RedirectToAction(nameof(Details), new { id = sirketId });
             }
             catch (Exception ex)
             {
                 TempData["Error"] = ex.Message;
+
+                // Hata durumunda dropdown'ı tekrar doldur
                 var anaSirketler = await _sirketService.GetAnaSirketlerAsync();
-                ViewBag.AnaSirketler = anaSirketler;
+                ViewBag.AnaSirketler = new SelectList(anaSirketler, "Id", "Unvan", dto.AnaSirketId);
                 return View(dto);
             }
         }
 
         // GET: Sirket/Edit/5
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Edit(int id)
         {
             try
             {
                 var sirket = await _sirketService.GetSirketByIdAsync(id);
+
                 if (sirket == null)
                 {
                     TempData["Error"] = "Şirket bulunamadı";
                     return RedirectToAction(nameof(Index));
                 }
 
+                // Ana şirketler listesi için SelectList oluştur
                 var anaSirketler = await _sirketService.GetAnaSirketlerAsync();
-                ViewBag.AnaSirketler = anaSirketler;
+                ViewBag.AnaSirketler = new SelectList(
+                    anaSirketler.Where(s => s.Id != id), // Kendisi hariç
+                    "Id",
+                    "Unvan",
+                    sirket.AnaSirketId
+                );
 
-                var dto = new SirketUpdateDTO
+                var updateDto = new SirketUpdateDTO
                 {
                     Id = sirket.Id,
                     Unvan = sirket.Unvan,
@@ -129,7 +153,7 @@ namespace PDKS.WebUI.Controllers
                     AnaSirketId = sirket.AnaSirketId
                 };
 
-                return View(dto);
+                return View(updateDto);
             }
             catch (Exception ex)
             {
@@ -141,28 +165,42 @@ namespace PDKS.WebUI.Controllers
         // POST: Sirket/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Edit(SirketUpdateDTO dto)
         {
+            if (!ModelState.IsValid)
+            {
+                // Hata durumunda dropdown'ı tekrar doldur
+                var anaSirketler = await _sirketService.GetAnaSirketlerAsync();
+                ViewBag.AnaSirketler = new SelectList(
+                    anaSirketler.Where(s => s.Id != dto.Id),
+                    "Id",
+                    "Unvan",
+                    dto.AnaSirketId
+                );
+                return View(dto);
+            }
+
             try
             {
-                if (!ModelState.IsValid)
-                {
-                    var anaSirketler = await _sirketService.GetAnaSirketlerAsync();
-                    ViewBag.AnaSirketler = anaSirketler;
-                    return View(dto);
-                }
-
                 await _sirketService.UpdateSirketAsync(dto);
-                await LogAction("Güncelleme", "Şirket", $"{dto.Unvan} şirketi güncellendi");
+                await LogAction("Güncelleme", "Sirket", $"{dto.Unvan} şirketi güncellendi");
 
                 TempData["Success"] = "Şirket başarıyla güncellendi";
-                return RedirectToAction(nameof(Index));
+                return RedirectToAction(nameof(Details), new { id = dto.Id });
             }
             catch (Exception ex)
             {
                 TempData["Error"] = ex.Message;
+
+                // Hata durumunda dropdown'ı tekrar doldur
                 var anaSirketler = await _sirketService.GetAnaSirketlerAsync();
-                ViewBag.AnaSirketler = anaSirketler;
+                ViewBag.AnaSirketler = new SelectList(
+                    anaSirketler.Where(s => s.Id != dto.Id),
+                    "Id",
+                    "Unvan",
+                    dto.AnaSirketId
+                );
                 return View(dto);
             }
         }
@@ -188,13 +226,6 @@ namespace PDKS.WebUI.Controllers
             }
         }
 
-        // GET: Sirket/Switch
-        [AllowAnonymous]
-        public async Task<IActionResult> Switch()
-        {
-            var sirketler = await _sirketService.GetAllSirketlerAsync();
-            return View(sirketler.Where(s => s.Aktif).ToList());
-        }
 
         // POST: Sirket/SelectSirket
         [HttpPost]
@@ -239,6 +270,121 @@ namespace PDKS.WebUI.Controllers
             {
                 TempData["Error"] = ex.Message;
                 return RedirectToAction(nameof(Index));
+            }
+        }
+
+        // PDKS.WebUI/Controllers/SirketController.cs - Ekle
+
+        // GET: Sirket/Switch
+        // PDKS.WebUI/Controllers/SirketController.cs - Switch GET
+        [Authorize]
+        public async Task<IActionResult> Switch()
+        {
+            try
+            {
+                // Kullanıcının erişebileceği şirketleri listele
+                List<SirketListDTO> sirketler;
+
+                if (User.IsInRole("Admin"))
+                {
+                    // Admin tüm şirketleri görebilir
+                    sirketler = await _sirketService.GetAllSirketlerAsync();
+                }
+                else
+                {
+                    // Diğer kullanıcılar sadece kendi şirketini görür
+                    var personel = await _unitOfWork.Personeller.GetByIdAsync(CurrentKullaniciId);
+                    if (personel != null)
+                    {
+                        var sirket = await _sirketService.GetSirketByIdAsync(personel.SirketId);
+                        sirketler = new List<SirketListDTO>
+                {
+                    new SirketListDTO
+                    {
+                        Id = sirket.Id,
+                        Unvan = sirket.Unvan,
+                        Aktif = sirket.Aktif,
+                        AnaSirket = sirket.AnaSirket,
+                        PersonelSayisi = sirket.PersonelSayisi
+                    }
+                };
+                    }
+                    else
+                    {
+                        sirketler = new List<SirketListDTO>();
+                    }
+                }
+
+                ViewBag.CurrentSirketId = CurrentSirketId;  // int olarak gönder
+
+                return View(sirketler);
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = ex.Message;
+                return RedirectToAction("Index", "Home");
+            }
+        }
+
+        // POST: Sirket/Switch
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [Authorize]
+        public async Task<IActionResult> Switch(int sirketId)
+        {
+            try
+            {
+                // Şirket var mı kontrol et
+                var sirket = await _sirketService.GetSirketByIdAsync(sirketId);
+
+                if (sirket == null)
+                {
+                    TempData["Error"] = "Şirket bulunamadı";
+                    return RedirectToAction(nameof(Switch));
+                }
+
+                // Admin değilse, kendi şirketi olmalı
+                if (!User.IsInRole("Admin"))
+                {
+                    var personel = await _unitOfWork.Personeller.GetByIdAsync(CurrentKullaniciId);
+                    if (personel == null || personel.SirketId != sirketId)
+                    {
+                        TempData["Error"] = "Bu şirkete erişim yetkiniz yok";
+                        return RedirectToAction(nameof(Switch));
+                    }
+                }
+
+                // Yeni claim'ler oluştur
+                var identity = (System.Security.Claims.ClaimsIdentity)User.Identity;
+
+                // Eski SirketId ve SirketAdi claim'lerini kaldır
+                var oldSirketIdClaim = identity.FindFirst("SirketId");
+                var oldSirketAdiClaim = identity.FindFirst("SirketAdi");
+
+                if (oldSirketIdClaim != null)
+                    identity.RemoveClaim(oldSirketIdClaim);
+
+                if (oldSirketAdiClaim != null)
+                    identity.RemoveClaim(oldSirketAdiClaim);
+
+                // Yeni claim'leri ekle
+                identity.AddClaim(new System.Security.Claims.Claim("SirketId", sirketId.ToString()));
+                identity.AddClaim(new System.Security.Claims.Claim("SirketAdi", sirket.Unvan));
+
+                // Cookie'yi güncelle
+                await HttpContext.SignInAsync(
+                    Microsoft.AspNetCore.Authentication.Cookies.CookieAuthenticationDefaults.AuthenticationScheme,
+                    new System.Security.Claims.ClaimsPrincipal(identity));
+
+                await LogAction("Şirket Değiştirme", "Sirket", $"{sirket.Unvan} şirketine geçiş yapıldı");
+
+                TempData["Success"] = $"{sirket.Unvan} şirketine geçiş yapıldınız";
+                return RedirectToAction("Index", "Home");
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = ex.Message;
+                return RedirectToAction(nameof(Switch));
             }
         }
     }

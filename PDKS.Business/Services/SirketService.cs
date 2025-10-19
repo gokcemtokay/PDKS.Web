@@ -36,15 +36,15 @@ namespace PDKS.Business.Services
                     Telefon = sirket.Telefon,
                     Email = sirket.Email,
                     Il = sirket.Il,
-                    Ilce = sirket.Ilce,
+                    Ilce = sirket.Ilce,  // ⭐ EKLE
                     Aktif = sirket.Aktif,
                     AnaSirket = sirket.AnaSirket,
                     AnaSirketAdi = sirket.AnaSirketId.HasValue
                         ? (await _unitOfWork.Sirketler.GetByIdAsync(sirket.AnaSirketId.Value))?.Unvan
                         : null,
                     PersonelSayisi = personelSayisi,
-                    KurulusTarihi = sirket.KurulusTarihi,
-                    OlusturmaTarihi = sirket.OlusturmaTarihi
+                    KurulusTarihi = sirket.KurulusTarihi,  // ⭐ EKLE
+                    OlusturmaTarihi = sirket.OlusturmaTarihi  // ⭐ EKLE
                 });
             }
 
@@ -239,10 +239,15 @@ namespace PDKS.Business.Services
                 Unvan = s.Unvan,
                 TicariUnvan = s.TicariUnvan,
                 VergiNo = s.VergiNo,
+                VergiDairesi = s.VergiDairesi,
                 Email = s.Email,
                 Telefon = s.Telefon,
+                Adres = s.Adres,  // ⭐ EKLE
+                Il = s.Il,
+                Ilce = s.Ilce,  // ⭐ EKLE
                 Aktif = s.Aktif,
-                AnaSirket = s.AnaSirket
+                AnaSirket = s.AnaSirket,
+                PersonelSayisi = 0  // Burada hesaplamaya gerek yok
             }).OrderBy(s => s.Unvan).ToList();
         }
 
@@ -263,8 +268,12 @@ namespace PDKS.Business.Services
                     Unvan = sirket.Unvan,
                     TicariUnvan = sirket.TicariUnvan,
                     VergiNo = sirket.VergiNo,
+                    VergiDairesi = sirket.VergiDairesi,
                     Email = sirket.Email,
                     Telefon = sirket.Telefon,
+                    Adres = sirket.Adres,  // ⭐ EKLE
+                    Il = sirket.Il,
+                    Ilce = sirket.Ilce,  // ⭐ EKLE
                     Aktif = sirket.Aktif,
                     AnaSirket = sirket.AnaSirket,
                     AnaSirketAdi = (await _unitOfWork.Sirketler.GetByIdAsync(anaSirketId))?.Unvan,

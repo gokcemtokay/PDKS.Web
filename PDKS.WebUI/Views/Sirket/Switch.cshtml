@@ -1,0 +1,123 @@
+﻿@* PDKS.WebUI/Views/Sirket/Switch.cshtml - Card body kısmını değiştir *@
+
+@model List<PDKS.Business.DTOs.SirketListDTO>
+@{
+    ViewData["Title"] = "Şirket Değiştir";
+    var currentSirketId = (int)ViewBag.CurrentSirketId;
+}
+
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2><i class="fas fa-exchange-alt me-2"></i>Şirket Değiştir</h2>
+            <p class="text-muted">Çalışmak istediğiniz şirketi seçin</p>
+        </div>
+    </div>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show">
+            <i class="fas fa-check-circle me-2"></i>@TempData["Success"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show">
+            <i class="fas fa-exclamation-circle me-2"></i>@TempData["Error"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <div class="row">
+        @if (Model != null && Model.Any())
+        {
+            foreach (var sirket in Model)
+            {
+                var isCurrentSirket = sirket.Id == currentSirketId;
+
+                <div class="col-md-6 col-lg-4 mb-4">
+                    <div class="card h-100 @(isCurrentSirket ? "border-primary shadow" : "")">
+                        <div class="card-body">
+                            <h5 class="card-title">
+                                <i class="fas fa-building me-2"></i>@sirket.Unvan
+                            </h5>
+
+                            <div class="mb-3">
+                                @if (isCurrentSirket)
+                                {
+                                    <span class="badge bg-primary">
+                                        <i class="fas fa-check me-1"></i>Aktif Şirket
+                                    </span>
+                                }
+
+                                @if (sirket.AnaSirket)
+                                {
+                                    <span class="badge bg-info">Ana Şirket</span>
+                                }
+                            </div>
+
+                            <div class="mb-2">
+                                <small class="text-muted">Personel Sayısı:</small>
+                                <strong>@sirket.PersonelSayisi</strong>
+                            </div>
+
+                            <div class="mb-3">
+                                <small class="text-muted">Durum:</small>
+                                @if (sirket.Aktif)
+                                {
+                                    <span class="badge bg-success">Aktif</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-danger">Pasif</span>
+                                }
+                            </div>
+
+                            @if (isCurrentSirket)
+                            {
+                                <button type="button" class="btn btn-outline-primary w-100" disabled>
+                                    <i class="fas fa-check me-2"></i>Şu An Bu Şirkettesiniz
+                                </button>
+                            }
+                            else if (!sirket.Aktif)
+                            {
+                                <button type="button" class="btn btn-secondary w-100" disabled>
+                                    <i class="fas fa-ban me-2"></i>Şirket Pasif
+                                </button>
+                            }
+                            else
+                            {
+                                <form asp-action="Switch" method="post">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="sirketId" value="@sirket.Id" />
+                                    <button type="submit" class="btn btn-primary w-100">
+                                        <i class="fas fa-exchange-alt me-2"></i>Bu Şirkete Geç
+                                    </button>
+                                </form>
+                            }
+                        </div>
+                    </div>
+                </div>
+            }
+        }
+        else
+        {
+            <div class="col-12">
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    Hiç şirket bulunamadı.
+                </div>
+            </div>
+        }
+    </div>
+
+    <div class="row mt-3">
+        <div class="col-12">
+            <a asp-action="Index" asp-controller="Home" class="btn btn-secondary">
+                <i class="fas fa-arrow-left me-2"></i>Ana Sayfaya Dön
+            </a>
+        </div>
+    </div>
+</div>

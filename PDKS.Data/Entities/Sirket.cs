@@ -17,7 +17,7 @@ namespace PDKS.Data.Entities
 
         [MaxLength(200)]
         [Column("ticari_unvan")]
-        public string TicariUnvan { get; set; }
+        public string? TicariUnvan { get; set; }
 
         [Required]
         [MaxLength(10)]
@@ -26,39 +26,39 @@ namespace PDKS.Data.Entities
 
         [MaxLength(100)]
         [Column("vergi_dairesi")]
-        public string VergiDairesi { get; set; }
+        public string? VergiDairesi { get; set; }
 
         [MaxLength(20)]
         [Column("telefon")]
-        public string Telefon { get; set; }
+        public string? Telefon { get; set; }
 
         [MaxLength(100)]
         [Column("email")]
-        public string Email { get; set; }
+        public string? Email { get; set; }
 
         [MaxLength(500)]
         [Column("adres")]
-        public string Adres { get; set; }
+        public string? Adres { get; set; }
 
         [MaxLength(50)]
         [Column("il")]
-        public string Il { get; set; }
+        public string? Il { get; set; }
 
         [MaxLength(50)]
         [Column("ilce")]
-        public string Ilce { get; set; }
+        public string? Ilce { get; set; }
 
         [MaxLength(10)]
         [Column("posta_kodu")]
-        public string PostaKodu { get; set; }
+        public string? PostaKodu { get; set; }
 
         [MaxLength(200)]
         [Column("website")]
-        public string Website { get; set; }
+        public string? Website { get; set; }
 
         [MaxLength(500)]
         [Column("logo_url")]
-        public string LogoUrl { get; set; }
+        public string? LogoUrl { get; set; }
 
         [Column("kurulis_tarihi")]
         public DateTime? KurulusTarihi { get; set; }
@@ -68,11 +68,11 @@ namespace PDKS.Data.Entities
 
         [MaxLength(3)]
         [Column("para_birimi")]
-        public string ParaBirimi { get; set; } = "TRY";
+        public string? ParaBirimi { get; set; } = "TRY";
 
         [MaxLength(1000)]
         [Column("notlar")]
-        public string Notlar { get; set; }
+        public string? Notlar { get; set; }
 
         [Column("olusturma_tarihi")]
         public DateTime OlusturmaTarihi { get; set; } = DateTime.UtcNow;

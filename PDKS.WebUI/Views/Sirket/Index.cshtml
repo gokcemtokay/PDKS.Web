@@ -42,8 +42,10 @@
                     <h5 class="card-title mb-0">Şirket Listesi</h5>
                 </div>
                 <div class="card-body">
+                    @* PDKS.WebUI/Views/Sirket/Index.cshtml - Sadece tablo kısmını değiştir *@
+
                     <div class="table-responsive">
-                        <table class="table table-hover" id="sirketTable">
+                        <table class="table table-hover">
                             <thead>
                                 <tr>
                                     <th>Ünvan</th>
@@ -71,9 +73,9 @@
                                                 }
                                             </td>
                                             <td>@sirket.VergiNo</td>
-                                            <td>@sirket.Telefon</td>
-                                            <td>@sirket.Email</td>
-                                            <td>@sirket.Il</td>
+                                            <td>@(sirket.Telefon ?? "-")</td>
+                                            <td>@(sirket.Email ?? "-")</td>
+                                            <td>@(sirket.Il ?? "-")</td>
                                             <td>
                                                 @if (!string.IsNullOrEmpty(sirket.AnaSirketAdi))
                                                 {
@@ -170,14 +172,6 @@
 @section Scripts {
     <script>
         $(document).ready(function() {
-            // DataTable
-            $('#sirketTable').DataTable({
-                language: {
-                    url: '//cdn.datatables.net/plug-ins/1.13.7/i18n/tr.json'
-                },
-                order: [[0, 'asc']]
-            });
-
             // Delete modal
             $('#deleteModal').on('show.bs.modal', function (event) {
                 var button = $(event.relatedTarget);
@@ -185,7 +179,7 @@
                 var sirketName = button.data('name');
 
                 $('#deleteSirketName').text(sirketName);
-                $('#deleteForm').attr('action', '@Url.Action("Delete", "Sirket")/' + sirketId);
+                $('#deleteForm').attr('action', '/Sirket/Delete/' + sirketId);
             });
         });
     </script>

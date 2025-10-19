@@ -55,6 +55,17 @@ namespace PDKS.WebUI.Controllers
                 : null;
             var rol = await _unitOfWork.Roller.GetByIdAsync(kullanici.RolId);
 
+            // ⭐ Şirket bilgisini al
+            string sirketAdi = "Şirket Seçilmedi";
+            int sirketId = 0;
+
+            if (personel != null)
+            {
+                sirketId = personel.SirketId;
+                var sirket = await _unitOfWork.Sirketler.GetByIdAsync(personel.SirketId);
+                sirketAdi = sirket?.Unvan ?? "Bilinmeyen Şirket";
+            }
+
             // Create claims
             var claims = new List<Claim>
     {
@@ -63,7 +74,9 @@ namespace PDKS.WebUI.Controllers
         new Claim(ClaimTypes.Email, kullanici.Email),
         new Claim(ClaimTypes.Role, rol.RolAdi),
         new Claim("PersonelId", personel?.Id.ToString() ?? "0"),
-        new Claim("Departman", personel?.Departman?.Ad ?? "")
+        new Claim("Departman", personel?.Departman?.Ad ?? ""),
+        new Claim("SirketId", sirketId.ToString()),     
+        new Claim("SirketAdi", sirketAdi)
     };
 
             var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
