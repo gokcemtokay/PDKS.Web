@@ -1,20 +1,13 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
+﻿// PDKS.Business/DTOs/TransferGecmisiDTO.cs
 namespace PDKS.Business.DTOs
 {
     public class TransferGecmisiDTO
     {
         public int Id { get; set; }
         public int PersonelId { get; set; }
-        public string PersonelAdi { get; set; }
-        public string EskiSirketUnvan { get; set; }
-        public string YeniSirketUnvan { get; set; }
-        public string EskiDepartman { get; set; }
-        public string YeniDepartman { get; set; }
+        public string PersonelAdSoyad { get; set; }
+        public string EskiSirketAdi { get; set; }
+        public string YeniSirketAdi { get; set; }
         public string EskiUnvan { get; set; }
         public string YeniUnvan { get; set; }
         public decimal? EskiMaas { get; set; }
@@ -22,6 +15,6 @@ namespace PDKS.Business.DTOs
         public DateTime TransferTarihi { get; set; }
         public string TransferTipi { get; set; }
         public string Sebep { get; set; }
-        public string OnaylayanKullanici { get; set; }
+        public string Notlar { get; set; }
     }
 }

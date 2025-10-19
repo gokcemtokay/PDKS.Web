@@ -1,9 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
+﻿// PDKS.Business/DTOs/SirketUpdateDTO.cs - LogoUrl ve AnaSirket ekle
 using System.ComponentModel.DataAnnotations;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace PDKS.Business.DTOs
 {
@@ -13,50 +9,57 @@ namespace PDKS.Business.DTOs
         public int Id { get; set; }
 
         [Required(ErrorMessage = "Ünvan zorunludur")]
-        [MaxLength(200)]
+        [StringLength(200)]
         public string Unvan { get; set; }
 
-        [MaxLength(200)]
+        [StringLength(200)]
         public string TicariUnvan { get; set; }
 
         [Required(ErrorMessage = "Vergi numarası zorunludur")]
-        [MaxLength(10)]
+        [StringLength(10, MinimumLength = 10)]
         public string VergiNo { get; set; }
 
-        [MaxLength(100)]
+        [StringLength(100)]
         public string VergiDairesi { get; set; }
 
-        [MaxLength(20)]
+        [StringLength(20)]
+        [Phone]
         public string Telefon { get; set; }
 
+        [StringLength(100)]
         [EmailAddress]
-        [MaxLength(100)]
         public string Email { get; set; }
 
-        [MaxLength(500)]
+        [StringLength(500)]
         public string Adres { get; set; }
 
-        [MaxLength(50)]
+        [StringLength(50)]
         public string Il { get; set; }
 
-        [MaxLength(50)]
+        [StringLength(50)]
         public string Ilce { get; set; }
 
-        [MaxLength(10)]
+        [StringLength(10)]
         public string PostaKodu { get; set; }
 
-        [MaxLength(200)]
+        [StringLength(200)]
+        [Url]
         public string Website { get; set; }
+
+        [StringLength(500)]
+        public string LogoUrl { get; set; }         // ✅ Eklendi
 
         public DateTime? KurulusTarihi { get; set; }
 
         public bool Aktif { get; set; }
 
-        [MaxLength(3)]
+        [StringLength(3)]
         public string ParaBirimi { get; set; }
 
-        [MaxLength(1000)]
+        [StringLength(1000)]
         public string Notlar { get; set; }
+
+        public bool AnaSirket { get; set; }         // ✅ Eklendi
 
         public int? AnaSirketId { get; set; }
     }

@@ -27,6 +27,8 @@ namespace PDKS.Data.Repositories
             Primler = new GenericRepository<Entities.Prim>(_context);
             Departmanlar = new GenericRepository<Entities.Departman>(_context);
             Mesailer = new GenericRepository<Entities.Mesai>(_context);
+            Sirketler = new GenericRepository<Entities.Sirket>(_context);
+            PersonelTransferGecmisleri = new GenericRepository<Entities.PersonelTransferGecmisi>(_context);
         }
 
         public IRepository<Entities.Personel> Personeller { get; private set; }
@@ -45,7 +47,8 @@ namespace PDKS.Data.Repositories
         public IRepository<Entities.Prim> Primler { get; private set; }
         public IRepository<Entities.Departman> Departmanlar { get; private set; }
         public IRepository<Entities.Mesai> Mesailer { get; private set; }
-
+        public IRepository<Entities.Sirket> Sirketler { get; private set; }
+        public IRepository<Entities.PersonelTransferGecmisi> PersonelTransferGecmisleri { get; private set; }
         public async Task<int> SaveChangesAsync()
         {
             return await _context.SaveChangesAsync();
@@ -90,7 +93,10 @@ namespace PDKS.Data.Repositories
                 _transaction = null;
             }
         }
-
+        public IRepository<T> GetRepository<T>() where T : class
+        {
+            return new GenericRepository<T>(_context);
+        }
         public void Dispose()
         {
             _transaction?.Dispose();

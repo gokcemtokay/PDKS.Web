@@ -1,0 +1,194 @@
+﻿@* PDKS.WebUI/Views/Sirket/Create.cshtml *@
+@model PDKS.Business.DTOs.SirketCreateDTO
+@{
+    ViewData["Title"] = "Yeni Şirket Ekle";
+}
+
+<div class="container-fluid">
+    <div class="row mb-3">
+        <div class="col-12">
+            <h2><i class="fas fa-building me-2"></i>Yeni Şirket Ekle</h2>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-10 mx-auto">
+            <div class="card">
+                <div class="card-body">
+                    <form asp-action="Create" method="post">
+                        <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+
+                        <!-- Genel Bilgiler -->
+                        <h5 class="mb-3"><i class="fas fa-info-circle me-2"></i>Genel Bilgiler</h5>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label asp-for="Unvan" class="form-label">Ünvan <span class="text-danger">*</span></label>
+                                <input asp-for="Unvan" class="form-control" placeholder="Örn: ABC Teknoloji A.Ş.">
+                                <span asp-validation-for="Unvan" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-6">
+                                <label asp-for="TicariUnvan" class="form-label">Ticari Ünvan</label>
+                                <input asp-for="TicariUnvan" class="form-control">
+                                <span asp-validation-for="TicariUnvan" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label asp-for="VergiNo" class="form-label">Vergi No <span class="text-danger">*</span></label>
+                                <input asp-for="VergiNo" class="form-control" placeholder="0000000000" maxlength="10">
+                                <span asp-validation-for="VergiNo" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-6">
+                                <label asp-for="VergiDairesi" class="form-label">Vergi Dairesi</label>
+                                <input asp-for="VergiDairesi" class="form-control">
+                                <span asp-validation-for="VergiDairesi" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <!-- İletişim Bilgileri -->
+                        <h5 class="mb-3 mt-4"><i class="fas fa-phone me-2"></i>İletişim Bilgileri</h5>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label asp-for="Telefon" class="form-label">Telefon</label>
+                                <input asp-for="Telefon" class="form-control" placeholder="0212 XXX XX XX">
+                                <span asp-validation-for="Telefon" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-6">
+                                <label asp-for="Email" class="form-label">Email</label>
+                                <input asp-for="Email" type="email" class="form-control" placeholder="info@sirket.com">
+                                <span asp-validation-for="Email" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-12">
+                                <label asp-for="Adres" class="form-label">Adres</label>
+                                <textarea asp-for="Adres" class="form-control" rows="2"></textarea>
+                                <span asp-validation-for="Adres" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-4">
+                                <label asp-for="Il" class="form-label">İl</label>
+                                <input asp-for="Il" class="form-control">
+                                <span asp-validation-for="Il" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-4">
+                                <label asp-for="Ilce" class="form-label">İlçe</label>
+                                <input asp-for="Ilce" class="form-control">
+                                <span asp-validation-for="Ilce" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-4">
+                                <label asp-for="PostaKodu" class="form-label">Posta Kodu</label>
+                                <input asp-for="PostaKodu" class="form-control">
+                                <span asp-validation-for="PostaKodu" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label asp-for="Website" class="form-label">Website</label>
+                                <input asp-for="Website" class="form-control" placeholder="https://www.sirket.com">
+                                <span asp-validation-for="Website" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-6">
+                                <label asp-for="LogoUrl" class="form-label">Logo URL</label>
+                                <input asp-for="LogoUrl" class="form-control">
+                                <span asp-validation-for="LogoUrl" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <!-- Diğer Bilgiler -->
+                        <h5 class="mb-3 mt-4"><i class="fas fa-cog me-2"></i>Diğer Bilgiler</h5>
+
+                        <div class="row mb-3">
+                            <div class="col-md-4">
+                                <label asp-for="KurulusTarihi" class="form-label">Kuruluş Tarihi</label>
+                                <input asp-for="KurulusTarihi" type="date" class="form-control">
+                                <span asp-validation-for="KurulusTarihi" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-4">
+                                <label asp-for="ParaBirimi" class="form-label">Para Birimi</label>
+                                <select asp-for="ParaBirimi" class="form-select">
+                                    <option value="TRY">TRY - Türk Lirası</option>
+                                    <option value="USD">USD - Dolar</option>
+                                    <option value="EUR">EUR - Euro</option>
+                                    <option value="GBP">GBP - Sterlin</option>
+                                </select>
+                                <span asp-validation-for="ParaBirimi" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Durum</label>
+                                <div class="form-check form-switch mt-2">
+                                    <input asp-for="Aktif" class="form-check-input" type="checkbox" checked>
+                                    <label asp-for="Aktif" class="form-check-label">Aktif</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Şirket Yapısı -->
+                        <h5 class="mb-3 mt-4"><i class="fas fa-sitemap me-2"></i>Şirket Yapısı</h5>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <div class="form-check">
+                                    <input asp-for="AnaSirket" class="form-check-input" type="checkbox" id="anaSirketCheck">
+                                    <label asp-for="AnaSirket" class="form-check-label">
+                                        Ana Şirket (Holding)
+                                    </label>
+                                </div>
+                                <small class="text-muted">Bu şirket bir ana şirket ise işaretleyin</small>
+                            </div>
+                            <div class="col-md-6">
+                                <label asp-for="AnaSirketId" class="form-label">Bağlı Olduğu Ana Şirket</label>
+                                <select asp-for="AnaSirketId" class="form-select" asp-items="ViewBag.AnaSirketler">
+                                    <option value="">Seçiniz...</option>
+                                </select>
+                                <span asp-validation-for="AnaSirketId" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-12">
+                                <label asp-for="Notlar" class="form-label">Notlar</label>
+                                <textarea asp-for="Notlar" class="form-control" rows="3"></textarea>
+                                <span asp-validation-for="Notlar" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <div class="mt-4">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-2"></i>Kaydet
+                            </button>
+                            <a asp-action="Index" class="btn btn-secondary">
+                                <i class="fas fa-times me-2"></i>İptal
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+    <script>
+        $(document).ready(function() {
+            // Ana şirket işaretlenirse, ana şirket seçimini devre dışı bırak
+            $('#anaSirketCheck').change(function() {
+                if($(this).is(':checked')) {
+                    $('select[name="AnaSirketId"]').prop('disabled', true).val('');
+                } else {
+                    $('select[name="AnaSirketId"]').prop('disabled', false);
+                }
+            });
+        });
+    </script>
+}

@@ -1,10 +1,10 @@
-﻿using PDKS.Business.DTOs;
+﻿// PDKS.Business/Services/PersonelService.cs
+using PDKS.Business.DTOs;
 using PDKS.Data.Entities;
 using PDKS.Data.Repositories;
 
 namespace PDKS.Business.Services
 {
-    // Personel Service Implementation
     public class PersonelService : IPersonelService
     {
         private readonly IUnitOfWork _unitOfWork;
@@ -17,9 +17,15 @@ namespace PDKS.Business.Services
         public async Task<IEnumerable<PersonelListDTO>> GetAllAsync()
         {
             var personeller = await _unitOfWork.Personeller.GetAllAsync();
+
+            // Şirket bilgilerini de dahil et
+            var sirketler = await _unitOfWork.Sirketler.GetAllAsync();
+
             return personeller.Select(p => new PersonelListDTO
             {
                 Id = p.Id,
+                SirketId = p.SirketId,
+                SirketAdi = sirketler.FirstOrDefault(s => s.Id == p.SirketId)?.Unvan ?? "",
                 AdSoyad = p.AdSoyad,
                 SicilNo = p.SicilNo,
                 Departman = p.Departman?.Ad ?? string.Empty,
@@ -36,9 +42,13 @@ namespace PDKS.Business.Services
         public async Task<IEnumerable<PersonelListDTO>> GetActivePersonelsAsync()
         {
             var personeller = await _unitOfWork.Personeller.FindAsync(p => p.Durum);
+            var sirketler = await _unitOfWork.Sirketler.GetAllAsync();
+
             return personeller.Select(p => new PersonelListDTO
             {
                 Id = p.Id,
+                SirketId = p.SirketId,
+                SirketAdi = sirketler.FirstOrDefault(s => s.Id == p.SirketId)?.Unvan ?? "",
                 AdSoyad = p.AdSoyad,
                 SicilNo = p.SicilNo,
                 Departman = p.Departman?.Ad ?? string.Empty,
@@ -57,6 +67,9 @@ namespace PDKS.Business.Services
             if (personel == null)
                 throw new Exception("Personel bulunamadı");
 
+            // Şirket bilgisini ekle
+            var sirket = await _unitOfWork.Sirketler.GetByIdAsync(personel.SirketId);
+
             var departman = personel.DepartmanId.HasValue
                 ? await _unitOfWork.Departmanlar.GetByIdAsync(personel.DepartmanId.Value)
                 : null;
@@ -65,12 +78,11 @@ namespace PDKS.Business.Services
                 ? await _unitOfWork.Vardiyalar.GetByIdAsync(personel.VardiyaId.Value)
                 : null;
 
-            var avanslar = await _unitOfWork.Avanslar.FindAsync(a => a.PersonelId == id);
-            var primler = await _unitOfWork.Primler.FindAsync(p => p.PersonelId == id);
-
             return new PersonelDetailDTO
             {
                 Id = personel.Id,
+                SirketId = personel.SirketId,
+                SirketAdi = sirket?.Unvan,
                 AdSoyad = personel.AdSoyad,
                 SicilNo = personel.SicilNo,
                 TcKimlikNo = personel.TcKimlikNo,
@@ -82,56 +94,83 @@ namespace PDKS.Business.Services
                 KanGrubu = personel.KanGrubu,
                 GirisTarihi = personel.GirisTarihi,
                 CikisTarihi = personel.CikisTarihi,
-                Maas = personel.Maas ?? 0m,
+                Maas = personel.Maas ?? 0,
                 Unvan = personel.Unvan,
                 Gorev = personel.Gorev,
-                AvansLimiti = personel.AvansLimiti ?? 0m,
+                AvansLimiti = personel.AvansLimiti ?? 0,
+                Durum = personel.Durum,
                 DepartmanId = personel.DepartmanId,
                 DepartmanAdi = departman?.Ad,
-                Departman = departman?.Ad ?? "Belirtilmemiş",  // Geriye dönük uyumluluk
+                Departman = departman?.Ad ?? string.Empty,
                 VardiyaId = personel.VardiyaId,
                 VardiyaAdi = vardiya?.Ad,
-                Durum = personel.Durum,
                 Notlar = personel.Notlar,
-                KayitTarihi = personel.KayitTarihi,
-                AktifAvansSayisi = avanslar.Count(a => a.Durum == "Aktif"),
-                ToplamAvans = avanslar.Sum(a => (decimal?)a.Tutar) ?? 0m,
-                ToplamPrim = primler.Sum(p => (decimal?)p.Tutar) ?? 0m
+                KayitTarihi = personel.KayitTarihi
             };
         }
 
         public async Task<int> CreateAsync(PersonelCreateDTO dto)
         {
-            // Check if email or sicil no exists
-            var emailExists = await _unitOfWork.Personeller.AnyAsync(p => p.Email == dto.Email);
-            if (emailExists)
-                throw new Exception("Bu email adresi zaten kullanılıyor");
+            // Şirket kontrolü
+            var sirket = await _unitOfWork.Sirketler.GetByIdAsync(dto.SirketId);
+            if (sirket == null)
+                throw new Exception("Şirket bulunamadı");
 
-            var sicilExists = await _unitOfWork.Personeller.AnyAsync(p => p.SicilNo == dto.SicilNo);
-            if (sicilExists)
+            if (!sirket.Aktif)
+                throw new Exception("Şirket aktif değil");
+
+            // Departman kontrolü - Şirkete ait mi?
+            if (dto.DepartmanId.HasValue)
+            {
+                var departman = await _unitOfWork.Departmanlar.GetByIdAsync(dto.DepartmanId.Value);
+                if (departman == null)
+                    throw new Exception("Departman bulunamadı");
+
+                if (departman.SirketId != dto.SirketId)
+                    throw new Exception("Seçilen departman bu şirkete ait değil");
+            }
+
+            // Sicil No kontrolü
+            var existingSicilNo = await _unitOfWork.Personeller
+                .FirstOrDefaultAsync(p => p.SicilNo == dto.SicilNo);
+            if (existingSicilNo != null)
                 throw new Exception("Bu sicil numarası zaten kullanılıyor");
+
+            // TC Kimlik No kontrolü
+            var existingTc = await _unitOfWork.Personeller
+                .FirstOrDefaultAsync(p => p.TcKimlikNo == dto.TcKimlikNo);
+            if (existingTc != null)
+                throw new Exception("Bu TC Kimlik No zaten kayıtlı");
+
+            // Email kontrolü
+            var existingEmail = await _unitOfWork.Personeller
+                .FirstOrDefaultAsync(p => p.Email == dto.Email);
+            if (existingEmail != null)
+                throw new Exception("Bu email adresi zaten kullanılıyor");
 
             var personel = new Personel
             {
+                SirketId = dto.SirketId,
                 AdSoyad = dto.AdSoyad,
                 SicilNo = dto.SicilNo,
                 TcKimlikNo = dto.TcKimlikNo,
-                DepartmanId = dto.DepartmanId,  // ✅ DÜZELTILDI
-                Gorev = dto.Gorev,
                 Email = dto.Email,
                 Telefon = dto.Telefon,
                 Adres = dto.Adres,
                 DogumTarihi = dto.DogumTarihi,
                 Cinsiyet = dto.Cinsiyet,
                 KanGrubu = dto.KanGrubu,
-                Durum = dto.Durum,
                 GirisTarihi = dto.GirisTarihi,
                 CikisTarihi = dto.CikisTarihi,
-                VardiyaId = dto.VardiyaId,
                 Maas = dto.Maas,
                 Unvan = dto.Unvan,
+                Gorev = dto.Gorev,
+                DepartmanId = dto.DepartmanId,
+                VardiyaId = dto.VardiyaId,
                 AvansLimiti = dto.AvansLimiti,
+                Durum = true,
                 Notlar = dto.Notlar,
+                KayitTarihi = DateTime.UtcNow,
                 OlusturmaTarihi = DateTime.UtcNow
             };
 
@@ -147,34 +186,59 @@ namespace PDKS.Business.Services
             if (personel == null)
                 throw new Exception("Personel bulunamadı");
 
-            // Check email uniqueness (excluding current record)
-            var emailExists = await _unitOfWork.Personeller.AnyAsync(p => p.Email == dto.Email && p.Id != dto.Id);
-            if (emailExists)
-                throw new Exception("Bu email adresi zaten kullanılıyor");
+            // Şirket kontrolü
+            var sirket = await _unitOfWork.Sirketler.GetByIdAsync(dto.SirketId);
+            if (sirket == null)
+                throw new Exception("Şirket bulunamadı");
 
-            // Check sicil no uniqueness (excluding current record)
-            var sicilExists = await _unitOfWork.Personeller.AnyAsync(p => p.SicilNo == dto.SicilNo && p.Id != dto.Id);
-            if (sicilExists)
-                throw new Exception("Bu sicil numarası zaten kullanılıyor");
+            // Departman kontrolü - Şirkete ait mi?
+            if (dto.DepartmanId.HasValue)
+            {
+                var departman = await _unitOfWork.Departmanlar.GetByIdAsync(dto.DepartmanId.Value);
+                if (departman == null)
+                    throw new Exception("Departman bulunamadı");
 
+                if (departman.SirketId != dto.SirketId)
+                    throw new Exception("Seçilen departman bu şirkete ait değil");
+            }
+
+            // Sicil No kontrolü (kendisi hariç)
+            var existingSicilNo = await _unitOfWork.Personeller
+                .FirstOrDefaultAsync(p => p.SicilNo == dto.SicilNo && p.Id != dto.Id);
+            if (existingSicilNo != null)
+                throw new Exception("Bu sicil numarası başka bir personel tarafından kullanılıyor");
+
+            // TC Kimlik No kontrolü (kendisi hariç)
+            var existingTc = await _unitOfWork.Personeller
+                .FirstOrDefaultAsync(p => p.TcKimlikNo == dto.TcKimlikNo && p.Id != dto.Id);
+            if (existingTc != null)
+                throw new Exception("Bu TC Kimlik No başka bir personel tarafından kullanılıyor");
+
+            // Email kontrolü (kendisi hariç)
+            var existingEmail = await _unitOfWork.Personeller
+                .FirstOrDefaultAsync(p => p.Email == dto.Email && p.Id != dto.Id);
+            if (existingEmail != null)
+                throw new Exception("Bu email adresi başka bir personel tarafından kullanılıyor");
+
+            personel.SirketId = dto.SirketId;
             personel.AdSoyad = dto.AdSoyad;
             personel.SicilNo = dto.SicilNo;
             personel.TcKimlikNo = dto.TcKimlikNo;
-            personel.DepartmanId = dto.DepartmanId;  // ✅ DÜZELTILDI
-            personel.Gorev = dto.Gorev;
             personel.Email = dto.Email;
             personel.Telefon = dto.Telefon;
             personel.Adres = dto.Adres;
             personel.DogumTarihi = dto.DogumTarihi;
             personel.Cinsiyet = dto.Cinsiyet;
             personel.KanGrubu = dto.KanGrubu;
-            personel.Durum = dto.Durum;
             personel.GirisTarihi = dto.GirisTarihi;
             personel.CikisTarihi = dto.CikisTarihi;
+            personel.DepartmanId = dto.DepartmanId;
             personel.VardiyaId = dto.VardiyaId;
+            personel.Gorev = dto.Gorev;
             personel.Maas = dto.Maas;
             personel.Unvan = dto.Unvan;
             personel.AvansLimiti = dto.AvansLimiti;
+            personel.Durum = dto.Durum;
             personel.Notlar = dto.Notlar;
             personel.GuncellemeTarihi = DateTime.UtcNow;
 
@@ -205,15 +269,19 @@ namespace PDKS.Business.Services
             var personeller = await _unitOfWork.Personeller.FindAsync(p =>
                 p.AdSoyad.Contains(searchTerm) ||
                 p.SicilNo.Contains(searchTerm) ||
-                (p.Departman != null && p.Departman.Ad.Contains(searchTerm)) ||  // ✅ DÜZELTILDI
+                (p.Departman != null && p.Departman.Ad.Contains(searchTerm)) ||
                 p.Email.Contains(searchTerm));
+
+            var sirketler = await _unitOfWork.Sirketler.GetAllAsync();
 
             return personeller.Select(p => new PersonelListDTO
             {
                 Id = p.Id,
+                SirketId = p.SirketId,
+                SirketAdi = sirketler.FirstOrDefault(s => s.Id == p.SirketId)?.Unvan ?? "",
                 AdSoyad = p.AdSoyad,
                 SicilNo = p.SicilNo,
-                Departman = p.Departman?.Ad ?? string.Empty,  // ✅ DÜZELTILDI
+                Departman = p.Departman?.Ad ?? string.Empty,
                 Gorev = p.Gorev,
                 Email = p.Email,
                 Telefon = p.Telefon,
@@ -230,9 +298,13 @@ namespace PDKS.Business.Services
                 p.Departman.Ad == departman &&
                 p.Durum);
 
+            var sirketler = await _unitOfWork.Sirketler.GetAllAsync();
+
             return personeller.Select(p => new PersonelListDTO
             {
                 Id = p.Id,
+                SirketId = p.SirketId,
+                SirketAdi = sirketler.FirstOrDefault(s => s.Id == p.SirketId)?.Unvan ?? "",
                 AdSoyad = p.AdSoyad,
                 SicilNo = p.SicilNo,
                 Departman = p.Departman?.Ad ?? string.Empty,
@@ -243,6 +315,36 @@ namespace PDKS.Business.Services
                 GirisTarihi = p.GirisTarihi,
                 VardiyaAdi = p.Vardiya?.Ad
             }).OrderBy(p => p.AdSoyad);
+        }
+
+        // ⭐ YENİ METODLAR: Şirket bazlı işlemler
+        public async Task<IEnumerable<PersonelListDTO>> GetBySirketAsync(int sirketId)
+        {
+            var personeller = await _unitOfWork.Personeller.FindAsync(p => p.SirketId == sirketId);
+            var sirket = await _unitOfWork.Sirketler.GetByIdAsync(sirketId);
+
+            return personeller.Select(p => new PersonelListDTO
+            {
+                Id = p.Id,
+                SirketId = p.SirketId,
+                SirketAdi = sirket?.Unvan ?? "",
+                AdSoyad = p.AdSoyad,
+                SicilNo = p.SicilNo,
+                Departman = p.Departman?.Ad ?? string.Empty,
+                Gorev = p.Gorev,
+                Email = p.Email,
+                Telefon = p.Telefon,
+                Durum = p.Durum,
+                GirisTarihi = p.GirisTarihi,
+                CikisTarihi = p.CikisTarihi,
+                VardiyaAdi = p.Vardiya?.Ad
+            }).OrderBy(p => p.AdSoyad);
+        }
+
+        public async Task<int> GetSirketPersonelSayisiAsync(int sirketId)
+        {
+            var personeller = await _unitOfWork.Personeller.FindAsync(p => p.SirketId == sirketId && p.Durum);
+            return personeller.Count();
         }
     }
 }

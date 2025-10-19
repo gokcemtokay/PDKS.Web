@@ -1,4 +1,5 @@
-﻿using PDKS.Business.DTOs;
+﻿// PDKS.Business/Services/ISirketService.cs
+using PDKS.Business.DTOs;
 
 namespace PDKS.Business.Services
 {

@@ -19,10 +19,13 @@
         IRepository<Entities.Prim> Primler { get; }
         IRepository<Entities.Departman> Departmanlar { get; }
         IRepository<Entities.Mesai> Mesailer { get; }
-
+        IRepository<Entities.Sirket> Sirketler { get; }
+        IRepository<Entities.PersonelTransferGecmisi> PersonelTransferGecmisleri { get; }
         Task<int> SaveChangesAsync();
         Task BeginTransactionAsync();
         Task CommitTransactionAsync();
         Task RollbackTransactionAsync();
+
+        IRepository<T> GetRepository<T>() where T : class;
     }
 }

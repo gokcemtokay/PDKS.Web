@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿// PDKS.Data/Entities/Departman.cs
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace PDKS.Data.Entities
@@ -8,6 +9,10 @@ namespace PDKS.Data.Entities
     {
         [Key]
         public int Id { get; set; }
+
+        // ⭐ YENİ: Şirket bağlantısı
+        [Required]
+        public int SirketId { get; set; }
 
         [Required]
         [StringLength(100)]
@@ -23,9 +28,20 @@ namespace PDKS.Data.Entities
 
         public bool Durum { get; set; } = true;
 
+        // ⭐ YENİ: Aktif property eklendi
+        public bool Aktif { get; set; } = true;
+
         public DateTime KayitTarihi { get; set; } = DateTime.UtcNow;
 
+        // ⭐ YENİ
+        public DateTime? OlusturmaTarihi { get; set; } = DateTime.UtcNow;
+        public DateTime? GuncellemeTarihi { get; set; }
+
         // Navigation Properties
+        // ⭐ YENİ
+        [ForeignKey("SirketId")]
+        public virtual Sirket Sirket { get; set; }
+
         [ForeignKey("UstDepartmanId")]
         public Departman? UstDepartman { get; set; }
 

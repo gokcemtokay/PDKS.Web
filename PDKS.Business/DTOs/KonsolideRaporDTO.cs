@@ -8,14 +8,16 @@ namespace PDKS.Business.DTOs
 {
     public class KonsolideRaporDTO
     {
-        public string SirketUnvan { get; set; }
-        public int ToplamPersonel { get; set; }
-        public int AktifPersonel { get; set; }
-        public int DevamsizPersonel { get; set; }
-        public int IzinliPersonel { get; set; }
-        public decimal ToplamMaasBordrosu { get; set; }
-        public int ToplamFazlaMesaiSaati { get; set; }
-        public decimal ToplamAvans { get; set; }
-        public decimal ToplamPrim { get; set; }
+        public int SirketId { get; set; }
+        public string SirketAdi { get; set; }
+        public int BagliSirketSayisi { get; set; }
+        public int ToplamPersonelSayisi { get; set; }
+        public int ToplamDepartmanSayisi { get; set; }
+        public int TransferSayisi { get; set; }
+        public string Donem { get; set; }
+        public decimal ToplamMaas { get; set; }
+        public int AktifPersonelSayisi { get; set; }
+        public int PasifPersonelSayisi { get; set; }
+        public List<KonsolideSirketDetayDTO> BagliSirketDetaylari { get; set; } = new List<KonsolideSirketDetayDTO>();
     }
 }

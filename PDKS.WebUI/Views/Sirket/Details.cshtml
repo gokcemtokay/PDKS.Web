@@ -1,0 +1,274 @@
+﻿@* PDKS.WebUI/Views/Sirket/Details.cshtml *@
+@model PDKS.Business.DTOs.SirketDetailDTO
+@{
+    ViewData["Title"] = "Şirket Detayı";
+}
+
+<div class="container-fluid">
+    <div class="row mb-3">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <h2><i class="fas fa-building me-2"></i>Şirket Detayı</h2>
+                <div>
+                    @if (User.IsInRole("Admin"))
+                    {
+                        <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-warning">
+                            <i class="fas fa-edit me-2"></i>Düzenle
+                        </a>
+                    }
+                    <a asp-action="Index" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left me-2"></i>Geri
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show">
+            <i class="fas fa-check-circle me-2"></i>@TempData["Success"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <div class="row">
+        <!-- Genel Bilgiler -->
+        <div class="col-lg-8">
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>Genel Bilgiler</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="text-muted small">Ünvan</label>
+                            <p class="fw-bold">@Model.Unvan</p>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="text-muted small">Ticari Ünvan</label>
+                            <p>@(Model.TicariUnvan ?? "-")</p>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="text-muted small">Vergi No</label>
+                            <p>@Model.VergiNo</p>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="text-muted small">Vergi Dairesi</label>
+                            <p>@(Model.VergiDairesi ?? "-")</p>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="text-muted small">Telefon</label>
+                            <p><i class="fas fa-phone me-2"></i>@(Model.Telefon ?? "-")</p>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="text-muted small">Email</label>
+                            <p><i class="fas fa-envelope me-2"></i>@(Model.Email ?? "-")</p>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-12">
+                            <label class="text-muted small">Adres</label>
+                            <p>@(Model.Adres ?? "-")</p>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <label class="text-muted small">İl</label>
+                            <p>@(Model.Il ?? "-")</p>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="text-muted small">İlçe</label>
+                            <p>@(Model.Ilce ?? "-")</p>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="text-muted small">Posta Kodu</label>
+                            <p>@(Model.PostaKodu ?? "-")</p>
+                        </div>
+                    </div>
+
+                    @if (!string.IsNullOrEmpty(Model.Website))
+                    {
+                        <div class="row mb-3">
+                            <div class="col-12">
+                                <label class="text-muted small">Website</label>
+                                <p>
+                                    <a href="@Model.Website" target="_blank">
+                                        <i class="fas fa-external-link-alt me-2"></i>@Model.Website
+                                    </a>
+                                </p>
+                            </div>
+                        </div>
+                    }
+
+                    @if (!string.IsNullOrEmpty(Model.Notlar))
+                    {
+                        <div class="row">
+                            <div class="col-12">
+                                <label class="text-muted small">Notlar</label>
+                                <p>@Model.Notlar</p>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- İstatistikler -->
+        <div class="col-lg-4">
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-chart-bar me-2"></i>İstatistikler</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label class="text-muted small">Durum</label>
+                        <p>
+                            @if (Model.Aktif)
+                            {
+                                <span class="badge bg-success">Aktif</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-danger">Pasif</span>
+                            }
+                        </p>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="text-muted small">Ana Şirket</label>
+                        <p>
+                            @if (Model.AnaSirket)
+                            {
+                                <span class="badge bg-primary">Evet</span>
+                            }
+                            else
+                            {
+                                <span>@(Model.AnaSirketAdi ?? "-")</span>
+                            }
+                        </p>
+                    </div>
+
+                    <hr>
+
+                    <div class="mb-3">
+                        <label class="text-muted small">Personel Sayısı</label>
+                        <h4><span class="badge bg-info">@Model.PersonelSayisi</span></h4>
+                        @if (Model.PersonelSayisi > 0)
+                        {
+                            <a asp-controller="Personel" asp-action="Index" class="btn btn-sm btn-outline-info">
+                                <i class="fas fa-users me-1"></i>Personelleri Gör
+                            </a>
+                        }
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="text-muted small">Departman Sayısı</label>
+                        <h4><span class="badge bg-secondary">@Model.DepartmanSayisi</span></h4>
+                        @if (Model.DepartmanSayisi > 0)
+                        {
+                            <a asp-controller="Departman" asp-action="Index" class="btn btn-sm btn-outline-secondary">
+                                <i class="fas fa-sitemap me-1"></i>Departmanları Gör
+                            </a>
+                        }
+                    </div>
+
+                    @if (Model.AnaSirket && Model.BagliSirketSayisi > 0)
+                    {
+                        <div class="mb-3">
+                            <label class="text-muted small">Bağlı Şirket Sayısı</label>
+                            <h4><span class="badge bg-warning text-dark">@Model.BagliSirketSayisi</span></h4>
+                            <a asp-action="BagliSirketler" asp-route-id="@Model.Id" class="btn btn-sm btn-outline-warning">
+                                <i class="fas fa-building me-1"></i>Bağlı Şirketler
+                            </a>
+                        </div>
+                    }
+
+                    <hr>
+
+                    <div class="mb-3">
+                        <label class="text-muted small">Kuruluş Tarihi</label>
+                        <p>@(Model.KurulusTarihi?.ToString("dd.MM.yyyy") ?? "-")</p>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="text-muted small">Para Birimi</label>
+                        <p><strong>@Model.ParaBirimi</strong></p>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="text-muted small">Kayıt Tarihi</label>
+                        <p class="small text-muted">@Model.OlusturmaTarihi?.ToString("dd.MM.yyyy HH:mm")</p>
+                    </div>
+
+                    @if (Model.GuncellemeTarihi.HasValue)
+                    {
+                        <div class="mb-3">
+                            <label class="text-muted small">Son Güncelleme</label>
+                            <p class="small text-muted">@Model.GuncellemeTarihi?.ToString("dd.MM.yyyy HH:mm")</p>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            @if (User.IsInRole("Admin"))
+            {
+                if (Model.PersonelSayisi == 0 && Model.DepartmanSayisi == 0)
+                {
+                    <div class="card border-danger">
+                        <div class="card-body text-center">
+                            <i class="fas fa-exclamation-triangle text-danger fa-3x mb-3"></i>
+                            <p class="text-danger mb-3">Bu şirketi silebilirsiniz</p>
+                            <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal">
+                                <i class="fas fa-trash me-2"></i>Şirketi Sil
+                            </button>
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    <div class="alert alert-warning">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <small>Şirketi silmek için önce personel ve departmanları kaldırmalısınız.</small>
+                    </div>
+                }
+            }
+        </div>
+    </div>
+</div>
+
+<!-- Delete Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">Şirketi Sil</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p><strong>@Model.Unvan</strong> şirketini silmek istediğinize emin misiniz?</p>
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <strong>Dikkat!</strong> Bu işlem geri alınamaz!
+                </div>
+            </div>
+            <div class="modal-footer">
+                <form asp-action="Delete" asp-route-id="@Model.Id" method="post">
+                    @Html.AntiForgeryToken()
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-trash me-2"></i>Evet, Sil
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

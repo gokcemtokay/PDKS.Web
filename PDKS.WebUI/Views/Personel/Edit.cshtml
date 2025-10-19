@@ -55,13 +55,11 @@
 
                         <div class="row">
                             <div class="col-md-6">
-                                <div class="form-group">
-                                    <label asp-for="DepartmanId">Departman</label>
-                                    <select asp-for="DepartmanId" class="form-control" asp-items="ViewBag.Departmanlar">
-                                        <option value="">-- Departman Seçiniz --</option>
-                                    </select>
-                                    <span asp-validation-for="DepartmanId" class="text-danger"></span>
-                                </div>
+                                <label asp-for="DepartmanId" class="form-label">Departman</label>
+                                <select asp-for="DepartmanId" class="form-select" asp-items="ViewBag.Departmanlar">
+                                    <option value="">Seçiniz...</option>
+                                </select>
+                                <span asp-validation-for="DepartmanId" class="text-danger"></span>
                             </div>
 
                             <div class="col-md-6">

@@ -3,6 +3,8 @@
     public class PersonelDetailDTO
     {
         public int Id { get; set; }
+        public int SirketId { get; set; }
+        public string SirketAdi { get; set; }
         public string AdSoyad { get; set; }
         public string SicilNo { get; set; }
         public string TcKimlikNo { get; set; }

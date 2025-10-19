@@ -32,7 +32,7 @@ builder.Services.AddScoped<IVardiyaService, VardiyaService>();
 builder.Services.AddScoped<IIzinService, IzinService>();
 builder.Services.AddScoped<IExportAndEmailService, ExportAndEmailService>();
 builder.Services.AddScoped<IBackupService, BackupService>();
-
+builder.Services.AddScoped<ISirketService, SirketService>();
 
 
 

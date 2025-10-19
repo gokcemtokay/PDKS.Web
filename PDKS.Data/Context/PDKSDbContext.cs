@@ -192,6 +192,7 @@ namespace PDKS.Data.Context
 
             // Departman - UstDepartman (Self-Referencing)
             modelBuilder.Entity<Departman>()
+
                 .HasOne(d => d.UstDepartman)
                 .WithMany(d => d.AltDepartmanlar)
                 .HasForeignKey(d => d.UstDepartmanId)
@@ -217,6 +218,27 @@ namespace PDKS.Data.Context
                 .WithMany(k => k.Bildirimler)
                 .HasForeignKey(b => b.KullaniciId)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            // ⭐ YENİ: Departman - Sirket (Many-to-One) 
+            modelBuilder.Entity<Departman>()
+                .HasOne(d => d.Sirket)
+                .WithMany(s => s.Departmanlar)
+                .HasForeignKey(d => d.SirketId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // ⭐ YENİ: Sirket - AnaSirket (Self-Referencing) 
+            modelBuilder.Entity<Sirket>()
+                .HasOne(s => s.AnaSirketNavigation)
+                .WithMany(s => s.BagliSirketler)
+                .HasForeignKey(s => s.AnaSirketId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // ⭐ YENİ: Personel - Sirket (Many-to-One) 
+            modelBuilder.Entity<Personel>()
+                .HasOne(p => p.Sirket)
+                .WithMany(s => s.Personeller)
+                .HasForeignKey(p => p.SirketId)
+                .OnDelete(DeleteBehavior.Restrict);
 
             // ============== SEED DATA - ROLLER ==============
 

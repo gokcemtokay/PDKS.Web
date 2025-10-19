@@ -1,7 +1,7 @@
-﻿// PDKS.Business/DTOs/DepartmanListDTO.cs
+﻿// PDKS.Business/DTOs/DepartmanDetailDTO.cs
 namespace PDKS.Business.DTOs
 {
-    public class DepartmanListDTO
+    public class DepartmanDetailDTO
     {
         public int Id { get; set; }
         public int SirketId { get; set; }
@@ -11,7 +11,11 @@ namespace PDKS.Business.DTOs
         public string Aciklama { get; set; }
         public int? UstDepartmanId { get; set; }
         public string UstDepartmanAdi { get; set; }
-        public int PersonelSayisi { get; set; }
         public bool Durum { get; set; }
+        public int PersonelSayisi { get; set; }
+        public int AltDepartmanSayisi { get; set; }
+        public DateTime KayitTarihi { get; set; }
+        public DateTime? OlusturmaTarihi { get; set; }
+        public DateTime? GuncellemeTarihi { get; set; }
     }
 }

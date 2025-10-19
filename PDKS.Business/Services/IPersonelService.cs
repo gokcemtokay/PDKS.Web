@@ -13,5 +13,7 @@ namespace PDKS.Business.Services
         Task DeleteAsync(int id);
         Task<IEnumerable<PersonelListDTO>> SearchAsync(string searchTerm);
         Task<IEnumerable<PersonelListDTO>> GetByDepartmentAsync(string departman);
+        Task<IEnumerable<PersonelListDTO>> GetBySirketAsync(int sirketId);
+        Task<int> GetSirketPersonelSayisiAsync(int sirketId);
     }
 }
