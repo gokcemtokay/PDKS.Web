@@ -9,6 +9,11 @@ namespace PDKS.Data.Entities
         [Key]
         public int Id { get; set; }
 
+        // ⭐ YENİ: Şirket bağlantısı
+        [Required]
+        [Column("sirket_id")]
+        public int SirketId { get; set; }
+
         [Required]
         [StringLength(100)]
         public string AdSoyad { get; set; }
@@ -59,19 +64,19 @@ namespace PDKS.Data.Entities
 
         // Foreign Keys
         public int? DepartmanId { get; set; }
-
         public int? VardiyaId { get; set; }
 
         [StringLength(500)]
         public string? Notlar { get; set; }
 
         public DateTime KayitTarihi { get; set; } = DateTime.UtcNow;
-
         public DateTime? OlusturmaTarihi { get; set; } = DateTime.UtcNow;
-
         public DateTime? GuncellemeTarihi { get; set; }
 
         // Navigation Properties
+        [ForeignKey("SirketId")]
+        public virtual Sirket Sirket { get; set; }
+
         [ForeignKey("DepartmanId")]
         public Departman? Departman { get; set; }
 
