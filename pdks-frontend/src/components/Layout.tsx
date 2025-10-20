@@ -1,5 +1,4 @@
-﻿import { useState } from 'react';
-import type { ReactNode } from 'react'; // Type-only import
+﻿import { useState, useEffect, ReactNode } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import {
     Box,
@@ -17,6 +16,7 @@ import {
     Menu,
     MenuItem,
     Divider,
+    Chip,
 } from '@mui/material';
 import {
     Menu as MenuIcon,
@@ -28,10 +28,16 @@ import {
     Assessment as AssessmentIcon,
     Logout as LogoutIcon,
 } from '@mui/icons-material';
+import api from '../services/api';
 
 interface LayoutProps {
     children: ReactNode;
     onLogout: () => void;
+}
+
+interface Sirket {
+    id: number;
+    sirketAdi: string;
 }
 
 const drawerWidth = 260;
@@ -48,8 +54,26 @@ const menuItems = [
 function Layout({ children, onLogout }: LayoutProps) {
     const [mobileOpen, setMobileOpen] = useState(false);
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+    const [sirket, setSirket] = useState<Sirket | null>(null);
     const navigate = useNavigate();
     const location = useLocation();
+
+    useEffect(() => {
+        loadSirket();
+    }, []);
+
+    const loadSirket = async () => {
+        try {
+            // Kullanıcının şirketini al (JWT token'dan veya API'den)
+            const response = await api.get('/Sirket');
+            if (response.data && response.data.length > 0) {
+                setSirket(response.data[0]); // İlk şirketi varsayılan yap
+                localStorage.setItem('sirketId', response.data[0].id.toString());
+            }
+        } catch (error) {
+            console.error('Sirket bilgisi alinamadi:', error);
+        }
+    };
 
     const handleDrawerToggle = () => {
         setMobileOpen(!mobileOpen);
@@ -89,6 +113,20 @@ function Layout({ children, onLogout }: LayoutProps) {
                 <Typography variant="caption" sx={{ opacity: 0.9 }}>
                     Personel Devam Kontrol
                 </Typography>
+
+                {/* Şirket Bilgisi */}
+                {sirket && (
+                    <Chip
+                        label={sirket.sirketAdi}
+                        size="small"
+                        sx={{
+                            mt: 1,
+                            bgcolor: 'rgba(255,255,255,0.2)',
+                            color: 'white',
+                            fontWeight: 'bold',
+                        }}
+                    />
+                )}
             </Box>
 
             <List sx={{ flexGrow: 1, px: 1, py: 2 }}>
@@ -145,6 +183,17 @@ function Layout({ children, onLogout }: LayoutProps) {
                         {menuItems.find((item) => item.path === location.pathname)?.text || 'PDKS'}
                     </Typography>
 
+                    {/* Şirket Bilgisi - Header'da */}
+                    {sirket && (
+                        <Chip
+                            icon={<BusinessIcon />}
+                            label={sirket.sirketAdi}
+                            sx={{ mr: 2 }}
+                            color="primary"
+                            variant="outlined"
+                        />
+                    )}
+
                     <IconButton onClick={handleProfileMenuOpen}>
                         <Avatar sx={{ bgcolor: '#667eea' }}>A</Avatar>
                     </IconButton>
@@ -162,12 +211,19 @@ function Layout({ children, onLogout }: LayoutProps) {
                                 Admin User
                             </Typography>
                         </MenuItem>
+                        {sirket && (
+                            <MenuItem disabled>
+                                <Typography variant="caption" color="text.secondary">
+                                    {sirket.sirketAdi}
+                                </Typography>
+                            </MenuItem>
+                        )}
                         <Divider />
                         <MenuItem onClick={handleLogout}>
                             <ListItemIcon>
                                 <LogoutIcon fontSize="small" />
                             </ListItemIcon>
-                            Çıkış Yap
+                            Cikis Yap
                         </MenuItem>
                     </Menu>
                 </Toolbar>

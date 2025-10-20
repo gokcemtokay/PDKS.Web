@@ -16,6 +16,7 @@ import {
     Alert,
     CircularProgress,
 } from '@mui/material';
+import type { SelectChangeEvent } from '@mui/material/Select'; // ⬅️ BURADAN IMPORT EDİN
 import { Save as SaveIcon, ArrowBack as ArrowBackIcon } from '@mui/icons-material';
 import api from '../../services/api';
 
@@ -32,6 +33,10 @@ interface PersonelFormData {
     vardiyaId: number | string;
     maas: number | string;
     aktif: boolean;
+    gorev: string;
+    unvan: string;
+    kanGrubu: string;
+    cinsiyet: string;
 }
 
 interface Departman {
@@ -44,6 +49,29 @@ interface Vardiya {
     vardiyaAdi: string;
 }
 
+interface Parametre {
+    id: number;
+    ad: string;
+    deger: string;
+    birim?: string;
+    aciklama?: string;
+    kategori?: string;
+}
+
+// Sabit listeler
+const KAN_GRUPLARI = [
+    'A Rh+',
+    'A Rh-',
+    'B Rh+',
+    'B Rh-',
+    'AB Rh+',
+    'AB Rh-',
+    '0 Rh+',
+    '0 Rh-',
+];
+
+const CINSIYETLER = ['Erkek', 'Kadin', 'Belirtmek Istemiyorum'];
+
 function PersonelForm() {
     const { id } = useParams();
     const navigate = useNavigate();
@@ -52,6 +80,8 @@ function PersonelForm() {
     const [error, setError] = useState('');
     const [departmanlar, setDepartmanlar] = useState<Departman[]>([]);
     const [vardiyalar, setVardiyalar] = useState<Vardiya[]>([]);
+    const [gorevler, setGorevler] = useState<Parametre[]>([]);
+    const [unvanlar, setUnvanlar] = useState<Parametre[]>([]);
 
     const [formData, setFormData] = useState<PersonelFormData>({
         ad: '',
@@ -66,6 +96,10 @@ function PersonelForm() {
         vardiyaId: '',
         maas: '',
         aktif: true,
+        gorev: '',
+        unvan: '',
+        kanGrubu: '',
+        cinsiyet: '',
     });
 
     useEffect(() => {
@@ -77,14 +111,28 @@ function PersonelForm() {
 
     const loadDependencies = async () => {
         try {
-            const [departmanRes, vardiyaRes] = await Promise.all([
+            const [departmanRes, vardiyaRes, gorevRes, unvanRes] = await Promise.all([
                 api.get('/Departman'),
                 api.get('/Vardiya'),
+                api.get('/Parametre/kategori/GOREV'),  // ⬅️ kategori kullan
+                api.get('/Parametre/kategori/UNVAN'),  // ⬅️ kategori kullan
             ]);
+
             setDepartmanlar(departmanRes.data || []);
             setVardiyalar(vardiyaRes.data || []);
+            setGorevler(gorevRes.data || []);
+            setUnvanlar(unvanRes.data || []);
         } catch (error) {
             console.error('Bagimliliklarda hata:', error);
+            // Fallback
+            setGorevler([
+                { id: 1, ad: 'Yazilim Gelistirici', deger: 'Yazilim Gelistirici', kategori: 'GOREV' },
+                { id: 2, ad: 'Sistem Yoneticisi', deger: 'Sistem Yoneticisi', kategori: 'GOREV' },
+            ]);
+            setUnvanlar([
+                { id: 1, ad: 'Junior', deger: 'Junior', kategori: 'UNVAN' },
+                { id: 2, ad: 'Senior', deger: 'Senior', kategori: 'UNVAN' },
+            ]);
         }
     };
 
@@ -109,6 +157,10 @@ function PersonelForm() {
                 vardiyaId: data.vardiyaId || '',
                 maas: data.maas || '',
                 aktif: data.aktif !== undefined ? data.aktif : true,
+                gorev: data.gorev || '',
+                unvan: data.unvan || '',
+                kanGrubu: data.kanGrubu || '',
+                cinsiyet: data.cinsiyet || '',
             });
         } catch (err) {
             console.error('Personel yuklenemedi:', err);
@@ -120,6 +172,10 @@ function PersonelForm() {
 
     const handleChange = (field: keyof PersonelFormData, value: string | number | boolean) => {
         setFormData((prev) => ({ ...prev, [field]: value }));
+    };
+
+    const handleSelectChange = (field: keyof PersonelFormData) => (event: SelectChangeEvent) => {
+        setFormData((prev) => ({ ...prev, [field]: event.target.value }));
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -136,13 +192,46 @@ function PersonelForm() {
             return;
         }
 
+        if (!formData.gorev || !formData.unvan) {
+            setError('Gorev ve Unvan alanlari zorunludur!');
+            setSubmitting(false);
+            return;
+        }
+
         try {
+            // localStorage'dan sirketId al
+            const sirketId = localStorage.getItem('sirketId');
+
+            if (!sirketId) {
+                setError('Sirket bilgisi bulunamadi! Lutfen cikis yapip tekrar giris yapin.');
+                setSubmitting(false);
+                return;
+            }
+
             const payload = {
-                ...formData,
+                sirketId: Number(sirketId), // ✅ ZORUNLU
+                ad: formData.ad,
+                soyad: formData.soyad,
+                adSoyad: `${formData.ad} ${formData.soyad}`,
+                tcKimlikNo: formData.tcKimlikNo,
+                sicilNo: formData.tcKimlikNo,
+                email: formData.email,
+                telefon: formData.telefon || '',
+                adres: formData.adres || '',
+                dogumTarihi: formData.dogumTarihi || null,
+                iseBaslamaTarihi: formData.iseBaslamaTarihi || null,
                 departmanId: formData.departmanId ? Number(formData.departmanId) : null,
                 vardiyaId: formData.vardiyaId ? Number(formData.vardiyaId) : null,
                 maas: formData.maas ? Number(formData.maas) : 0,
+                durum: formData.aktif,
+                gorev: formData.gorev,
+                unvan: formData.unvan,
+                kanGrubu: formData.kanGrubu || '',
+                cinsiyet: formData.cinsiyet || '',
+                notlar: '',
             };
+
+            console.log('📦 Payload:', payload); // Debug için
 
             if (id) {
                 await api.put(`/Personel/${id}`, { ...payload, id: parseInt(id) });
@@ -152,6 +241,7 @@ function PersonelForm() {
 
             navigate('/personel');
         } catch (err: any) {
+            console.error('❌ Hata:', err);
             const errorMsg = err.response?.data || 'Islem basarisiz!';
             setError(typeof errorMsg === 'string' ? errorMsg : JSON.stringify(errorMsg));
         } finally {
@@ -187,6 +277,7 @@ function PersonelForm() {
 
                 <Box component="form" onSubmit={handleSubmit} noValidate>
                     <Grid container spacing={3}>
+                        {/* Ad */}
                         <Grid item xs={12} md={6}>
                             <TextField
                                 fullWidth
@@ -197,6 +288,7 @@ function PersonelForm() {
                             />
                         </Grid>
 
+                        {/* Soyad */}
                         <Grid item xs={12} md={6}>
                             <TextField
                                 fullWidth
@@ -207,6 +299,7 @@ function PersonelForm() {
                             />
                         </Grid>
 
+                        {/* TC Kimlik No */}
                         <Grid item xs={12} md={6}>
                             <TextField
                                 fullWidth
@@ -218,6 +311,7 @@ function PersonelForm() {
                             />
                         </Grid>
 
+                        {/* E-posta */}
                         <Grid item xs={12} md={6}>
                             <TextField
                                 fullWidth
@@ -229,6 +323,7 @@ function PersonelForm() {
                             />
                         </Grid>
 
+                        {/* Telefon */}
                         <Grid item xs={12} md={6}>
                             <TextField
                                 fullWidth
@@ -238,6 +333,7 @@ function PersonelForm() {
                             />
                         </Grid>
 
+                        {/* Maas */}
                         <Grid item xs={12} md={6}>
                             <TextField
                                 fullWidth
@@ -248,6 +344,91 @@ function PersonelForm() {
                             />
                         </Grid>
 
+                        {/* Gorev */}
+                        <Grid item xs={12} md={6}>
+                            <FormControl fullWidth required>
+                                <InputLabel>Gorev</InputLabel>
+                                <Select
+                                    value={formData.gorev}
+                                    onChange={handleSelectChange('gorev')}
+                                    label="Gorev"
+                                >
+                                    <MenuItem value="">
+                                        <em>Seciniz</em>
+                                    </MenuItem>
+                                    {gorevler.map((gorev) => (
+                                        <MenuItem key={gorev.id} value={gorev.deger}>
+                                            {gorev.ad || gorev.deger}
+                                        </MenuItem>
+                                    ))}
+                                </Select>
+                            </FormControl>
+                        </Grid>
+
+                        {/* Unvan - Parametreden */}
+                        <Grid item xs={12} md={6}>
+                            <FormControl fullWidth required>
+                                <InputLabel>Unvan</InputLabel>
+                                <Select
+                                    value={formData.unvan}
+                                    onChange={handleSelectChange('unvan')}
+                                    label="Unvan"
+                                >
+                                    <MenuItem value="">
+                                        <em>Seciniz</em>
+                                    </MenuItem>
+                                    {unvanlar.map((unvan) => (
+                                        <MenuItem key={unvan.id} value={unvan.deger}>
+                                            {unvan.deger}
+                                        </MenuItem>
+                                    ))}
+                                </Select>
+                            </FormControl>
+                        </Grid>
+
+                        {/* Kan Grubu - Sabit */}
+                        <Grid item xs={12} md={6}>
+                            <FormControl fullWidth>
+                                <InputLabel>Kan Grubu</InputLabel>
+                                <Select
+                                    value={formData.kanGrubu}
+                                    onChange={handleSelectChange('kanGrubu')}
+                                    label="Kan Grubu"
+                                >
+                                    <MenuItem value="">
+                                        <em>Seciniz</em>
+                                    </MenuItem>
+                                    {KAN_GRUPLARI.map((kan) => (
+                                        <MenuItem key={kan} value={kan}>
+                                            {kan}
+                                        </MenuItem>
+                                    ))}
+                                </Select>
+                            </FormControl>
+                        </Grid>
+
+                        {/* Cinsiyet - Sabit */}
+                        <Grid item xs={12} md={6}>
+                            <FormControl fullWidth>
+                                <InputLabel>Cinsiyet</InputLabel>
+                                <Select
+                                    value={formData.cinsiyet}
+                                    onChange={handleSelectChange('cinsiyet')}
+                                    label="Cinsiyet"
+                                >
+                                    <MenuItem value="">
+                                        <em>Seciniz</em>
+                                    </MenuItem>
+                                    {CINSIYETLER.map((cinsiyet) => (
+                                        <MenuItem key={cinsiyet} value={cinsiyet}>
+                                            {cinsiyet}
+                                        </MenuItem>
+                                    ))}
+                                </Select>
+                            </FormControl>
+                        </Grid>
+
+                        {/* Dogum Tarihi */}
                         <Grid item xs={12} md={6}>
                             <TextField
                                 fullWidth
@@ -259,6 +440,7 @@ function PersonelForm() {
                             />
                         </Grid>
 
+                        {/* Ise Baslama Tarihi */}
                         <Grid item xs={12} md={6}>
                             <TextField
                                 fullWidth
@@ -270,12 +452,13 @@ function PersonelForm() {
                             />
                         </Grid>
 
+                        {/* Departman */}
                         <Grid item xs={12} md={6}>
                             <FormControl fullWidth>
                                 <InputLabel>Departman</InputLabel>
                                 <Select
                                     value={formData.departmanId}
-                                    onChange={(e) => handleChange('departmanId', e.target.value)}
+                                    onChange={handleSelectChange('departmanId')}
                                     label="Departman"
                                 >
                                     <MenuItem value="">
@@ -290,12 +473,13 @@ function PersonelForm() {
                             </FormControl>
                         </Grid>
 
+                        {/* Vardiya */}
                         <Grid item xs={12} md={6}>
                             <FormControl fullWidth>
                                 <InputLabel>Vardiya</InputLabel>
                                 <Select
                                     value={formData.vardiyaId}
-                                    onChange={(e) => handleChange('vardiyaId', e.target.value)}
+                                    onChange={handleSelectChange('vardiyaId')}
                                     label="Vardiya"
                                 >
                                     <MenuItem value="">
@@ -310,6 +494,7 @@ function PersonelForm() {
                             </FormControl>
                         </Grid>
 
+                        {/* Adres */}
                         <Grid item xs={12}>
                             <TextField
                                 fullWidth
@@ -321,6 +506,7 @@ function PersonelForm() {
                             />
                         </Grid>
 
+                        {/* Aktif */}
                         <Grid item xs={12}>
                             <FormControlLabel
                                 control={
@@ -333,6 +519,7 @@ function PersonelForm() {
                             />
                         </Grid>
 
+                        {/* Butonlar */}
                         <Grid item xs={12}>
                             <Box display="flex" gap={2}>
                                 <Button

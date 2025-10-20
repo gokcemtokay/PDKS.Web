@@ -7,11 +7,9 @@ using System.Threading.Tasks;
 
 namespace PDKS.WebUI.Controllers
 {
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Admin,IK")]
     [ApiController]
     [Route("api/[controller]")]
-    [Produces("application/json")]
-    [Consumes("application/json")]
     public class ParametreController : ControllerBase
     {
         private readonly IParametreService _parametreService;
@@ -28,7 +26,62 @@ namespace PDKS.WebUI.Controllers
             try
             {
                 var parametreler = await _parametreService.GetAllAsync();
-                return Ok(parametreler); // DÜZELTİLEN SATIR
+                return Ok(parametreler);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Internal Server Error: {ex.Message}");
+            }
+        }
+
+        // GET: api/Parametre/5
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetParametreById(int id)
+        {
+            try
+            {
+                var parametre = await _parametreService.GetByIdAsync(id);
+                if (parametre == null)
+                {
+                    return NotFound($"Parametre with ID {id} not found.");
+                }
+                return Ok(parametre);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Internal Server Error: {ex.Message}");
+            }
+        }
+
+        // GET: api/Parametre/kategori/GOREV
+        [HttpGet("kategori/{kategori}")]
+        public async Task<IActionResult> GetByKategori(string kategori)
+        {
+            try
+            {
+                var parametreler = await _parametreService.GetByKategoriAsync(kategori);
+                return Ok(parametreler);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Internal Server Error: {ex.Message}");
+            }
+        }
+
+        // POST: api/Parametre
+        [HttpPost]
+        public async Task<IActionResult> CreateParametre([FromBody] ParametreCreateDTO dto)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            try
+            {
+                var newId = await _parametreService.CreateAsync(dto);
+                var createdParametre = await _parametreService.GetByIdAsync(newId);
+                return CreatedAtAction(nameof(GetParametreById), new { id = newId }, createdParametre);
             }
             catch (Exception ex)
             {
@@ -53,6 +106,25 @@ namespace PDKS.WebUI.Controllers
             try
             {
                 await _parametreService.UpdateAsync(dto);
+                return NoContent();
+            }
+            catch (Exception ex)
+            {
+                if (ex.Message.Contains("bulunamadı"))
+                {
+                    return NotFound(ex.Message);
+                }
+                return StatusCode(500, $"Internal Server Error: {ex.Message}");
+            }
+        }
+
+        // DELETE: api/Parametre/5
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteParametre(int id)
+        {
+            try
+            {
+                await _parametreService.DeleteAsync(id);
                 return NoContent();
             }
             catch (Exception ex)

@@ -1,6 +1,9 @@
 ﻿using PDKS.Business.DTOs;
 using PDKS.Data.Entities;
 using PDKS.Data.Repositories;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace PDKS.Business.Services
 {
@@ -13,10 +16,10 @@ namespace PDKS.Business.Services
             _unitOfWork = unitOfWork;
         }
 
-        public async Task<IEnumerable<ParametreListDTO>> GetAllAsync()
+        public async Task<List<ParametreDTO>> GetAllAsync()
         {
             var parametreler = await _unitOfWork.Parametreler.GetAllAsync();
-            return parametreler.Select(p => new ParametreListDTO
+            return parametreler.Select(p => new ParametreDTO
             {
                 Id = p.Id,
                 Ad = p.Ad,
@@ -24,16 +27,16 @@ namespace PDKS.Business.Services
                 Birim = p.Birim,
                 Aciklama = p.Aciklama,
                 Kategori = p.Kategori
-            }).OrderBy(p => p.Kategori).ThenBy(p => p.Ad);
+            }).ToList();
         }
 
-        public async Task<ParametreListDTO> GetByIdAsync(int id)
+        public async Task<ParametreDTO> GetByIdAsync(int id)
         {
             var parametre = await _unitOfWork.Parametreler.GetByIdAsync(id);
             if (parametre == null)
-                throw new Exception("Parametre bulunamadı");
+                return null;
 
-            return new ParametreListDTO
+            return new ParametreDTO
             {
                 Id = parametre.Id,
                 Ad = parametre.Ad,
@@ -44,19 +47,27 @@ namespace PDKS.Business.Services
             };
         }
 
-        public async Task<string> GetDegerAsync(string ad)
+        // YENİ METOD - Kategoriye göre getir
+        public async Task<List<ParametreDTO>> GetByKategoriAsync(string kategori)
         {
-            var parametre = (await _unitOfWork.Parametreler.FindAsync(p => p.Ad == ad)).FirstOrDefault();
-            return parametre?.Deger ?? string.Empty;
+            var parametreler = await _unitOfWork.Parametreler.GetAllAsync();
+
+            return parametreler
+                .Where(p => p.Kategori == kategori)
+                .Select(p => new ParametreDTO
+                {
+                    Id = p.Id,
+                    Ad = p.Ad,
+                    Deger = p.Deger,
+                    Birim = p.Birim,
+                    Aciklama = p.Aciklama,
+                    Kategori = p.Kategori
+                })
+                .ToList();
         }
 
         public async Task<int> CreateAsync(ParametreCreateDTO dto)
         {
-            // Aynı isimde parametre var mı kontrol et
-            var mevcutParametre = await _unitOfWork.Parametreler.FindAsync(p => p.Ad == dto.Ad);
-            if (mevcutParametre.Any())
-                throw new Exception("Bu isimde bir parametre zaten bulunmaktadır");
-
             var parametre = new Parametre
             {
                 Ad = dto.Ad,
@@ -68,7 +79,6 @@ namespace PDKS.Business.Services
 
             await _unitOfWork.Parametreler.AddAsync(parametre);
             await _unitOfWork.SaveChangesAsync();
-
             return parametre.Id;
         }
 
@@ -77,12 +87,6 @@ namespace PDKS.Business.Services
             var parametre = await _unitOfWork.Parametreler.GetByIdAsync(dto.Id);
             if (parametre == null)
                 throw new Exception("Parametre bulunamadı");
-
-            // Aynı isimde başka parametre var mı kontrol et (kendisi hariç)
-            var mevcutParametre = await _unitOfWork.Parametreler.FindAsync(p =>
-                p.Ad == dto.Ad && p.Id != dto.Id);
-            if (mevcutParametre.Any())
-                throw new Exception("Bu isimde bir parametre zaten bulunmaktadır");
 
             parametre.Ad = dto.Ad;
             parametre.Deger = dto.Deger;
@@ -100,6 +104,7 @@ namespace PDKS.Business.Services
             if (parametre == null)
                 throw new Exception("Parametre bulunamadı");
 
+            // Delete yerine Remove kullanın
             _unitOfWork.Parametreler.Remove(parametre);
             await _unitOfWork.SaveChangesAsync();
         }
