@@ -10,6 +10,8 @@ namespace PDKS.WebUI.Controllers
     [Authorize]
     [ApiController]
     [Route("api/[controller]")]
+    [Produces("application/json")]
+    [Consumes("application/json")]
     public class DepartmanController : ControllerBase
     {
         private readonly IDepartmanService _departmanService;

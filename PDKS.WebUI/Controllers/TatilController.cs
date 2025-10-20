@@ -10,6 +10,8 @@ namespace PDKS.WebUI.Controllers
     [Authorize(Roles = "Admin,IK")]
     [ApiController]
     [Route("api/[controller]")]
+    [Produces("application/json")]
+    [Consumes("application/json")]
     public class TatilController : ControllerBase
     {
         private readonly ITatilService _tatilService;

@@ -13,6 +13,8 @@ namespace PDKS.WebUI.Controllers
     [Authorize(Roles = "Admin,IK,Yönetici")]
     [ApiController]
     [Route("api/[controller]")]
+    [Produces("application/json")]
+    [Consumes("application/json")]
     public class RaporController : ControllerBase
     {
         private readonly IReportService _reportService;

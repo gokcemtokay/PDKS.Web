@@ -12,6 +12,8 @@ namespace PDKS.WebUI.Controllers
     [Authorize]
     [ApiController]
     [Route("api/[controller]")]
+    [Produces("application/json")]
+    [Consumes("application/json")]
     public class SirketController : ControllerBase
     {
         private readonly ISirketService _sirketService;

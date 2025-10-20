@@ -10,11 +10,14 @@ using System;
 using System.Threading.Tasks;
 using PDKS.Data.Entities;
 using Microsoft.AspNetCore.Authorization;
+using DocumentFormat.OpenXml.Math;
 
 namespace PDKS.WebUI.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [Produces("application/json")]
+    [Consumes("application/json")]
     public class AuthController : ControllerBase
     {
         private readonly IAuthService _authService;
@@ -80,6 +83,44 @@ namespace PDKS.WebUI.Controllers
                 signingCredentials: credentials);
 
             return new JwtSecurityTokenHandler().WriteToken(token);
+        }
+
+        [HttpPost("hash-password")]
+        [AllowAnonymous]
+        public IActionResult HashPassword([FromBody] HashPasswordRequest request)
+        {
+            var hash = BCrypt.Net.BCrypt.HashPassword(request.Password);
+            return Ok(new
+            {
+                password = request.Password,
+                hash = hash,
+                algorithm = "BCrypt"
+            });
+        }
+
+
+        [HttpPost("create-bcrypt-hash")]
+        [AllowAnonymous]
+        public IActionResult CreateBCryptHash()
+        {
+            var password = "admin123";
+            var hash = BCrypt.Net.BCrypt.HashPassword(password);
+
+            return Ok(new
+            {
+                password = password,
+                hash = hash,
+                hashLength = hash.Length,
+                startsWithDollar = hash.StartsWith("$2"),
+                testVerify = BCrypt.Net.BCrypt.Verify(password, hash)
+            });
+        }
+
+
+        // DTO
+        public class HashPasswordRequest
+        {
+            public string Password { get; set; } = string.Empty;
         }
     }
 }

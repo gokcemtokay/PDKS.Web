@@ -10,6 +10,8 @@ namespace PDKS.WebUI.Controllers
     [Authorize(Roles = "Admin,IK")]
     [ApiController]
     [Route("api/[controller]")]
+    [Produces("application/json")]
+    [Consumes("application/json")]
     public class VardiyaController : ControllerBase
     {
         private readonly IVardiyaService _vardiyaService;

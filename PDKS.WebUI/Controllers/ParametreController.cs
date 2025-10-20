@@ -10,6 +10,8 @@ namespace PDKS.WebUI.Controllers
     [Authorize(Roles = "Admin")]
     [ApiController]
     [Route("api/[controller]")]
+    [Produces("application/json")]
+    [Consumes("application/json")]
     public class ParametreController : ControllerBase
     {
         private readonly IParametreService _parametreService;

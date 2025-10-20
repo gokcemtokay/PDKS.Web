@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Authentication.JwtBearer;
+ï»¿using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using PDKS.Business.Services;
@@ -6,6 +6,11 @@ using PDKS.Data.Context;
 using PDKS.Data.Repositories;
 using System.Text;
 using Microsoft.OpenApi.Models;
+
+
+Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+Console.OutputEncoding = Encoding.UTF8;
+Console.InputEncoding = Encoding.UTF8;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -16,14 +21,18 @@ builder.Services.AddDbContext<PDKSDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 // Add services to the container.
-// MVC yerine API Controller'larını kullanacağımızı belirtiyoruz.
-builder.Services.AddControllers();
+// MVC yerine API Controller'larÄ±nÄ± kullanacaÄŸÄ±mÄ±zÄ± belirtiyoruz.
+builder.Services.AddControllers().AddJsonOptions(options =>
+{
+    options.JsonSerializerOptions.Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping;
+    options.JsonSerializerOptions.WriteIndented = true;
+});
 
-// Swagger (OpenAPI) servisini ekleyerek API'yi test etmek için bir arayüz sağlıyoruz.
+// Swagger (OpenAPI) servisini ekleyerek API'yi test etmek iÃ§in bir arayÃ¼z saÄŸlÄ±yoruz.
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
-    // Swagger'a JWT Token ile yetkilendirme yapabilme özelliği ekliyoruz.
+    // Swagger'a JWT Token ile yetkilendirme yapabilme Ã¶zelliÄŸi ekliyoruz.
     c.SwaggerDoc("v1", new OpenApiInfo { Title = "PDKS API", Version = "v1" });
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
@@ -75,7 +84,7 @@ builder.Services.AddScoped<IBackupService, BackupService>();
 builder.Services.AddScoped<ISirketService, SirketService>();
 builder.Services.AddScoped<ICihazService, CihazService>();
 
-// --- 2. Kimlik Doğrulama (Authentication) Yapılandırması (Cookie yerine JWT) ---
+// --- 2. Kimlik DoÄŸrulama (Authentication) YapÄ±landÄ±rmasÄ± (Cookie yerine JWT) ---
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
@@ -92,43 +101,48 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     });
 
 
-// Yetkilendirme (Authorization) Politikaları aynı kalabilir.
+// Yetkilendirme (Authorization) PolitikalarÄ± aynÄ± kalabilir.
 builder.Services.AddAuthorization(options =>
 {
     options.AddPolicy("AdminOnly", policy => policy.RequireRole("Admin"));
     options.AddPolicy("AdminOrIK", policy => policy.RequireRole("Admin", "IK"));
-    options.AddPolicy("ManagerAccess", policy => policy.RequireRole("Admin", "IK", "Yönetici"));
+    options.AddPolicy("ManagerAccess", policy => policy.RequireRole("Admin", "IK", "YÃ¶netici"));
 });
 
 // Add HttpContextAccessor
 builder.Services.AddHttpContextAccessor();
 
-// --- 3. CORS (Cross-Origin Resource Sharing) Yapılandırması ---
-// React uygulamasından gelecek isteklere izin vermek için ekliyoruz.
+// --- 3. CORS (Cross-Origin Resource Sharing) YapÄ±landÄ±rmasÄ± ---
+// React uygulamasÄ±ndan gelecek isteklere izin vermek iÃ§in ekliyoruz.
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowReactApp",
-        policy =>
-        {
-            policy.WithOrigins("http://localhost:3000") // React development sunucusunun adresi
-                  .AllowAnyHeader()
-                  .AllowAnyMethod();
-        });
+    options.AddPolicy("AllowReactApp", policy =>
+    {
+        policy.WithOrigins(
+            "http://localhost:56899",  // â¬…ï¸ Frontend'in portu
+            "http://localhost:5173",
+            "http://localhost:3000"
+        )
+        .AllowAnyHeader()
+        .AllowAnyMethod()
+        .AllowCredentials();
+    });
 });
 
+Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
 var app = builder.Build();
 
-// --- 4. HTTP Request Pipeline (Middleware) Yapılandırması ---
+// --- 4. HTTP Request Pipeline (Middleware) YapÄ±landÄ±rmasÄ± ---
 
-// Development ortamında Swagger arayüzünü aktif hale getiriyoruz.
+// Development ortamÄ±nda Swagger arayÃ¼zÃ¼nÃ¼ aktif hale getiriyoruz.
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
 }
 
-// Development ortamında migration'ları otomatik uygula (opsiyonel)
+// Development ortamÄ±nda migration'larÄ± otomatik uygula (opsiyonel)
 if (app.Environment.IsDevelopment())
 {
     using var scope = app.Services.CreateScope();
@@ -140,13 +154,13 @@ if (app.Environment.IsDevelopment())
     catch (Exception ex)
     {
         var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
-        logger.LogError(ex, "Migration sırasında hata oluştu");
+        logger.LogError(ex, "Migration sÄ±rasÄ±nda hata oluÅŸtu");
     }
 }
 
 app.UseHttpsRedirection();
 
-// CORS politikasını aktif hale getiriyoruz. Bu satır UseRouting'den önce olmalı.
+// CORS politikasÄ±nÄ± aktif hale getiriyoruz. Bu satÄ±r UseRouting'den Ã¶nce olmalÄ±.
 app.UseCors("AllowReactApp");
 
 app.UseRouting();
@@ -155,11 +169,11 @@ app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
 
-// Controller'ları endpoint olarak map'liyoruz.
+// Controller'larÄ± endpoint olarak map'liyoruz.
 app.MapControllers();
 
 
-// --- Seed Data (Başlangıç Verisi) - Bu kısım aynı kalabilir ---
+// --- Seed Data (BaÅŸlangÄ±Ã§ Verisi) - Bu kÄ±sÄ±m aynÄ± kalabilir ---
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
@@ -175,10 +189,10 @@ using (var scope = app.Services.CreateScope())
         {
             var adminPersonel = new PDKS.Data.Entities.Personel
             {
-                AdSoyad = "Sistem Yöneticisi",
+                AdSoyad = "Sistem YÃ¶neticisi",
                 SicilNo = "ADM001",
                 DepartmanId = 1,
-                Gorev = "Sistem Yöneticisi",
+                Gorev = "Sistem YÃ¶neticisi",
                 Email = "admin@pdks.com",
                 Telefon = "05001234567",
                 Durum = true,
@@ -206,13 +220,13 @@ using (var scope = app.Services.CreateScope())
             context.SaveChanges();
 
             var logger = services.GetRequiredService<ILogger<Program>>();
-            logger.LogInformation("Admin kullanıcı oluşturuldu: admin@pdks.com / admin123");
+            logger.LogInformation("Admin kullanÄ±cÄ± oluÅŸturuldu: admin@pdks.com / admin123");
         }
     }
     catch (Exception ex)
     {
         var logger = services.GetRequiredService<ILogger<Program>>();
-        logger.LogError(ex, "Seed data oluşturulurken hata oluştu");
+        logger.LogError(ex, "Seed data oluÅŸturulurken hata oluÅŸtu");
     }
 }
 

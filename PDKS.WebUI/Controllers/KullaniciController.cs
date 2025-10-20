@@ -10,6 +10,8 @@ namespace PDKS.WebUI.Controllers
     [Authorize(Roles = "Admin")]
     [ApiController]
     [Route("api/[controller]")]
+    [Produces("application/json")]
+    [Consumes("application/json")]
     public class KullaniciController : ControllerBase
     {
         private readonly IKullaniciService _kullaniciService;

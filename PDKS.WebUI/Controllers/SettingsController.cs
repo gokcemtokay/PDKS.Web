@@ -13,6 +13,8 @@ namespace PDKS.WebUI.Controllers
     [Authorize(Roles = "Admin")]
     [ApiController]
     [Route("api/[controller]")]
+    [Produces("application/json")]
+    [Consumes("application/json")]
     public class SettingsController : ControllerBase
     {
         private readonly IBackupService _backupService;
