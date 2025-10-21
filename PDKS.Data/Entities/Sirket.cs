@@ -95,6 +95,8 @@ namespace PDKS.Data.Entities
         public virtual ICollection<Sirket> BagliSirketler { get; set; } = new List<Sirket>();
         public virtual ICollection<Personel> Personeller { get; set; } = new List<Personel>();
         public virtual ICollection<Departman> Departmanlar { get; set; } = new List<Departman>();
+        public virtual ICollection<KullaniciSirket> KullaniciSirketleri { get; set; } = new List<KullaniciSirket>(); // ⭐ YENİ EKLENEN SATIR
         public virtual ICollection<Cihaz> Cihazlar { get; set; } = new List<Cihaz>();
+        public virtual ICollection<Vardiya> Vardiyalar { get; set; } = new List<Vardiya>();
     }
 }

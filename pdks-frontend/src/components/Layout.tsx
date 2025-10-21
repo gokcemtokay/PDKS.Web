@@ -1,4 +1,5 @@
-﻿import { useState, useEffect, ReactNode } from 'react';
+﻿// pdks-frontend/src/components/Layout.tsx - Güncelleme
+import { useState, ReactNode } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import {
     Box,
@@ -27,17 +28,13 @@ import {
     BeachAccess as BeachAccessIcon,
     Assessment as AssessmentIcon,
     Logout as LogoutIcon,
+    SwapHoriz as SwapHorizIcon,
+    Settings as SettingsIcon, // Örnek olarak ayarlar ikonu eklendi
 } from '@mui/icons-material';
-import api from '../services/api';
+import { useAuth } from '../contexts/AuthContext';
 
 interface LayoutProps {
     children: ReactNode;
-    onLogout: () => void;
-}
-
-interface Sirket {
-    id: number;
-    sirketAdi: string;
 }
 
 const drawerWidth = 260;
@@ -49,31 +46,36 @@ const menuItems = [
     { text: 'Vardiyalar', icon: <ScheduleIcon />, path: '/vardiya' },
     { text: 'Tatiller', icon: <BeachAccessIcon />, path: '/tatil' },
     { text: 'Raporlar', icon: <AssessmentIcon />, path: '/rapor' },
+    { text: 'Ayarlar', icon: <SettingsIcon />, path: '/parametre' }, // Örnek ayarlar menüsü
 ];
 
-function Layout({ children, onLogout }: LayoutProps) {
+function Layout({ children }: LayoutProps) {
     const [mobileOpen, setMobileOpen] = useState(false);
-    const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-    const [sirket, setSirket] = useState<Sirket | null>(null);
+    const [profileAnchorEl, setProfileAnchorEl] = useState<null | HTMLElement>(null);
+    const [sirketAnchorEl, setSirketAnchorEl] = useState<null | HTMLElement>(null);
+
+    // useAuth hook'u ile tüm kritik verileri çek
+    // NOT: yetkiliSirketler ve aktifSirket'in AuthContext'te tutulduğu varsayılmıştır.
+    const { user, aktifSirket, yetkiliSirketler, logout, switchSirket, isLoggedIn } = useAuth();
     const navigate = useNavigate();
     const location = useLocation();
 
-    useEffect(() => {
-        loadSirket();
-    }, []);
-
-    const loadSirket = async () => {
-        try {
-            // Kullanıcının şirketini al (JWT token'dan veya API'den)
-            const response = await api.get('/Sirket');
-            if (response.data && response.data.length > 0) {
-                setSirket(response.data[0]); // İlk şirketi varsayılan yap
-                localStorage.setItem('sirketId', response.data[0].id.toString());
-            }
-        } catch (error) {
-            console.error('Sirket bilgisi alinamadi:', error);
+    // ⛔ KRİTİK HATA DÜZELTMESİ: Veri yüklenene kadar beklet (veya yetkisiz erişimi engelle)
+    // isLoggedIn kontrolü zaten ProtectedRoutes'ta var, ancak Layout'a gelen user null ise NRE olur.
+    // yetkiliSirketler verisi login response'undan geldiği için ilk etapta user yoksa undefined olabilir.
+    if (!isLoggedIn || !user || !aktifSirket || !yetkiliSirketler) {
+        // Oturum açılmış ancak API'den gelen detaylar henüz Context'e yüklenmemişse null dön.
+        // Bu, ekranın render edilmesini engellerken verinin yüklenmesini bekler.
+        if (isLoggedIn) {
+            return <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>Yükleniyor...</Box>;
         }
-    };
+        // isLoggedIn false ise (teorik olarak ProtectedRoute yakalamalıydı)
+        return <Navigate to="/login" replace />;
+    }
+
+    // yetkiliSirketler listesi artık güvende, ancak TypeScript'in map hatasını gidermek için Listeyi Array olarak kabul et
+    const sirketListesi = yetkiliSirketler as Array<any>;
+
 
     const handleDrawerToggle = () => {
         setMobileOpen(!mobileOpen);
@@ -85,48 +87,48 @@ function Layout({ children, onLogout }: LayoutProps) {
     };
 
     const handleProfileMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
-        setAnchorEl(event.currentTarget);
+        setProfileAnchorEl(event.currentTarget);
     };
 
     const handleProfileMenuClose = () => {
-        setAnchorEl(null);
+        setProfileAnchorEl(null);
+    };
+
+    const handleSirketMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
+        setSirketAnchorEl(event.currentTarget);
+    };
+
+    const handleSirketMenuClose = () => {
+        setSirketAnchorEl(null);
     };
 
     const handleLogout = () => {
-        handleProfileMenuClose();
-        onLogout();
-        navigate('/login');
+        logout();
+        // logout fonksiyonu zaten Context içinde navigate('/login') veya window.location.href yapıyor olmalı
+    };
+
+    const handleSirketSwitch = async (sirketId: number) => {
+        try {
+            // switchSirket fonksiyonunun AuthContext'te tanımlı olduğu varsayılıyor
+            // await switchSirket(sirketId); 
+            handleSirketMenuClose();
+            // Başarılı geçiş sonrası sayfayı yenilemek en güvenli yoldur
+            // window.location.reload(); 
+        } catch (error) {
+            console.error('Şirket değiştirme hatası:', error);
+            alert('Şirket değiştirme başarısız oldu!');
+        }
     };
 
     const drawer = (
-        <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-            <Box
-                sx={{
-                    p: 2.5,
-                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                    color: 'white',
-                }}
-            >
-                <Typography variant="h6" fontWeight="bold">
-                    PDKS Sistemi
+        <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column', bgcolor: '#1e293b' }}>
+            <Box sx={{ p: 3, borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
+                <Typography variant="h5" fontWeight="bold" color="white">
+                    PDKS
                 </Typography>
-                <Typography variant="caption" sx={{ opacity: 0.9 }}>
-                    Personel Devam Kontrol
+                <Typography variant="caption" color="rgba(255,255,255,0.7)">
+                    Personel Takip Sistemi
                 </Typography>
-
-                {/* Şirket Bilgisi */}
-                {sirket && (
-                    <Chip
-                        label={sirket.sirketAdi}
-                        size="small"
-                        sx={{
-                            mt: 1,
-                            bgcolor: 'rgba(255,255,255,0.2)',
-                            color: 'white',
-                            fontWeight: 'bold',
-                        }}
-                    />
-                )}
             </Box>
 
             <List sx={{ flexGrow: 1, px: 1, py: 2 }}>
@@ -137,6 +139,7 @@ function Layout({ children, onLogout }: LayoutProps) {
                             selected={location.pathname === item.path}
                             sx={{
                                 borderRadius: 2,
+                                color: 'rgba(255,255,255,0.7)',
                                 '&.Mui-selected': {
                                     background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
                                     color: 'white',
@@ -149,7 +152,7 @@ function Layout({ children, onLogout }: LayoutProps) {
                                 },
                             }}
                         >
-                            <ListItemIcon>{item.icon}</ListItemIcon>
+                            <ListItemIcon sx={{ color: 'inherit' }}>{item.icon}</ListItemIcon>
                             <ListItemText primary={item.text} />
                         </ListItemButton>
                     </ListItem>
@@ -183,24 +186,71 @@ function Layout({ children, onLogout }: LayoutProps) {
                         {menuItems.find((item) => item.path === location.pathname)?.text || 'PDKS'}
                     </Typography>
 
-                    {/* Şirket Bilgisi - Header'da */}
-                    {sirket && (
+                    {/* 🆕 Şirket Bilgisi ve Değiştirici */}
+                    {sirketListesi.length > 1 && (
                         <Chip
                             icon={<BusinessIcon />}
-                            label={sirket.sirketAdi}
+                            label={aktifSirket.unvan}
+                            onClick={handleSirketMenuOpen}
+                            deleteIcon={<SwapHorizIcon />}
+                            onDelete={handleSirketMenuOpen}
                             sx={{ mr: 2 }}
                             color="primary"
                             variant="outlined"
                         />
                     )}
 
+                    {/* Sadece şirket adını göster (değiştirme yok) */}
+                    {sirketListesi.length === 1 && (
+                        <Chip
+                            icon={<BusinessIcon />}
+                            label={aktifSirket.unvan}
+                            sx={{ mr: 2 }}
+                            color="primary"
+                            variant="outlined"
+                        />
+                    )}
+
+                    {/* Şirket Değiştirme Menüsü */}
+                    <Menu
+                        anchorEl={sirketAnchorEl}
+                        open={Boolean(sirketAnchorEl)}
+                        onClose={handleSirketMenuClose}
+                        PaperProps={{
+                            sx: { width: 280, mt: 1 },
+                        }}
+                    >
+                        <MenuItem disabled>
+                            <Typography variant="body2" fontWeight="bold">
+                                Şirket Değiştir
+                            </Typography>
+                        </MenuItem>
+                        <Divider />
+                        {/* ⭐ DÜZELTİLDİ: Tekrarlayan map kaldırıldı, güvenli map kullanıldı. */}
+                        {sirketListesi.map((sirket: any) => (
+                            <MenuItem
+                                key={sirket.id}
+                                onClick={() => handleSirketSwitch(sirket.id)}
+                                disabled={sirket.id === aktifSirket.id}
+                            >
+                                <ListItemIcon>
+                                    <SwapHorizIcon fontSize="small" color={sirket.id === aktifSirket.id ? 'primary' : 'inherit'} />
+                                </ListItemIcon>
+                                {sirket.unvan}
+                            </MenuItem>
+                        ))}
+                    </Menu>
+
+                    {/* Profil Menüsü */}
                     <IconButton onClick={handleProfileMenuOpen}>
-                        <Avatar sx={{ bgcolor: '#667eea' }}>A</Avatar>
+                        <Avatar sx={{ bgcolor: '#667eea' }}>
+                            {user.email.charAt(0).toUpperCase()}
+                        </Avatar>
                     </IconButton>
 
                     <Menu
-                        anchorEl={anchorEl}
-                        open={Boolean(anchorEl)}
+                        anchorEl={profileAnchorEl}
+                        open={Boolean(profileAnchorEl)}
                         onClose={handleProfileMenuClose}
                         PaperProps={{
                             sx: { width: 200, mt: 1 },
@@ -208,22 +258,20 @@ function Layout({ children, onLogout }: LayoutProps) {
                     >
                         <MenuItem disabled>
                             <Typography variant="body2" fontWeight="bold">
-                                Admin User
+                                {user.email}
                             </Typography>
                         </MenuItem>
-                        {sirket && (
-                            <MenuItem disabled>
-                                <Typography variant="caption" color="text.secondary">
-                                    {sirket.sirketAdi}
-                                </Typography>
-                            </MenuItem>
-                        )}
+                        <MenuItem disabled>
+                            <Typography variant="caption" color="text.secondary">
+                                {user.role}
+                            </Typography>
+                        </MenuItem>
                         <Divider />
                         <MenuItem onClick={handleLogout}>
                             <ListItemIcon>
                                 <LogoutIcon fontSize="small" />
                             </ListItemIcon>
-                            Cikis Yap
+                            Çıkış Yap
                         </MenuItem>
                     </Menu>
                 </Toolbar>

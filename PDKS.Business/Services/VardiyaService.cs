@@ -1,94 +1,70 @@
-﻿using PDKS.Business.DTOs;
+﻿using AutoMapper;
+using PDKS.Business.DTOs;
 using PDKS.Data.Entities;
 using PDKS.Data.Repositories;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace PDKS.Business.Services
 {
     public class VardiyaService : IVardiyaService
     {
         private readonly IUnitOfWork _unitOfWork;
+        private readonly IMapper _mapper;
 
-        public VardiyaService(IUnitOfWork unitOfWork)
+        public VardiyaService(IUnitOfWork unitOfWork, IMapper mapper)
         {
             _unitOfWork = unitOfWork;
+            _mapper = mapper;
         }
 
         public async Task<IEnumerable<VardiyaListDTO>> GetAllAsync()
         {
-            var vardiyalar = await _unitOfWork.Vardiyalar.GetAllAsync();
-            return vardiyalar.Select(v => new VardiyaListDTO
-            {
-                Id = v.Id,
-                Ad = v.Ad,
-                BaslangicSaati = v.BaslangicSaati.ToString(@"hh\:mm"),
-                BitisSaati = v.BitisSaati.ToString(@"hh\:mm"),
-                GeceVardiyasiMi = v.GeceVardiyasiMi,
-                EsnekVardiyaMi = v.EsnekVardiyaMi,
-                ToleransSuresiDakika = v.ToleransSuresiDakika,
-                Aciklama = v.Aciklama,
-                Durum = v.Durum
-            }).OrderBy(v => v.Ad);
+            var vardiyalar = await _unitOfWork.GetRepository<Vardiya>().GetAllAsync();
+            return _mapper.Map<IEnumerable<VardiyaListDTO>>(vardiyalar);
         }
 
         public async Task<IEnumerable<VardiyaListDTO>> GetAktifVardiyalarAsync()
         {
-            var vardiyalar = await _unitOfWork.Vardiyalar.FindAsync(v => v.Durum);
-            return vardiyalar.Select(v => new VardiyaListDTO
-            {
-                Id = v.Id,
-                Ad = v.Ad,
-                BaslangicSaati = v.BaslangicSaati.ToString(@"hh\:mm"),
-                BitisSaati = v.BitisSaati.ToString(@"hh\:mm"),
-                GeceVardiyasiMi = v.GeceVardiyasiMi,
-                EsnekVardiyaMi = v.EsnekVardiyaMi,
-                ToleransSuresiDakika = v.ToleransSuresiDakika,
-                Aciklama = v.Aciklama,
-                Durum = v.Durum
-            }).OrderBy(v => v.Ad);
+            var vardiyalar = await _unitOfWork.GetRepository<Vardiya>()
+                .FindAsync(v => v.Durum == true);
+
+            return _mapper.Map<IEnumerable<VardiyaListDTO>>(vardiyalar);
+        }
+
+        // ⭐ KRİTİK METOT: Şirket ID'sine göre vardiyaları filtreler
+        public async Task<IEnumerable<VardiyaListDTO>> GetBySirketAsync(int sirketId)
+        {
+            // Vardiya Entity'sindeki SirketId alanına göre filtreleme yapar.
+            var vardiyalar = await _unitOfWork.GetRepository<Vardiya>()
+                .FindAsync(v => v.SirketId == sirketId); // Vardiya Entity'sinde SirketId olması şarttır.
+
+            return _mapper.Map<IEnumerable<VardiyaListDTO>>(vardiyalar);
         }
 
         public async Task<VardiyaDetailDTO> GetByIdAsync(int id)
         {
-            var vardiya = await _unitOfWork.Vardiyalar.GetByIdAsync(id);
-            if (vardiya == null)
-                throw new Exception("Vardiya bulunamadı");
+            var vardiya = await _unitOfWork.GetRepository<Vardiya>().GetByIdAsync(id);
 
-            return new VardiyaDetailDTO
+            if (vardiya == null)
             {
-                Id = vardiya.Id,
-                Ad = vardiya.Ad,
-                BaslangicSaati = vardiya.BaslangicSaati.ToString(@"hh\:mm"),
-                BitisSaati = vardiya.BitisSaati.ToString(@"hh\:mm"),
-                GeceVardiyasiMi = vardiya.GeceVardiyasiMi,
-                EsnekVardiyaMi = vardiya.EsnekVardiyaMi,
-                ToleransSuresiDakika = vardiya.ToleransSuresiDakika,
-                Aciklama = vardiya.Aciklama,
-                Durum = vardiya.Durum
-            };
+                throw new Exception($"ID {id} olan vardiya bulunamadı.");
+            }
+
+            return _mapper.Map<VardiyaDetailDTO>(vardiya);
         }
 
         public async Task<int> CreateAsync(VardiyaCreateDTO dto)
         {
-            // Parse time strings
-            if (!TimeSpan.TryParse(dto.BaslangicSaati, out var baslangic))
-                throw new Exception("Geçersiz başlangıç saati formatı");
+            var vardiya = _mapper.Map<Vardiya>(dto);
 
-            if (!TimeSpan.TryParse(dto.BitisSaati, out var bitis))
-                throw new Exception("Geçersiz bitiş saati formatı");
+            // Varsayılan değerler
+            vardiya.Durum = true;
+            // DTO'da SirketId olduğu varsayılmıştır.
 
-            var vardiya = new Vardiya
-            {
-                Ad = dto.Ad,
-                BaslangicSaati = baslangic,
-                BitisSaati = bitis,
-                GeceVardiyasiMi = dto.GeceVardiyasiMi,
-                EsnekVardiyaMi = dto.EsnekVardiyaMi,
-                ToleransSuresiDakika = dto.ToleransSuresiDakika,
-                Aciklama = dto.Aciklama,
-                Durum = dto.Durum
-            };
-
-            await _unitOfWork.Vardiyalar.AddAsync(vardiya);
+            await _unitOfWork.GetRepository<Vardiya>().AddAsync(vardiya);
             await _unitOfWork.SaveChangesAsync();
 
             return vardiya.Id;
@@ -96,42 +72,38 @@ namespace PDKS.Business.Services
 
         public async Task UpdateAsync(VardiyaUpdateDTO dto)
         {
-            var vardiya = await _unitOfWork.Vardiyalar.GetByIdAsync(dto.Id);
+            var vardiya = await _unitOfWork.GetRepository<Vardiya>().GetByIdAsync(dto.Id);
+
             if (vardiya == null)
-                throw new Exception("Vardiya bulunamadı");
+            {
+                throw new Exception($"ID {dto.Id} olan vardiya bulunamadı.");
+            }
 
-            // Parse time strings
-            if (!TimeSpan.TryParse(dto.BaslangicSaati, out var baslangic))
-                throw new Exception("Geçersiz başlangıç saati formatı");
+            // GÜVENLİK KONTROLÜ
+            if (vardiya.SirketId != dto.SirketId)
+            {
+                throw new UnauthorizedAccessException("Vardiya güncelleme işlemi başarısız: Şirket yetkisi eşleşmiyor.");
+            }
 
-            if (!TimeSpan.TryParse(dto.BitisSaati, out var bitis))
-                throw new Exception("Geçersiz bitiş saati formatı");
+            _mapper.Map(dto, vardiya);
 
-            vardiya.Ad = dto.Ad;
-            vardiya.BaslangicSaati = baslangic;
-            vardiya.BitisSaati = bitis;
-            vardiya.GeceVardiyasiMi = dto.GeceVardiyasiMi;
-            vardiya.EsnekVardiyaMi = dto.EsnekVardiyaMi;
-            vardiya.ToleransSuresiDakika = dto.ToleransSuresiDakika;
-            vardiya.Aciklama = dto.Aciklama;
-            vardiya.Durum = dto.Durum;
-
-            _unitOfWork.Vardiyalar.Update(vardiya);
+            _unitOfWork.GetRepository<Vardiya>().Update(vardiya);
             await _unitOfWork.SaveChangesAsync();
         }
 
         public async Task DeleteAsync(int id)
         {
-            var vardiya = await _unitOfWork.Vardiyalar.GetByIdAsync(id);
+            var vardiya = await _unitOfWork.GetRepository<Vardiya>().GetByIdAsync(id);
+
             if (vardiya == null)
-                throw new Exception("Vardiya bulunamadı");
+            {
+                throw new Exception($"ID {id} olan vardiya bulunamadı.");
+            }
 
-            // Check if any personnel is using this shift
-            var personellerWithVardiya = await _unitOfWork.Personeller.FindAsync(p => p.VardiyaId == id);
-            if (personellerWithVardiya.Any())
-                throw new Exception("Bu vardiyada personel bulunduğu için silinemez");
+            // Soft Delete (Durum'u pasif yap)
+            vardiya.Durum = false;
+            _unitOfWork.GetRepository<Vardiya>().Update(vardiya);
 
-            _unitOfWork.Vardiyalar.Remove(vardiya);
             await _unitOfWork.SaveChangesAsync();
         }
     }

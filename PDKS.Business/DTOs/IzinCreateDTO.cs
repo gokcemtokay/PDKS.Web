@@ -19,6 +19,12 @@ namespace PDKS.Business.DTOs
         [DataType(DataType.Date)]
         public DateTime BitisTarihi { get; set; }
 
+        public int IzinGunSayisi { get; set; } // EKLEME: Hesaplama serviste yapılabilir
+
+        [Required(ErrorMessage = "Onay Durumu zorunludur")]
+        [StringLength(50, ErrorMessage = "Onay Durumu en fazla 50 karakter olabilir")]
+        public string OnayDurumu { get; set; } = "Beklemede"; // EKLEME
+
         [StringLength(1000, ErrorMessage = "Açıklama en fazla 1000 karakter olabilir")]
         public string? Aciklama { get; set; }
     }

@@ -1,4 +1,4 @@
-﻿import { useState } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
     Container,
@@ -12,79 +12,81 @@ import {
     IconButton,
 } from '@mui/material';
 import { Visibility, VisibilityOff, Login as LoginIcon } from '@mui/icons-material';
-import api from '../services/api';
+import axios from 'axios'; // Doğrudan axios'u kullanacağız. api.ts kullanılıyorsa, onu da kullanabilirsiniz.
+import { useAuth } from '../contexts/AuthContext'; // ⭐ KRİTİK: useAuth'u import ettik
 
-interface LoginPageProps {
-    onLogin: (token: string) => void;
-}
+const API_LOGIN_URL = '/api/Auth/login';
 
-function LoginPage({ onLogin }: LoginPageProps) {
+// LoginPageProps artık kullanılmayacak, onLogin kaldırıldı.
+// function LoginPage({ onLogin }: LoginPageProps) {
+function LoginPage() {
     const [email, setEmail] = useState('admin@pdks.com');
     const [password, setPassword] = useState('admin123');
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
+
     const navigate = useNavigate();
+    // ⭐ KRİTİK DEĞİŞİKLİK: useAuth'tan login ve isLoggedIn durumunu çekiyoruz.
+    const { login, isLoggedIn } = useAuth();
+
+    // Bileşen yüklendiğinde veya isLoggedIn değiştiğinde yönlendirme kontrolü
+    useEffect(() => {
+        // Eğer giriş yapılmışsa, direkt ana sayfaya yönlendir.
+        if (isLoggedIn) {
+            navigate('/', { replace: true });
+        }
+    }, [isLoggedIn, navigate]);
+
+    // isLoggedIn true ise, bu bileşeni render etmeye gerek yok, yönlendirme zaten yapılıyor.
+    if (isLoggedIn) {
+        return null;
+    }
+
 
     const handleSubmit = async (e: React.FormEvent) => {
-        // ÖNEMLİ: Sayfa yenilenmesini engelle
         e.preventDefault();
-        e.stopPropagation();
-
-        console.log('🔐 Form submit - preventDefault çağrıldı');
-
         setError('');
         setLoading(true);
 
         try {
-            console.log('📡 API isteği gönderiliyor...');
-
-            const response = await api.post('/Auth/login', {
+            const response = await axios.post(API_LOGIN_URL, {
                 email: email.trim(),
                 password: password
             });
 
-            console.log('✅ Response:', response.data);
-
             const token = response.data?.token || response.data?.Token;
 
             if (token) {
-                console.log('💾 Token kaydediliyor...');
-                localStorage.setItem('token', token);
-                onLogin(token);
+                // ⭐ KRİTİK KISIM: Token'ı AuthContext'e kaydet. 
+                // Bu, hem global state'i günceller hem de App.tsx'teki yönlendirmeyi tetikler.
+                login(token);
+                // Başarılı giriş sonrası yönlendirme, useEffect içinde zaten handle ediliyor.
+                // İsteğe bağlı olarak direkt yönlendirme çağrılabilir:
+                // navigate('/', { replace: true });
 
-                console.log('🚀 Navigate ediliyor...');
-                navigate('/', { replace: true });
             } else {
-                console.error('❌ Token bulunamadı!');
-                setError('Giriş başarılı ama token alınamadı.');
+                setError('Giriş başarılı ama sunucudan token alınamadı.');
             }
 
-        } catch (err: any) {
-            console.error('❌ Catch bloğu:', err);
-
+        } catch (err) {
             let errorMessage = 'Giriş başarısız!';
 
-            if (err?.response) {
-                if (err.response.status === 401) {
-                    errorMessage = 'Geçersiz e-posta veya şifre!';
-                } else if (err.response.data) {
-                    errorMessage = typeof err.response.data === 'string'
-                        ? err.response.data
-                        : err.response.data.message || errorMessage;
-                }
-            } else if (err?.message) {
+            if (axios.isAxiosError(err) && err.response) {
+                // Sunucudan gelen hata mesajını kullan
+                errorMessage = (err.response.data.message || err.response.data || 'Geçersiz e-posta veya şifre').toString();
+            } else if (err instanceof Error) {
                 errorMessage = err.message;
             }
 
-            console.log('⚠️ Hata mesajı set ediliyor:', errorMessage);
             setError(errorMessage);
-
+            localStorage.removeItem('token'); // Başarısız denemede token'ı temizle
         } finally {
             setLoading(false);
         }
     };
 
+    // Kalan render kodu aynı kalır.
     return (
         <Box
             sx={{
@@ -128,7 +130,6 @@ function LoginPage({ onLogin }: LoginPageProps) {
                         Personel Devam Kontrol Sistemi
                     </Typography>
 
-                    {/* onSubmit burada, form tag'inde */}
                     <Box
                         component="form"
                         onSubmit={handleSubmit}

@@ -2,7 +2,11 @@
 using Microsoft.AspNetCore.Mvc;
 using PDKS.Business.DTOs;
 using PDKS.Business.Services;
+using PDKS.Data.Entities;
+using PDKS.Data.Repositories;
 using System;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
 using System.Threading.Tasks;
 
 namespace PDKS.WebUI.Controllers
@@ -16,11 +20,13 @@ namespace PDKS.WebUI.Controllers
     {
         private readonly IKullaniciService _kullaniciService;
         private readonly IAuthService _authService;
+        private readonly IUnitOfWork _unitOfWork;
 
-        public KullaniciController(IKullaniciService kullaniciService, IAuthService authService)
+        public KullaniciController(IKullaniciService kullaniciService, IAuthService authService, IUnitOfWork unitOfWork)
         {
             _kullaniciService = kullaniciService;
             _authService = authService;
+            _unitOfWork = unitOfWork;
         }
 
         // GET: api/Kullanici
@@ -113,6 +119,53 @@ namespace PDKS.WebUI.Controllers
                 }
                 return StatusCode(500, $"Internal Server Error: {ex.Message}");
             }
+        }
+
+        [HttpGet("yetkili-sirketler")]
+        [Authorize]
+        public async Task<IActionResult> GetYetkiliSirketler()
+        {
+            try
+            {
+                var kullaniciId = GetCurrentUserId();
+
+                var yetkiliSirketler = await _unitOfWork.GetRepository<KullaniciSirket>()
+                    .FindAsync(ks => ks.KullaniciId == kullaniciId && ks.Aktif);
+
+                var sirketler = new List<object>();
+
+                foreach (var ks in yetkiliSirketler)
+                {
+                    var sirket = await _unitOfWork.Sirketler.GetByIdAsync(ks.SirketId);
+                    if (sirket != null)
+                    {
+                        sirketler.Add(new
+                        {
+                            id = sirket.Id,
+                            unvan = sirket.Unvan,
+                            logoUrl = sirket.LogoUrl,
+                            varsayilan = ks.Varsayilan
+                        });
+                    }
+                }
+
+                return Ok(sirketler);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = $"Hata: {ex.Message}" });
+            }
+        }
+
+        private int GetCurrentUserId()
+        {
+            var userIdClaim = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier
+                                                              || c.Type == JwtRegisteredClaimNames.Sub);
+            if (userIdClaim != null && int.TryParse(userIdClaim.Value, out int userId))
+            {
+                return userId;
+            }
+            throw new InvalidOperationException("User ID could not be found in token.");
         }
     }
 }

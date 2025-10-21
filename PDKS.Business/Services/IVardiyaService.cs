@@ -10,5 +10,6 @@ namespace PDKS.Business.Services
         Task<int> CreateAsync(VardiyaCreateDTO dto);
         Task UpdateAsync(VardiyaUpdateDTO dto);
         Task DeleteAsync(int id);
+        Task<IEnumerable<VardiyaListDTO>> GetBySirketAsync(int sirketId);
     }
 }

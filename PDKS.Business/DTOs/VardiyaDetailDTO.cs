@@ -3,6 +3,7 @@
     public class VardiyaDetailDTO
     {
         public int Id { get; set; }
+        public int SirketId { get; set; }
         public string Ad { get; set; }
         public string BaslangicSaati { get; set; }
         public string BitisSaati { get; set; }

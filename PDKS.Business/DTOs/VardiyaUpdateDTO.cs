@@ -6,6 +6,8 @@ namespace PDKS.Business.DTOs
     {
         [Required]
         public int Id { get; set; }
+        [Required]
+        public int SirketId { get; set; }
 
         [Required(ErrorMessage = "Vardiya adı zorunludur")]
         [StringLength(100, ErrorMessage = "Vardiya adı en fazla 100 karakter olabilir")]

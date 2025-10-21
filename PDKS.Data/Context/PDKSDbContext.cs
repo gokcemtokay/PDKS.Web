@@ -29,7 +29,8 @@ namespace PDKS.Data.Context
         public DbSet<Prim> Primler { get; set; }
         public DbSet<Departman> Departmanlar { get; set; }
         public DbSet<Mesai> Mesailer { get; set; }
-
+        public DbSet<KullaniciSirket> KullaniciSirketler { get; set; }
+        public DbSet<Sirket> Sirketler { get; set; }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             // Bu ValueConverter hem DateTime hem de DateTime? tipleri için çalışacak.
@@ -110,13 +111,12 @@ namespace PDKS.Data.Context
                 .HasOne(g => g.Personel)
                 .WithMany(p => p.GirisCikislar)
                 .HasForeignKey(g => g.PersonelId)
-                .HasForeignKey(g => g.CihazId)
                 .OnDelete(DeleteBehavior.Cascade);
 
             // GirisCikis - Cihaz (Many-to-One)
             modelBuilder.Entity<GirisCikis>()
                 .HasOne(g => g.Cihaz)
-                .WithMany()
+                .WithMany(c => c.GirisCikislar) 
                 .HasForeignKey(g => g.CihazId)
                 .OnDelete(DeleteBehavior.Restrict);
 
@@ -201,7 +201,7 @@ namespace PDKS.Data.Context
             // CihazLog - Cihaz (Many-to-One)
             modelBuilder.Entity<CihazLog>()
                 .HasOne(cl => cl.Cihaz)
-                .WithMany()
+                .WithMany(c => c.CihazLoglari) 
                 .HasForeignKey(cl => cl.CihazId)
                 .OnDelete(DeleteBehavior.Cascade);
 
@@ -238,6 +238,28 @@ namespace PDKS.Data.Context
                 .HasOne(p => p.Sirket)
                 .WithMany(s => s.Personeller)
                 .HasForeignKey(p => p.SirketId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<KullaniciSirket>()
+                // Composite Primary Key (birden fazla atama için benzersizlik sağlar)
+                .HasKey(ks => new { ks.KullaniciId, ks.SirketId });
+
+            modelBuilder.Entity<KullaniciSirket>()
+                .HasOne(ks => ks.Kullanici)
+                .WithMany(k => k.KullaniciSirketler)
+                .HasForeignKey(ks => ks.KullaniciId)
+                .OnDelete(DeleteBehavior.Restrict); // Kullanıcı silinirse kayıtlar kalsın
+
+            modelBuilder.Entity<KullaniciSirket>()
+                .HasOne(ks => ks.Sirket)
+                .WithMany(s => s.KullaniciSirketleri)
+                .HasForeignKey(ks => ks.SirketId)
+                .OnDelete(DeleteBehavior.Restrict); // Şirket silinirse kayıtlar kalsın (veya uygun aksiyon)
+
+            modelBuilder.Entity<Vardiya>()
+                .HasOne(v => v.Sirket)
+                .WithMany(s => s.Vardiyalar) // Varsayım: Sirket entity'sinde Vardiyalar ICollection'ı var.
+                .HasForeignKey(v => v.SirketId)
                 .OnDelete(DeleteBehavior.Restrict);
 
             // ============== SEED DATA - ROLLER ==============
@@ -323,6 +345,7 @@ namespace PDKS.Data.Context
                     KayitTarihi = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc)
                 }
             );
+
 
             // ============== SEED DATA - VARDIYA ==============
 

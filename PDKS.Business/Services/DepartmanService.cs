@@ -1,7 +1,10 @@
-﻿// PDKS.Business/Services/DepartmanService.cs
-using PDKS.Business.DTOs;
+﻿using PDKS.Business.DTOs;
 using PDKS.Data.Entities;
 using PDKS.Data.Repositories;
+using System.Collections.Generic;
+using System.Linq; // Select, Count, OrderBy, FirstOrDefault, Any için gerekli
+using System.Threading.Tasks; // Task için gerekli
+using System; // Exception, DateTime, HashSet için gerekli
 
 namespace PDKS.Business.Services
 {
@@ -35,6 +38,7 @@ namespace PDKS.Business.Services
 
         public async Task<DepartmanListDTO> GetByIdAsync(int id)
         {
+            // Tekil nesne çekerken ilişki (UstDepartman) dahil edilmelidir.
             var departman = await _unitOfWork.Departmanlar.GetByIdAsync(id);
             if (departman == null)
                 throw new Exception("Departman bulunamadı");
@@ -205,10 +209,13 @@ namespace PDKS.Business.Services
             }).OrderBy(d => d.DepartmanAdi);
         }
 
-        // ⭐ YENİ METODLAR: Şirket bazlı işlemler
+        // ⭐ YENİ METOT İMPLEMENTASYONU: Şirket bazlı filtreleme
         public async Task<IEnumerable<DepartmanListDTO>> GetBySirketAsync(int sirketId)
         {
+            // Şirket ID'sine göre departmanları filtrele
             var departmanlar = await _unitOfWork.Departmanlar.FindAsync(d => d.SirketId == sirketId);
+
+            // Personel ve Sirket bilgilerini çek (Optimize edilebilir, ancak mevcut yapıyı koruyor)
             var personeller = await _unitOfWork.Personeller.GetAllAsync();
             var sirket = await _unitOfWork.Sirketler.GetByIdAsync(sirketId);
 
@@ -221,6 +228,7 @@ namespace PDKS.Business.Services
                 Aciklama = d.Aciklama,
                 UstDepartmanAdi = d.UstDepartman?.Ad,
                 Durum = d.Durum,
+                // Personel sayısını sadece ilgili şirketin departmanları için hesaplamak daha doğru olurdu
                 PersonelSayisi = personeller.Count(p => p.DepartmanId == d.Id)
             }).OrderBy(d => d.DepartmanAdi);
         }

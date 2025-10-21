@@ -1,7 +1,10 @@
-﻿// PDKS.Business/Services/PersonelService.cs
-using PDKS.Business.DTOs;
+﻿using PDKS.Business.DTOs;
 using PDKS.Data.Entities;
 using PDKS.Data.Repositories;
+using System.Collections.Generic;
+using System.Linq; // Select, Count, OrderBy, FirstOrDefault, Any için gerekli
+using System.Threading.Tasks; // Tüm metotlar Task döndürdüğü için gerekli
+using System; // Exception ve DateTime için gerekli
 
 namespace PDKS.Business.Services
 {
@@ -59,6 +62,40 @@ namespace PDKS.Business.Services
                 GirisTarihi = p.GirisTarihi,
                 VardiyaAdi = p.Vardiya?.Ad
             }).OrderBy(p => p.AdSoyad);
+        }
+
+        // ⭐ YENİ METOT İMPLEMENTASYONU: Şirket bazlı filtreleme
+        public async Task<IEnumerable<PersonelListDTO>> GetBySirketAsync(int sirketId)
+        {
+            // Şirket ID'sine göre personelleri filtrele
+            var personeller = await _unitOfWork.Personeller.FindAsync(p => p.SirketId == sirketId);
+
+            // Personel listesi için sadece ilgili şirketi bir kez çek
+            var sirket = await _unitOfWork.Sirketler.GetByIdAsync(sirketId);
+
+            return personeller.Select(p => new PersonelListDTO
+            {
+                Id = p.Id,
+                SirketId = p.SirketId,
+                SirketAdi = sirket?.Unvan ?? "",
+                AdSoyad = p.AdSoyad,
+                SicilNo = p.SicilNo,
+                // Departman ve Vardiya navigasyon property'lerinin Eager Loading ile geldiği varsayılmıştır.
+                Departman = p.Departman?.Ad ?? string.Empty,
+                Gorev = p.Gorev,
+                Email = p.Email,
+                Telefon = p.Telefon,
+                Durum = p.Durum,
+                GirisTarihi = p.GirisTarihi,
+                CikisTarihi = p.CikisTarihi,
+                VardiyaAdi = p.Vardiya?.Ad
+            }).OrderBy(p => p.AdSoyad);
+        }
+
+        public async Task<int> GetSirketPersonelSayisiAsync(int sirketId)
+        {
+            var personeller = await _unitOfWork.Personeller.FindAsync(p => p.SirketId == sirketId && p.Durum);
+            return personeller.Count();
         }
 
         public async Task<PersonelDetailDTO> GetByIdAsync(int id)
@@ -317,34 +354,10 @@ namespace PDKS.Business.Services
             }).OrderBy(p => p.AdSoyad);
         }
 
-        // ⭐ YENİ METODLAR: Şirket bazlı işlemler
-        public async Task<IEnumerable<PersonelListDTO>> GetBySirketAsync(int sirketId)
-        {
-            var personeller = await _unitOfWork.Personeller.FindAsync(p => p.SirketId == sirketId);
-            var sirket = await _unitOfWork.Sirketler.GetByIdAsync(sirketId);
-
-            return personeller.Select(p => new PersonelListDTO
-            {
-                Id = p.Id,
-                SirketId = p.SirketId,
-                SirketAdi = sirket?.Unvan ?? "",
-                AdSoyad = p.AdSoyad,
-                SicilNo = p.SicilNo,
-                Departman = p.Departman?.Ad ?? string.Empty,
-                Gorev = p.Gorev,
-                Email = p.Email,
-                Telefon = p.Telefon,
-                Durum = p.Durum,
-                GirisTarihi = p.GirisTarihi,
-                CikisTarihi = p.CikisTarihi,
-                VardiyaAdi = p.Vardiya?.Ad
-            }).OrderBy(p => p.AdSoyad);
-        }
-
-        public async Task<int> GetSirketPersonelSayisiAsync(int sirketId)
-        {
-            var personeller = await _unitOfWork.Personeller.FindAsync(p => p.SirketId == sirketId && p.Durum);
-            return personeller.Count();
-        }
+        //public async Task<int> GetSirketPersonelSayisiAsync(int sirketId)
+        //{
+        //    var personeller = await _unitOfWork.Personeller.FindAsync(p => p.SirketId == sirketId && p.Durum);
+        //    return personeller.Count();
+        //}
     }
 }

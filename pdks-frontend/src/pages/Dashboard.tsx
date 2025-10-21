@@ -6,6 +6,8 @@ import {
     Typography,
     Box,
     Paper,
+    CircularProgress,
+    Alert,
 } from '@mui/material';
 import {
     People as PeopleIcon,
@@ -14,6 +16,7 @@ import {
     TrendingUp as TrendingUpIcon,
 } from '@mui/icons-material';
 import api from '../services/api';
+import { useAuth } from '../contexts/AuthContext';
 
 interface Stats {
     toplamPersonel: number;
@@ -23,18 +26,28 @@ interface Stats {
 }
 
 function Dashboard() {
+    const { isLoggedIn, currentSirketId, aktifSirket } = useAuth();
     const [stats, setStats] = useState<Stats>({
         toplamPersonel: 0,
         toplamDepartman: 0,
         toplamVardiya: 0,
         bugunGelen: 0,
     });
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
-        loadStats();
-    }, []);
+        if (isLoggedIn && currentSirketId) {
+            loadStats();
+        } else if (!isLoggedIn) {
+            setLoading(false);
+        }
+    }, [isLoggedIn, currentSirketId]);
 
     const loadStats = async () => {
+        setLoading(true);
+        setError(null);
+
         try {
             const [personelRes, departmanRes, vardiyaRes] = await Promise.all([
                 api.get('/Personel'),
@@ -42,14 +55,29 @@ function Dashboard() {
                 api.get('/Vardiya'),
             ]);
 
+            // ⭐ KRİTİK DÜZELTME: Yanıtın null veya undefined olma ihtimaline karşı güvence
+            const personelData = Array.isArray(personelRes.data) ? personelRes.data : [];
+            const departmanData = Array.isArray(departmanRes.data) ? departmanRes.data : [];
+            const vardiyaData = Array.isArray(vardiyaRes.data) ? vardiyaRes.data : [];
+
             setStats({
-                toplamPersonel: personelRes.data.length,
-                toplamDepartman: departmanRes.data.length,
-                toplamVardiya: vardiyaRes.data.length,
-                bugunGelen: Math.floor(Math.random() * personelRes.data.length),
+                toplamPersonel: personelData.length,
+                toplamDepartman: departmanData.length,
+                toplamVardiya: vardiyaData.length,
+                // Güvenli erişim
+                bugunGelen: Math.floor(Math.random() * personelData.length),
             });
-        } catch (error) {
-            console.error('İstatistikler yüklenemedi:', error);
+
+        } catch (err: any) {
+            console.error('İstatistikler yüklenemedi:', err);
+            const errMsg = err.response?.data?.message || err.message || 'Veri yüklenirken sunucu hatası oluştu.';
+            setError(errMsg);
+            setStats({ // Hata durumunda bile istatistikleri sıfırla
+                toplamPersonel: 0, toplamDepartman: 0, toplamVardiya: 0, bugunGelen: 0,
+            });
+        } finally {
+            // ⭐ FİNAL ÇÖZÜM: Hata oluşsa bile yüklenme durumundan çık
+            setLoading(false);
         }
     };
 
@@ -79,6 +107,33 @@ function Dashboard() {
             color: '#43e97b',
         },
     ];
+
+    if (loading) {
+        return (
+            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', mt: 10 }}>
+                <CircularProgress />
+                <Typography sx={{ ml: 2, color: 'text.secondary' }}>Veriler yükleniyor...</Typography>
+            </Box>
+        );
+    }
+
+    if (error) {
+        return (
+            <Alert severity="error" sx={{ mt: 3 }}>
+                Dashboard yüklenemedi. **Hata:** {error}
+            </Alert>
+        );
+    }
+
+    // Veri yoksa bile ekran boş kalmasın, bilgi versin.
+    if (!aktifSirket || (stats.toplamPersonel === 0 && stats.toplamDepartman === 0)) {
+        return (
+            <Alert severity="info" sx={{ mt: 3 }}>
+                Aktif şirket: **{aktifSirket?.unvan}**. Henüz yüklenecek personel veya istatistik verisi bulunamadı.
+            </Alert>
+        );
+    }
+
 
     return (
         <Box>
@@ -125,7 +180,7 @@ function Dashboard() {
                             Son Aktiviteler
                         </Typography>
                         <Typography color="text.secondary">
-                            Yakında burada son giriş-çıkış kayıtları görüntülenecek...
+                            Aktif şirket **{aktifSirket.unvan}** için son giriş-çıkış kayıtları burada görüntülenecek...
                         </Typography>
                     </Paper>
                 </Grid>

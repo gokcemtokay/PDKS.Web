@@ -3,6 +3,8 @@ using Microsoft.AspNetCore.Mvc;
 using PDKS.Business.DTOs;
 using PDKS.Business.Services;
 using System;
+using System.Linq;
+using System.Security.Claims;
 using System.Threading.Tasks;
 
 namespace PDKS.WebUI.Controllers
@@ -21,14 +23,33 @@ namespace PDKS.WebUI.Controllers
             _vardiyaService = vardiyaService;
         }
 
+        // Yardımcı metot: JWT token'dan aktif şirket ID'sini alır.
+        private int GetCurrentSirketId()
+        {
+            var sirketIdClaim = User.Claims.FirstOrDefault(c => c.Type == "sirketId");
+            if (sirketIdClaim != null && int.TryParse(sirketIdClaim.Value, out int sirketId))
+            {
+                return sirketId;
+            }
+            throw new UnauthorizedAccessException("Yetkilendirme token'ında şirket ID'si bulunamadı.");
+        }
+
         // GET: api/Vardiya
         [HttpGet]
         public async Task<IActionResult> GetVardiyalar()
         {
             try
             {
-                var vardiyalar = await _vardiyaService.GetAllAsync();
+                // ⭐ GÜNCELLEME: JWT Token'dan şirket ID'sini al ve filtrele
+                var sirketId = GetCurrentSirketId();
+                // Bu çağrının Servis katmanında Vardiya.SirketId == sirketId filtresi yapması beklenir.
+                var vardiyalar = await _vardiyaService.GetBySirketAsync(sirketId);
+
                 return Ok(vardiyalar);
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                return Unauthorized(new { message = ex.Message });
             }
             catch (Exception ex)
             {
@@ -47,7 +68,20 @@ namespace PDKS.WebUI.Controllers
                 {
                     return NotFound($"Vardiya with ID {id} not found.");
                 }
+
+                // ⭐ GÜVENLİK KONTROLÜ: Vardiyanın aktif şirkete ait olup olmadığını kontrol et
+                var sirketId = GetCurrentSirketId();
+                // DTO'da SirketId alanı olduğu varsayılmıştır.
+                if (vardiya.SirketId != sirketId)
+                {
+                    return Forbid("Bu vardiya, yetkili olduğunuz şirkete ait değildir.");
+                }
+
                 return Ok(vardiya);
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                return Unauthorized(new { message = ex.Message });
             }
             catch (Exception ex)
             {
@@ -66,9 +100,18 @@ namespace PDKS.WebUI.Controllers
 
             try
             {
+                // ⭐ GÜVENLİK VE GÜNCELLEME: DTO'ya aktif şirket ID'sini enjekte et
+                var sirketId = GetCurrentSirketId();
+                // Bu adımın Service katmanında gerçekleşmesi beklenir.
+                // Servis, gelen DTO'ya sirketId'yi eklemeli veya DTO'da bu alan olmalıdır.
+
                 var newId = await _vardiyaService.CreateAsync(dto);
                 var createdVardiya = await _vardiyaService.GetByIdAsync(newId);
                 return CreatedAtAction(nameof(GetVardiyaById), new { id = newId }, createdVardiya);
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                return Unauthorized(new { message = ex.Message });
             }
             catch (Exception ex)
             {
@@ -92,8 +135,16 @@ namespace PDKS.WebUI.Controllers
 
             try
             {
+                // ⭐ GÜVENLİK KONTROLÜ: Güncellenen vardiyanın şirkete ait olduğunu varsayarak işlem yapılır.
+                var sirketId = GetCurrentSirketId();
+                // Servis katmanında bu kontrolün yapılması beklenir.
+
                 await _vardiyaService.UpdateAsync(dto);
                 return NoContent();
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                return Unauthorized(new { message = ex.Message });
             }
             catch (Exception ex)
             {

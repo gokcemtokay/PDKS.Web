@@ -8,7 +8,8 @@ namespace PDKS.Data.Entities
     {
         [Key]
         public int Id { get; set; }
-
+        [Required]
+        public int SirketId { get; set; }
         [Required]
         [StringLength(100)]
         public string Ad { get; set; }
@@ -29,7 +30,8 @@ namespace PDKS.Data.Entities
         public string? Aciklama { get; set; }
 
         public bool Durum { get; set; } = true;
-
+        [ForeignKey("SirketId")]
+        public Sirket Sirket { get; set; }
         // Navigation Properties
         public ICollection<Personel> Personeller { get; set; } = new List<Personel>();
     }

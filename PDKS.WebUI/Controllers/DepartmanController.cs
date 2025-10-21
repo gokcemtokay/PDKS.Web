@@ -3,6 +3,8 @@ using Microsoft.AspNetCore.Mvc;
 using PDKS.Business.DTOs;
 using PDKS.Business.Services;
 using System;
+using System.Linq;
+using System.Security.Claims;
 using System.Threading.Tasks;
 
 namespace PDKS.WebUI.Controllers
@@ -21,14 +23,34 @@ namespace PDKS.WebUI.Controllers
             _departmanService = departmanService;
         }
 
+        // Yardımcı metot: JWT token'dan aktif şirket ID'sini alır.
+        private int GetCurrentSirketId()
+        {
+            var sirketIdClaim = User.Claims.FirstOrDefault(c => c.Type == "sirketId");
+            if (sirketIdClaim != null && int.TryParse(sirketIdClaim.Value, out int sirketId))
+            {
+                return sirketId;
+            }
+            throw new UnauthorizedAccessException("Yetkilendirme token'ında şirket ID'si bulunamadı.");
+        }
+
+
         // GET: api/Departman
         [HttpGet]
         public async Task<IActionResult> GetDepartmanlar()
         {
             try
             {
-                var departmanlar = await _departmanService.GetAllAsync();
+                // ⭐ GÜNCELLEME: JWT Token'dan şirket ID'sini al ve filtrele
+                var sirketId = GetCurrentSirketId();
+                // Bu çağrının Servis katmanında Departman.SirketId == sirketId filtresi yapması beklenir.
+                var departmanlar = await _departmanService.GetBySirketAsync(sirketId);
+
                 return Ok(departmanlar);
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                return Unauthorized(new { message = ex.Message });
             }
             catch (Exception ex)
             {
@@ -47,7 +69,21 @@ namespace PDKS.WebUI.Controllers
                 {
                     return NotFound($"Departman with ID {id} not found.");
                 }
+
+                // ⭐ GÜVENLİK KONTROLÜ: Departmanın aktif şirkete ait olup olmadığını kontrol et
+                // Not: Servis'ten dönen DTO'nun SirketId içermesi gerekir.
+                var sirketId = GetCurrentSirketId();
+                // DTO'da SirketId alanı olduğu varsayılmıştır.
+                if (departman.SirketId != sirketId)
+                {
+                    return Forbid("Bu departman, yetkili olduğunuz şirkete ait değildir.");
+                }
+
                 return Ok(departman);
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                return Unauthorized(new { message = ex.Message });
             }
             catch (Exception ex)
             {
@@ -67,9 +103,20 @@ namespace PDKS.WebUI.Controllers
 
             try
             {
+                // ⭐ GÜVENLİK KONTROLÜ: DTO'daki şirket ID'si token'daki ID ile eşleşmeli
+                var sirketId = GetCurrentSirketId();
+                if (dto.SirketId != sirketId)
+                {
+                    return Forbid("Yeni departman kaydı, sadece aktif şirketinize yapılabilir.");
+                }
+
                 var newDepartmanId = await _departmanService.CreateAsync(dto);
                 var createdDepartman = await _departmanService.GetByIdAsync(newDepartmanId);
                 return CreatedAtAction(nameof(GetDepartmanById), new { id = newDepartmanId }, createdDepartman);
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                return Unauthorized(new { message = ex.Message });
             }
             catch (Exception ex)
             {
@@ -94,8 +141,19 @@ namespace PDKS.WebUI.Controllers
 
             try
             {
+                // ⭐ GÜVENLİK KONTROLÜ: DTO'daki şirket ID'si token'daki ID ile eşleşmeli
+                var sirketId = GetCurrentSirketId();
+                if (dto.SirketId != sirketId)
+                {
+                    return Forbid("Departman güncellemesi, sadece aktif şirketinize yapılabilir.");
+                }
+
                 await _departmanService.UpdateAsync(dto);
                 return NoContent();
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                return Unauthorized(new { message = ex.Message });
             }
             catch (Exception ex)
             {
@@ -114,8 +172,26 @@ namespace PDKS.WebUI.Controllers
         {
             try
             {
+                var departman = await _departmanService.GetByIdAsync(id);
+                if (departman == null)
+                {
+                    return NotFound($"Departman with ID {id} not found.");
+                }
+
+                // ⭐ GÜVENLİK KONTROLÜ: Departmanın aktif şirkete ait olup olmadığını kontrol et
+                var sirketId = GetCurrentSirketId();
+                // DTO'da SirketId alanı olduğu varsayılmıştır.
+                if (departman.SirketId != sirketId)
+                {
+                    return Forbid("Bu departman, yetkili olduğunuz şirkete ait değildir ve silinemez.");
+                }
+
                 await _departmanService.DeleteAsync(id);
                 return NoContent();
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                return Unauthorized(new { message = ex.Message });
             }
             catch (Exception ex)
             {

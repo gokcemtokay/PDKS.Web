@@ -6,7 +6,7 @@ using PDKS.Data.Context;
 using PDKS.Data.Repositories;
 using System.Text;
 using Microsoft.OpenApi.Models;
-
+using AutoMapper;
 
 Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 Console.OutputEncoding = Encoding.UTF8;
@@ -16,6 +16,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 // --- 1. Servislerin Eklenmesi ---
 
+builder.Services.AddAutoMapper(typeof(IVardiyaService).Assembly);
 // Database Context - PostgreSQL
 builder.Services.AddDbContext<PDKSDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));

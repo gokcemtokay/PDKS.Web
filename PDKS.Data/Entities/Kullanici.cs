@@ -48,5 +48,6 @@ namespace PDKS.Data.Entities
 
         public ICollection<Log> Loglar { get; set; } = new List<Log>();
         public ICollection<Bildirim> Bildirimler { get; set; } = new List<Bildirim>();
+        public virtual ICollection<KullaniciSirket> KullaniciSirketler { get; set; } = new List<KullaniciSirket>();
     }
 }

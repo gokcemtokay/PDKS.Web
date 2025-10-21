@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using PDKS.Data.Context;
@@ -11,9 +12,11 @@ using PDKS.Data.Context;
 namespace PDKS.Data.Migrations
 {
     [DbContext(typeof(PDKSDbContext))]
-    partial class PDKSDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251020204236_FinalStructuralFixes")]
+    partial class FinalStructuralFixes
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1104,15 +1107,10 @@ namespace PDKS.Data.Migrations
                     b.Property<bool>("GeceVardiyasiMi")
                         .HasColumnType("boolean");
 
-                    b.Property<int>("SirketId")
-                        .HasColumnType("integer");
-
                     b.Property<int>("ToleransSuresiDakika")
                         .HasColumnType("integer");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("SirketId");
 
                     b.ToTable("Vardiyalar");
 
@@ -1127,7 +1125,6 @@ namespace PDKS.Data.Migrations
                             Durum = true,
                             EsnekVardiyaMi = false,
                             GeceVardiyasiMi = false,
-                            SirketId = 0,
                             ToleransSuresiDakika = 15
                         },
                         new
@@ -1140,7 +1137,6 @@ namespace PDKS.Data.Migrations
                             Durum = true,
                             EsnekVardiyaMi = false,
                             GeceVardiyasiMi = true,
-                            SirketId = 0,
                             ToleransSuresiDakika = 15
                         },
                         new
@@ -1153,7 +1149,6 @@ namespace PDKS.Data.Migrations
                             Durum = true,
                             EsnekVardiyaMi = true,
                             GeceVardiyasiMi = false,
-                            SirketId = 0,
                             ToleransSuresiDakika = 30
                         });
                 });
@@ -1377,17 +1372,6 @@ namespace PDKS.Data.Migrations
                     b.Navigation("AnaSirketNavigation");
                 });
 
-            modelBuilder.Entity("PDKS.Data.Entities.Vardiya", b =>
-                {
-                    b.HasOne("PDKS.Data.Entities.Sirket", "Sirket")
-                        .WithMany("Vardiyalar")
-                        .HasForeignKey("SirketId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("Sirket");
-                });
-
             modelBuilder.Entity("PDKS.Data.Entities.Cihaz", b =>
                 {
                     b.Navigation("CihazLoglari");
@@ -1442,8 +1426,6 @@ namespace PDKS.Data.Migrations
                     b.Navigation("KullaniciSirketleri");
 
                     b.Navigation("Personeller");
-
-                    b.Navigation("Vardiyalar");
                 });
 
             modelBuilder.Entity("PDKS.Data.Entities.Vardiya", b =>

@@ -10,7 +10,9 @@ using System;
 using System.Threading.Tasks;
 using PDKS.Data.Entities;
 using Microsoft.AspNetCore.Authorization;
-using DocumentFormat.OpenXml.Math;
+using System.Linq;
+using System.Collections.Generic;
+using PDKS.Data.Repositories;
 
 namespace PDKS.WebUI.Controllers
 {
@@ -23,12 +25,14 @@ namespace PDKS.WebUI.Controllers
         private readonly IAuthService _authService;
         private readonly IConfiguration _configuration;
         private readonly IKullaniciService _kullaniciService;
+        private readonly IUnitOfWork _unitOfWork;
 
-        public AuthController(IAuthService authService, IConfiguration configuration, IKullaniciService kullaniciService)
+        public AuthController(IAuthService authService, IConfiguration configuration, IKullaniciService kullaniciService, IUnitOfWork unitOfWork)
         {
             _authService = authService;
             _configuration = configuration;
             _kullaniciService = kullaniciService;
+            _unitOfWork = unitOfWork;
         }
 
         [HttpPost("login")]
@@ -39,15 +43,87 @@ namespace PDKS.WebUI.Controllers
                 return BadRequest(ModelState);
             }
 
+            // 1. Kullanıcıyı doğrula (Şifre kontrolü)
             var kullanici = await _authService.ValidateUserAsync(loginDto.Email, loginDto.Password);
 
-            if (kullanici != null)
+            if (kullanici == null)
             {
-                var token = GenerateJwtToken(kullanici);
-                return Ok(new { token = token });
+                return Unauthorized(new { message = "Geçersiz e-posta veya şifre." });
             }
 
-            return Unauthorized("Geçersiz e-posta veya şifre.");
+            // 2. CRITICAL FIX: Kullanıcının Rol'ünü çek (NRE hatasını gidermek için)
+            var rol = await _unitOfWork.Roller.GetByIdAsync(kullanici.RolId);
+
+            if (rol == null)
+            {
+                return StatusCode(500, new { message = "Kullanıcının rol bilgisi veritabanında eksik." });
+            }
+            kullanici.Rol = rol;
+
+            // 3. Kullanıcının yetkili olduğu KullaniciSirket kayıtlarını getir
+            var yetkiliSirketKayitlari = await _unitOfWork.GetRepository<KullaniciSirket>()
+                .FindAsync(ks => ks.KullaniciId == kullanici.Id && ks.Aktif);
+
+            if (!yetkiliSirketKayitlari.Any())
+            {
+                return Unauthorized(new { message = "Kullanıcıya ait aktif şirket bulunamadı. Lütfen sistem yöneticinize başvurun." });
+            }
+
+            // 4. Varsayılan şirketi bul veya ilk şirketi kullan
+            // NOT: Varsayilan alanı KullaniciSirket entity'sinde bulunmalıdır.
+            var varsayilanKayit = yetkiliSirketKayitlari.FirstOrDefault(ks => ks.Varsayilan);
+            var aktifKayit = varsayilanKayit ?? yetkiliSirketKayitlari.First();
+
+            // 5. Aktif şirketin detaylarını çek (token ve ana ekran için)
+            var aktifSirket = await _unitOfWork.Sirketler.GetByIdAsync(aktifKayit.SirketId);
+
+            if (aktifSirket == null)
+            {
+                return StatusCode(500, new { message = "Seçilen şirket bilgisi veritabanında bulunamadı." });
+            }
+
+            // 6. Yetkili şirketler listesi için tüm detayları çek ve DTO listesi oluştur (NRE'siz Projeksiyon)
+            var yetkiliSirketDetaylari = new List<object>();
+
+            // Her bir yetkili şirketin detayını çekiyoruz (Eager Loading desteği olmadığı varsayımıyla NRE'yi önlüyoruz)
+            foreach (var kayit in yetkiliSirketKayitlari)
+            {
+                var sirketDetay = await _unitOfWork.Sirketler.GetByIdAsync(kayit.SirketId);
+
+                if (sirketDetay != null)
+                {
+                    yetkiliSirketDetaylari.Add(new
+                    {
+                        id = sirketDetay.Id,
+                        unvan = sirketDetay.Unvan,
+                        logoUrl = sirketDetay.LogoUrl,
+                        varsayilan = kayit.Varsayilan
+                    });
+                }
+            }
+
+
+            // 7. JWT Token oluştur
+            var token = GenerateJwtToken(kullanici, aktifSirket.Id, aktifSirket.Unvan);
+
+            return Ok(new
+            {
+                token = token,
+                kullanici = new
+                {
+                    id = kullanici.Id,
+                    email = kullanici.Email,
+                    rol = kullanici.Rol.RolAdi,
+                    personelId = kullanici.PersonelId
+                },
+                aktifSirket = new
+                {
+                    id = aktifSirket.Id,
+                    unvan = aktifSirket.Unvan,
+                    logoUrl = aktifSirket.LogoUrl
+                },
+                yetkiliSirketler = yetkiliSirketDetaylari
+            });
         }
 
         [HttpPost("logout")]
@@ -55,13 +131,11 @@ namespace PDKS.WebUI.Controllers
         public IActionResult Logout()
         {
             // JWT stateless olduğu için sunucu tarafında yapılacak bir işlem yoktur.
-            // Token'ın silinmesi ve oturumun sonlandırılması client (React) tarafının sorumluluğundadır.
-            // Bu endpoint, client'a işlemin başarılı olduğunu bildirmek için 200 OK döner.
             return Ok(new { message = "Çıkış başarılı. Lütfen token'ı client tarafında silin." });
         }
 
 
-        private string GenerateJwtToken(Kullanici kullanici)
+        private string GenerateJwtToken(Kullanici kullanici, int aktifSirketId, string sirketAdi)
         {
             var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]));
             var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
@@ -71,7 +145,9 @@ namespace PDKS.WebUI.Controllers
                 new Claim(JwtRegisteredClaimNames.Sub, kullanici.Id.ToString()),
                 new Claim(JwtRegisteredClaimNames.Email, kullanici.Email),
                 new Claim(ClaimTypes.Role, kullanici.Rol.RolAdi),
-                new Claim("personelId", kullanici.PersonelId.ToString()),
+                new Claim("personelId", kullanici.PersonelId?.ToString() ?? ""),
+                new Claim("sirketId", aktifSirketId.ToString()),
+                new Claim("sirketAdi", sirketAdi),
                 new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
             };
 
@@ -79,7 +155,7 @@ namespace PDKS.WebUI.Controllers
                 issuer: _configuration["Jwt:Issuer"],
                 audience: _configuration["Jwt:Audience"],
                 claims: claims,
-                expires: DateTime.Now.AddHours(8), // Token geçerlilik süresi
+                expires: DateTime.Now.AddHours(8),
                 signingCredentials: credentials);
 
             return new JwtSecurityTokenHandler().WriteToken(token);

@@ -1,10 +1,16 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Configuration;
+using Microsoft.IdentityModel.Tokens;
 using PDKS.Business.DTOs;
 using PDKS.Business.Services;
+using PDKS.Data.Entities;
+using PDKS.Data.Repositories;
 using System;
+using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Security.Claims;
+using System.Text;
 using System.Threading.Tasks;
 
 namespace PDKS.WebUI.Controllers
@@ -17,10 +23,14 @@ namespace PDKS.WebUI.Controllers
     public class SirketController : ControllerBase
     {
         private readonly ISirketService _sirketService;
+        private readonly IConfiguration _configuration; 
+        private readonly IUnitOfWork _unitOfWork;
 
-        public SirketController(ISirketService sirketService)
+        public SirketController(ISirketService sirketService, IConfiguration configuration, IUnitOfWork unitOfWork)
         {
             _sirketService = sirketService;
+            _configuration = configuration; 
+            _unitOfWork = unitOfWork; 
         }
 
         // GET: api/Sirket
@@ -155,16 +165,105 @@ namespace PDKS.WebUI.Controllers
             }
         }
 
-        // Helper metot: Token içerisinden o anki kullanıcının ID'sini okur.
+        // Helper metodlar
         private int GetCurrentUserId()
         {
-            var userIdClaim = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier);
+            var userIdClaim = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier
+                                                              || c.Type == JwtRegisteredClaimNames.Sub);
             if (userIdClaim != null && int.TryParse(userIdClaim.Value, out int userId))
             {
                 return userId;
             }
-            // Bu durum normalde [Authorize] olduğu için yaşanmamalı.
             throw new InvalidOperationException("User ID could not be found in token.");
+        }
+
+
+        [HttpPost("switch/{sirketId}")]
+        [Authorize]
+        public async Task<IActionResult> SwitchSirket(int sirketId)
+        {
+            try
+            {
+                var kullaniciId = GetCurrentUserId();
+
+                // Kullanıcının bu şirkete yetkisi var mı kontrol et
+                var yetki = await _unitOfWork.GetRepository<KullaniciSirket>()
+                    .FirstOrDefaultAsync(ks =>
+                        ks.KullaniciId == kullaniciId &&
+                        ks.SirketId == sirketId &&
+                        ks.Aktif);
+
+                if (yetki == null)
+                {
+                    return Forbid("Bu şirkete erişim yetkiniz yok.");
+                }
+
+                // Kullanıcı ve şirket bilgisini al
+                var kullanici = await _unitOfWork.Kullanicilar.GetByIdAsync(kullaniciId);
+                if (kullanici == null)
+                {
+                    return NotFound(new { message = "Kullanıcı bulunamadı." });
+                }
+
+                kullanici.Rol = await _unitOfWork.Roller.GetByIdAsync(kullanici.RolId);
+                var sirket = await _unitOfWork.Sirketler.GetByIdAsync(sirketId);
+
+                // Yeni token oluştur
+                var newToken = GenerateJwtToken(kullanici, sirketId, sirket.Unvan);
+
+                return Ok(new
+                {
+                    token = newToken,
+                    sirket = new
+                    {
+                        id = sirket.Id,
+                        unvan = sirket.Unvan,
+                        logoUrl = sirket.LogoUrl
+                    }
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = $"Hata: {ex.Message}" });
+            }
+        }
+
+        private string GenerateJwtToken(Kullanici kullanici, int sirketId, string sirketAdi)
+        {
+            // Yukarıdaki GenerateJwtToken metodu
+            var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]));
+            var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
+
+            var claims = new[]
+            {
+                new Claim(JwtRegisteredClaimNames.Sub, kullanici.Id.ToString()),
+                new Claim(JwtRegisteredClaimNames.Email, kullanici.Email),
+                new Claim(ClaimTypes.Role, kullanici.Rol.RolAdi),
+                new Claim("personelId", kullanici.PersonelId.ToString()),
+                new Claim("sirketId", sirketId.ToString()),
+                new Claim("sirketAdi", sirketAdi),
+                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
+            };
+
+            var token = new JwtSecurityToken(
+                issuer: _configuration["Jwt:Issuer"],
+                audience: _configuration["Jwt:Audience"],
+                claims: claims,
+                expires: DateTime.Now.AddHours(8),
+                signingCredentials: credentials);
+
+            return new JwtSecurityTokenHandler().WriteToken(token);
+        }
+
+        // Token'dan şirket ID'sini al
+        private int GetCurrentSirketId()
+        {
+            var sirketIdClaim = User.Claims.FirstOrDefault(c => c.Type == "sirketId");
+            if (sirketIdClaim != null && int.TryParse(sirketIdClaim.Value, out int sirketId))
+            {
+                return sirketId;
+            }
+            throw new InvalidOperationException("Şirket ID could not be found in token.");
         }
     }
 }
