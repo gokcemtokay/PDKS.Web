@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using PDKS.Data.Context;
@@ -11,9 +12,11 @@ using PDKS.Data.Context;
 namespace PDKS.Data.Migrations
 {
     [DbContext(typeof(PDKSDbContext))]
-    partial class PDKSDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251021142701_AddNewModules")]
+    partial class AddNewModules
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -627,48 +630,6 @@ namespace PDKS.Data.Migrations
                     b.HasIndex("UstDepartmanId");
 
                     b.ToTable("Departmanlar");
-                });
-
-            modelBuilder.Entity("PDKS.Data.Entities.DeviceToken", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<bool>("Aktif")
-                        .HasColumnType("boolean");
-
-                    b.Property<string>("DeviceInfo")
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)");
-
-                    b.Property<int>("KullaniciId")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime>("OlusturmaTarihi")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Platform")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)");
-
-                    b.Property<DateTime>("SonKullanimTarihi")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Token")
-                        .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("KullaniciId", "Token")
-                        .IsUnique();
-
-                    b.ToTable("DeviceTokens");
                 });
 
             modelBuilder.Entity("PDKS.Data.Entities.DosyaTalebi", b =>
@@ -2084,9 +2045,6 @@ namespace PDKS.Data.Migrations
                     b.Property<DateTime?>("OlusturmaTarihi")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<string>("ProfilResmi")
-                        .HasColumnType("text");
-
                     b.Property<string>("SicilNo")
                         .IsRequired()
                         .HasMaxLength(20)
@@ -2996,17 +2954,6 @@ namespace PDKS.Data.Migrations
                     b.Navigation("Sirket");
 
                     b.Navigation("UstDepartman");
-                });
-
-            modelBuilder.Entity("PDKS.Data.Entities.DeviceToken", b =>
-                {
-                    b.HasOne("PDKS.Data.Entities.Kullanici", "Kullanici")
-                        .WithMany()
-                        .HasForeignKey("KullaniciId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Kullanici");
                 });
 
             modelBuilder.Entity("PDKS.Data.Entities.DosyaTalebi", b =>

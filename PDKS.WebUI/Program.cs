@@ -7,6 +7,11 @@ using PDKS.Data.Repositories;
 using System.Text;
 using Microsoft.OpenApi.Models;
 using AutoMapper;
+using PDKS.WebUI.Hubs;
+using Microsoft.AspNetCore.Mvc.Versioning;
+using Microsoft.AspNetCore.Mvc;
+using AspNetCoreRateLimit;
+
 
 Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 Console.OutputEncoding = Encoding.UTF8;
@@ -21,6 +26,7 @@ builder.Services.AddAutoMapper(typeof(IVardiyaService).Assembly);
 builder.Services.AddDbContext<PDKSDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
+
 // Add services to the container.
 // MVC yerine API Controller'larını kullanacağımızı belirtiyoruz.
 builder.Services.AddControllers().AddJsonOptions(options =>
@@ -28,6 +34,8 @@ builder.Services.AddControllers().AddJsonOptions(options =>
     options.JsonSerializerOptions.Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping;
     options.JsonSerializerOptions.WriteIndented = true;
 });
+
+builder.Services.AddSignalR();
 
 // Swagger (OpenAPI) servisini ekleyerek API'yi test etmek için bir arayüz sağlıyoruz.
 builder.Services.AddEndpointsApiExplorer();
@@ -84,8 +92,51 @@ builder.Services.AddScoped<IExportAndEmailService, ExportAndEmailService>();
 builder.Services.AddScoped<IBackupService, BackupService>();
 builder.Services.AddScoped<ISirketService, SirketService>();
 builder.Services.AddScoped<ICihazService, CihazService>();
+builder.Services.AddScoped<IOnayAkisiService, OnayAkisiService>();
+// Register Services kısmında namespace değişikliği:
+
+builder.Services.AddScoped<IFileUploadService, FileUploadService>();
+
+builder.Services.AddScoped<PDKS.WebUI.Services.IBildirimService, PDKS.WebUI.Services.BildirimService>();
+builder.Services.AddScoped<PDKS.Business.Services.IFileUploadService, PDKS.Business.Services.FileUploadService>();
+
+// Push Notification Service
+builder.Services.AddScoped<PDKS.WebUI.Services.IPushNotificationService, PDKS.WebUI.Services.PushNotificationService>();
+
+// API Versioning ekle (builder.Services kısmına)
+builder.Services.AddApiVersioning(options =>
+{
+    options.DefaultApiVersion = new ApiVersion(1, 0);
+    options.AssumeDefaultVersionWhenUnspecified = true;
+    options.ReportApiVersions = true;
+    options.ApiVersionReader = ApiVersionReader.Combine(
+        new UrlSegmentApiVersionReader(),
+        new HeaderApiVersionReader("X-Api-Version"),
+        new QueryStringApiVersionReader("api-version")
+    );
+});
+
+builder.Services.AddVersionedApiExplorer(options =>
+{
+    options.GroupNameFormat = "'v'VVV";
+    options.SubstituteApiVersionInUrl = true;
+});
+
+// Response Compression (Mobil için önemli - veri tasarrufu)
+builder.Services.AddResponseCompression(options =>
+{
+    options.EnableForHttps = true;
+    options.Providers.Add<Microsoft.AspNetCore.ResponseCompression.GzipCompressionProvider>();
+    options.Providers.Add<Microsoft.AspNetCore.ResponseCompression.BrotliCompressionProvider>();
+});
+
+builder.Services.Configure<Microsoft.AspNetCore.ResponseCompression.GzipCompressionProviderOptions>(options =>
+{
+    options.Level = System.IO.Compression.CompressionLevel.Fastest;
+});
 
 // --- 2. Kimlik Doğrulama (Authentication) Yapılandırması (Cookie yerine JWT) ---
+// Authentication
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
@@ -98,6 +149,23 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidIssuer = builder.Configuration["Jwt:Issuer"],
             ValidAudience = builder.Configuration["Jwt:Audience"],
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]))
+        };
+
+        // ✅ SignalR için JWT Authentication
+        options.Events = new JwtBearerEvents
+        {
+            OnMessageReceived = context =>
+            {
+                var accessToken = context.Request.Query["access_token"];
+                var path = context.HttpContext.Request.Path;
+
+                if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/notificationHub"))
+                {
+                    context.Token = accessToken;
+                }
+
+                return Task.CompletedTask;
+            }
         };
     });
 
@@ -130,6 +198,32 @@ builder.Services.AddCors(options =>
     });
 });
 
+// Rate Limiting (DDoS koruması)
+builder.Services.AddMemoryCache();
+builder.Services.Configure<AspNetCoreRateLimit.IpRateLimitOptions>(options =>
+{
+    options.EnableEndpointRateLimiting = true;
+    options.StackBlockedRequests = false;
+    options.HttpStatusCode = 429;
+    options.RealIpHeader = "X-Real-IP";
+    options.ClientIdHeader = "X-ClientId";
+    options.GeneralRules = new List<AspNetCoreRateLimit.RateLimitRule>
+    {
+        new AspNetCoreRateLimit.RateLimitRule
+        {
+            Endpoint = "*",
+            Period = "1m",
+            Limit = 60
+        }
+    };
+});
+
+builder.Services.AddSingleton<AspNetCoreRateLimit.IIpPolicyStore, AspNetCoreRateLimit.MemoryCacheIpPolicyStore>();
+builder.Services.AddSingleton<AspNetCoreRateLimit.IRateLimitCounterStore, AspNetCoreRateLimit.MemoryCacheRateLimitCounterStore>();
+builder.Services.AddSingleton<AspNetCoreRateLimit.IRateLimitConfiguration, AspNetCoreRateLimit.RateLimitConfiguration>();
+builder.Services.AddSingleton<AspNetCoreRateLimit.IProcessingStrategy, AspNetCoreRateLimit.AsyncKeyLockProcessingStrategy>();
+builder.Services.AddInMemoryRateLimiting();
+
 Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
 var app = builder.Build();
@@ -159,8 +253,11 @@ if (app.Environment.IsDevelopment())
     }
 }
 
-app.UseHttpsRedirection();
 
+
+app.UseHttpsRedirection();
+app.UseResponseCompression();
+app.UseIpRateLimiting();
 // CORS politikasını aktif hale getiriyoruz. Bu satır UseRouting'den önce olmalı.
 app.UseCors("AllowReactApp");
 
@@ -170,6 +267,7 @@ app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
 
+app.MapHub<NotificationHub>("/notificationHub");
 // Controller'ları endpoint olarak map'liyoruz.
 app.MapControllers();
 

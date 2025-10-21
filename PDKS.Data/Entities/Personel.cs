@@ -26,6 +26,7 @@ namespace PDKS.Data.Entities
         [StringLength(11)]
         public string TcKimlikNo { get; set; }
 
+        public string? ProfilResmi { get; set; }
         [Required]
         [StringLength(100)]
         public string Email { get; set; }

@@ -31,6 +31,12 @@ namespace PDKS.Data.Entities
 
         public DateTime OlusturmaTarihi { get; set; } = DateTime.UtcNow;
 
+        // ✅ YENİ EKLENENLER - Referans için
+        [StringLength(50)]
+        public string? ReferansTip { get; set; } // Izin, Avans, Masraf, Arac, Seyahat, Gorev, Mazeret
+
+        public int? ReferansId { get; set; } // İlgili kaydın ID'si
+
         // Navigation Properties
         [ForeignKey("KullaniciId")]
         public Kullanici Kullanici { get; set; }

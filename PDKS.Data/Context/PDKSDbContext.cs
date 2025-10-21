@@ -31,6 +31,39 @@ namespace PDKS.Data.Context
         public DbSet<Mesai> Mesailer { get; set; }
         public DbSet<KullaniciSirket> KullaniciSirketler { get; set; }
         public DbSet<Sirket> Sirketler { get; set; }
+
+        public DbSet<GorevTanimi> GorevTanimlari { get; set; }
+        public DbSet<IzinHakki> IzinHaklari { get; set; }
+        public DbSet<OnayAkisi> OnayAkislari { get; set; }
+        public DbSet<AvansTalebi> AvansTalepleri { get; set; }
+        public DbSet<Arac> Araclar { get; set; }
+        public DbSet<AracTalebi> AracTalepleri { get; set; }
+        public DbSet<AracKullanimRaporu> AracKullanimRaporlari { get; set; }
+        public DbSet<SeyahatTalebi> SeyahatTalepleri { get; set; }
+        public DbSet<SeyahatMasraf> SeyahatMasraflari { get; set; }
+        public DbSet<MasrafTalebi> MasrafTalepleri { get; set; }
+        public DbSet<Gorev> Gorevler { get; set; }
+        public DbSet<GorevAtama> GorevAtamalari { get; set; }
+        public DbSet<GorevYorum> GorevYorumlari { get; set; }
+        public DbSet<MazeretBildirimi> MazeretBildirimleri { get; set; }
+        public DbSet<DosyaTalebi> DosyaTalepleri { get; set; }
+        public DbSet<ToplantiOdasi> ToplantiOdalari { get; set; }
+        public DbSet<ToplantiOdasiRezervasyon> ToplantiOdasiRezervasyonlari { get; set; }
+        public DbSet<Zimmet> Zimmetler { get; set; }
+        public DbSet<MalzemeTalebi> MalzemeTalepleri { get; set; }
+        public DbSet<Forum> Forumlar { get; set; }
+        public DbSet<ForumKonu> ForumKonulari { get; set; }
+        public DbSet<ForumMesaj> ForumMesajlari { get; set; }
+        public DbSet<Duyuru> Duyurular { get; set; }
+        public DbSet<Etkinlik> Etkinlikler { get; set; }
+        public DbSet<EtkinlikKatilimci> EtkinlikKatilimcilari { get; set; }
+        public DbSet<Anket> Anketler { get; set; }
+        public DbSet<AnketSoru> AnketSorulari { get; set; }
+        public DbSet<AnketCevap> AnketCevaplari { get; set; }
+        public DbSet<Oneri> Oneriler { get; set; }
+        public DbSet<Sikayet> Sikayetler { get; set; }
+
+        public DbSet<DeviceToken> DeviceTokens { get; set; }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             // Bu ValueConverter hem DateTime hem de DateTime? tipleri için çalışacak.
@@ -89,6 +122,19 @@ namespace PDKS.Data.Context
             modelBuilder.Entity<Tatil>()
                 .HasIndex(t => t.Tarih)
                 .IsUnique();
+
+            modelBuilder.Entity<Arac>()
+                .HasIndex(a => a.Plaka)
+                .IsUnique();
+
+            modelBuilder.Entity<OnayAkisi>()
+                .HasIndex(o => new { o.OnayTipi, o.ReferansId, o.Sira });
+
+            modelBuilder.Entity<Bildirim>()
+                .HasIndex(b => new { b.KullaniciId, b.Okundu });
+
+            modelBuilder.Entity<ToplantiOdasiRezervasyon>()
+                .HasIndex(t => new { t.OdaId, t.BaslangicTarihi, t.BitisTarihi });
 
             // ============== RELATIONSHIPS ==============
 
@@ -261,6 +307,211 @@ namespace PDKS.Data.Context
                 .WithMany(s => s.Vardiyalar) // Varsayım: Sirket entity'sinde Vardiyalar ICollection'ı var.
                 .HasForeignKey(v => v.SirketId)
                 .OnDelete(DeleteBehavior.Restrict);
+
+            // GorevTanimi - Departman
+            modelBuilder.Entity<GorevTanimi>()
+                .HasOne(gt => gt.Departman)
+                .WithMany()
+                .HasForeignKey(gt => gt.DepartmanId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // GorevTanimi - Sirket
+            modelBuilder.Entity<GorevTanimi>()
+                .HasOne(gt => gt.Sirket)
+                .WithMany()
+                .HasForeignKey(gt => gt.SirketId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // IzinHakki - Personel
+            modelBuilder.Entity<IzinHakki>()
+                .HasOne(ih => ih.Personel)
+                .WithMany()
+                .HasForeignKey(ih => ih.PersonelId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // IzinHakki - Sirket
+            modelBuilder.Entity<IzinHakki>()
+                .HasOne(ih => ih.Sirket)
+                .WithMany()
+                .HasForeignKey(ih => ih.SirketId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // OnayAkisi - Onaylayici
+            modelBuilder.Entity<OnayAkisi>()
+                .HasOne(oa => oa.Onaylayici)
+                .WithMany()
+                .HasForeignKey(oa => oa.OnaylayiciPersonelId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // OnayAkisi - Sirket
+            modelBuilder.Entity<OnayAkisi>()
+                .HasOne(oa => oa.Sirket)
+                .WithMany()
+                .HasForeignKey(oa => oa.SirketId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // AvansTalebi - Personel
+            modelBuilder.Entity<AvansTalebi>()
+                .HasOne(at => at.Personel)
+                .WithMany()
+                .HasForeignKey(at => at.PersonelId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // AvansTalebi - Sirket
+            modelBuilder.Entity<AvansTalebi>()
+                .HasOne(at => at.Sirket)
+                .WithMany()
+                .HasForeignKey(at => at.SirketId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Arac - TahsisliPersonel
+            modelBuilder.Entity<Arac>()
+                .HasOne(a => a.TahsisliPersonel)
+                .WithMany()
+                .HasForeignKey(a => a.TahsisliPersonelId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Arac - Sirket
+            modelBuilder.Entity<Arac>()
+                .HasOne(a => a.Sirket)
+                .WithMany()
+                .HasForeignKey(a => a.SirketId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // AracTalebi - Personel
+            modelBuilder.Entity<AracTalebi>()
+                .HasOne(at => at.Personel)
+                .WithMany()
+                .HasForeignKey(at => at.PersonelId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // AracTalebi - Arac
+            modelBuilder.Entity<AracTalebi>()
+                .HasOne(at => at.Arac)
+                .WithMany(a => a.AracTalepleri)
+                .HasForeignKey(at => at.AracId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // AracTalebi - Sirket
+            modelBuilder.Entity<AracTalebi>()
+                .HasOne(at => at.Sirket)
+                .WithMany()
+                .HasForeignKey(at => at.SirketId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Zimmet - Personel
+            modelBuilder.Entity<Zimmet>()
+                .HasOne(z => z.Personel)
+                .WithMany()
+                .HasForeignKey(z => z.PersonelId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // Zimmet - Sirket
+            modelBuilder.Entity<Zimmet>()
+                .HasOne(z => z.Sirket)
+                .WithMany()
+                .HasForeignKey(z => z.SirketId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Gorev - Atayan
+            modelBuilder.Entity<Gorev>()
+                .HasOne(g => g.Atayan)
+                .WithMany()
+                .HasForeignKey(g => g.AtayanPersonelId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Gorev - UstGorev (Self-Referencing)
+            modelBuilder.Entity<Gorev>()
+                .HasOne(g => g.UstGorev)
+                .WithMany(g => g.AltGorevler)
+                .HasForeignKey(g => g.UstGorevId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Gorev - Sirket
+            modelBuilder.Entity<Gorev>()
+                .HasOne(g => g.Sirket)
+                .WithMany()
+                .HasForeignKey(g => g.SirketId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // GorevAtama - Gorev
+            modelBuilder.Entity<GorevAtama>()
+                .HasOne(ga => ga.Gorev)
+                .WithMany(g => g.GorevAtamalari)
+                .HasForeignKey(ga => ga.GorevId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // GorevAtama - Personel
+            modelBuilder.Entity<GorevAtama>()
+                .HasOne(ga => ga.Personel)
+                .WithMany()
+                .HasForeignKey(ga => ga.PersonelId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // MazeretBildirimi - Personel
+            modelBuilder.Entity<MazeretBildirimi>()
+                .HasOne(mb => mb.Personel)
+                .WithMany()
+                .HasForeignKey(mb => mb.PersonelId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // MazeretBildirimi - Onaylayici
+            modelBuilder.Entity<MazeretBildirimi>()
+                .HasOne(mb => mb.Onaylayici)
+                .WithMany()
+                .HasForeignKey(mb => mb.OnaylayiciPersonelId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // MazeretBildirimi - Sirket
+            modelBuilder.Entity<MazeretBildirimi>()
+                .HasOne(mb => mb.Sirket)
+                .WithMany()
+                .HasForeignKey(mb => mb.SirketId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // ToplantiOdasi - Sirket
+            modelBuilder.Entity<ToplantiOdasi>()
+                .HasOne(to => to.Sirket)
+                .WithMany()
+                .HasForeignKey(to => to.SirketId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // ToplantiOdasiRezervasyon - Oda
+            modelBuilder.Entity<ToplantiOdasiRezervasyon>()
+                .HasOne(tor => tor.Oda)
+                .WithMany(to => to.Rezervasyonlar)
+                .HasForeignKey(tor => tor.OdaId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // ToplantiOdasiRezervasyon - Personel
+            modelBuilder.Entity<ToplantiOdasiRezervasyon>()
+                .HasOne(tor => tor.Personel)
+                .WithMany()
+                .HasForeignKey(tor => tor.PersonelId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // ToplantiOdasiRezervasyon - Sirket
+            modelBuilder.Entity<ToplantiOdasiRezervasyon>()
+                .HasOne(tor => tor.Sirket)
+                .WithMany()
+                .HasForeignKey(tor => tor.SirketId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<DeviceToken>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Token).IsRequired().HasMaxLength(500);
+                entity.Property(e => e.Platform).HasMaxLength(20);
+                entity.Property(e => e.DeviceInfo).HasMaxLength(500);
+
+                entity.HasIndex(e => new { e.KullaniciId, e.Token }).IsUnique();
+
+                entity.HasOne(e => e.Kullanici)
+                    .WithMany()
+                    .HasForeignKey(e => e.KullaniciId)
+                    .OnDelete(DeleteBehavior.Cascade);
+            });
+
 
             // ============== SEED DATA - ROLLER ==============
 
