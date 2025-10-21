@@ -24,6 +24,7 @@ import {
 import { DataGrid } from '@mui/x-data-grid';
 import type { GridColDef } from '@mui/x-data-grid';
 import api from '../../services/api';
+import { useAuth } from '../../contexts/AuthContext'; // ✅ Import ekleyin
 
 interface Vardiya {
     id: number;
@@ -42,6 +43,7 @@ interface VardiyaFormData {
 }
 
 function VardiyaList() {
+    const { currentSirketId } = useAuth(); // ✅ Ekleyin
     const [vardiyalar, setVardiyalar] = useState<Vardiya[]>([]);
     const [loading, setLoading] = useState(false);
     const [formDialog, setFormDialog] = useState<{ open: boolean; data: VardiyaFormData | null }>({
@@ -111,18 +113,37 @@ function VardiyaList() {
     const handleSubmit = async () => {
         if (!formDialog.data) return;
 
+        if (!formDialog.data.vardiyaAdi || !formDialog.data.baslangicSaati || !formDialog.data.bitisSaati) {
+            setSnackbar({ open: true, message: 'Tüm zorunlu alanları doldurun!', severity: 'error' });
+            return;
+        }
+
+        if (!currentSirketId) {
+            setSnackbar({ open: true, message: 'Şirket bilgisi bulunamadı!', severity: 'error' });
+            return;
+        }
+
         try {
+            const payload = {
+                ...formDialog.data,
+                sirketId: currentSirketId, // ✅ SirketId ekle
+            };
+
             if (formDialog.data.id) {
-                await api.put(`/Vardiya/${formDialog.data.id}`, formDialog.data);
+                await api.put(`/Vardiya/${formDialog.data.id}`, payload);
                 setSnackbar({ open: true, message: 'Vardiya güncellendi!', severity: 'success' });
             } else {
-                await api.post('/Vardiya', formDialog.data);
+                await api.post('/Vardiya', payload);
                 setSnackbar({ open: true, message: 'Vardiya eklendi!', severity: 'success' });
             }
             handleCloseForm();
             loadVardiyalar();
-        } catch {
-            setSnackbar({ open: true, message: 'İşlem başarısız!', severity: 'error' });
+        } catch (error: any) {
+            console.error('Vardiya kayıt hatası:', error);
+            const errorMsg = error.response?.data?.message
+                || JSON.stringify(error.response?.data?.errors)
+                || 'İşlem başarısız!';
+            setSnackbar({ open: true, message: errorMsg, severity: 'error' });
         }
     };
 
@@ -133,7 +154,7 @@ function VardiyaList() {
             await api.delete(`/Vardiya/${deleteDialog.id}`);
             setSnackbar({ open: true, message: 'Vardiya silindi!', severity: 'success' });
             loadVardiyalar();
-        } catch {
+        } catch (error) {
             setSnackbar({ open: true, message: 'İşlem başarısız!', severity: 'error' });
         } finally {
             setDeleteDialog({ open: false, id: null });

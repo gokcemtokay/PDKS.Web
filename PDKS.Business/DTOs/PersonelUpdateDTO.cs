@@ -67,6 +67,6 @@ namespace PDKS.Business.DTOs
         public bool Durum { get; set; }
 
         [StringLength(500)]
-        public string Notlar { get; set; }
+        public string? Notlar { get; set; }
     }
 }

@@ -63,6 +63,6 @@ namespace PDKS.Business.DTOs
         public decimal? AvansLimiti { get; set; }
 
         [StringLength(500)]
-        public string Notlar { get; set; }
+        public string? Notlar { get; set; }
     }
 }

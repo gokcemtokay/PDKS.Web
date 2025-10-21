@@ -23,6 +23,7 @@ import {
 import { DataGrid } from '@mui/x-data-grid';
 import type { GridColDef } from '@mui/x-data-grid';
 import api from '../../services/api';
+import { useAuth } from '../../contexts/AuthContext'; // ✅ Import ekleyin
 
 interface Departman {
     id: number;
@@ -38,6 +39,7 @@ interface DepartmanFormData {
 }
 
 function DepartmanList() {
+    const { currentSirketId } = useAuth(); // ✅ Ekleyin
     const [departmanlar, setDepartmanlar] = useState<Departman[]>([]);
     const [loading, setLoading] = useState(false);
     const [formDialog, setFormDialog] = useState<{ open: boolean; data: DepartmanFormData | null }>({
@@ -103,18 +105,38 @@ function DepartmanList() {
     const handleSubmit = async () => {
         if (!formDialog.data) return;
 
+        if (!formDialog.data.departmanAdi) {
+            setSnackbar({ open: true, message: 'Departman adı zorunludur!', severity: 'error' });
+            return;
+        }
+
+        if (!currentSirketId) {
+            setSnackbar({ open: true, message: 'Şirket bilgisi bulunamadı!', severity: 'error' });
+            return;
+        }
+
         try {
+            const payload = {
+                ...formDialog.data,
+                sirketId: currentSirketId, // ✅ SirketId ekle
+            };
+
             if (formDialog.data.id) {
-                await api.put(`/Departman/${formDialog.data.id}`, formDialog.data);
+                await api.put(`/Departman/${formDialog.data.id}`, payload);
                 setSnackbar({ open: true, message: 'Departman güncellendi!', severity: 'success' });
             } else {
-                await api.post('/Departman', formDialog.data);
+                await api.post('/Departman', payload);
                 setSnackbar({ open: true, message: 'Departman eklendi!', severity: 'success' });
             }
             handleCloseForm();
             loadDepartmanlar();
-        } catch (error) {
-            setSnackbar({ open: true, message: 'İşlem başarısız!', severity: 'error' });
+        } catch (error: any) {
+            console.error('Departman kayıt hatası:', error);
+            console.error('Validation Errors:', error.response?.data?.errors);
+            const errorMsg = error.response?.data?.message
+                || JSON.stringify(error.response?.data?.errors)
+                || 'İşlem başarısız!';
+            setSnackbar({ open: true, message: errorMsg, severity: 'error' });
         }
     };
 

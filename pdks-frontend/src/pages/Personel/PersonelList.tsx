@@ -31,11 +31,16 @@ interface Personel {
     id: number;
     ad: string;
     soyad: string;
+    adSoyad?: string;
     tcKimlikNo: string;
     email: string;
     telefon: string;
     departmanAdi: string;
     vardiyaAdi: string;
+    gorev: string;          // ✅ Ekleyin
+    unvan: string;          // ✅ Ekleyin
+    iseBaslamaTarihi?: string; // ✅ Ekleyin
+    cikisTarihi?: string;   // ✅ Ekleyin
     aktif: boolean;
 }
 
@@ -62,7 +67,20 @@ function PersonelList() {
         setLoading(true);
         try {
             const response = await api.get('/Personel');
-            setPersoneller(response.data);
+            console.log('Full Response:', response); // ✅ Tüm response
+            console.log('Response Data:', response.data); // ✅ Sadece data
+            console.log('Data Type:', typeof response.data); // ✅ Tip
+            console.log('Is Array?', Array.isArray(response.data)); // ✅ Array mi?
+
+            if (response.data && Array.isArray(response.data)) {
+                console.log('Personel Count:', response.data.length);
+                if (response.data.length > 0) {
+                    console.log('İlk Personel:', response.data[0]);
+                    console.log('Alanlar:', Object.keys(response.data[0]));
+                }
+            }
+
+            setPersoneller(response.data || []);
         } catch (error) {
             console.error('Personeller yüklenemedi:', error);
             setSnackbar({ open: true, message: 'Personeller yüklenemedi!', severity: 'error' });
@@ -120,11 +138,42 @@ function PersonelList() {
             field: 'departmanAdi',
             headerName: 'Departman',
             width: 150,
+            valueGetter: (_value: unknown, row: Personel) => {
+                return row.departmanAdi || row.departman || '-';
+            },
+        },
+        {
+            field: 'gorev',
+            headerName: 'Görev',
+            width: 150,
+        },
+        {
+            field: 'unvan',
+            headerName: 'Ünvan',
+            width: 120,
         },
         {
             field: 'vardiyaAdi',
             headerName: 'Vardiya',
-            width: 120,
+            width: 150,
+            valueGetter: (_value: unknown, row: Personel) => {
+
+                return row.vardiyaAdi || '-';
+            },
+        },
+        {
+            field: 'iseBaslamaTarihi',
+            headerName: 'İşe Başlama',
+            width: 130,
+            valueGetter: (_value: unknown, row: Personel) =>
+                row.iseBaslamaTarihi ? new Date(row.iseBaslamaTarihi).toLocaleDateString('tr-TR') : '-',
+        },
+        {
+            field: 'cikisTarihi',
+            headerName: 'İşten Ayrılma',
+            width: 130,
+            valueGetter: (_value: unknown, row: Personel) =>
+                row.cikisTarihi ? new Date(row.cikisTarihi).toLocaleDateString('tr-TR') : '-',
         },
         {
             field: 'aktif',

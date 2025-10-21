@@ -1,6 +1,6 @@
-﻿// pdks-frontend/src/components/Layout.tsx - Güncelleme
+﻿// pdks-frontend/src/components/Layout.tsx
 import { useState, ReactNode } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, Navigate } from 'react-router-dom';
 import {
     Box,
     Drawer,
@@ -28,8 +28,8 @@ import {
     BeachAccess as BeachAccessIcon,
     Assessment as AssessmentIcon,
     Logout as LogoutIcon,
+    Settings as SettingsIcon,
     SwapHoriz as SwapHorizIcon,
-    Settings as SettingsIcon, // Örnek olarak ayarlar ikonu eklendi
 } from '@mui/icons-material';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -46,7 +46,7 @@ const menuItems = [
     { text: 'Vardiyalar', icon: <ScheduleIcon />, path: '/vardiya' },
     { text: 'Tatiller', icon: <BeachAccessIcon />, path: '/tatil' },
     { text: 'Raporlar', icon: <AssessmentIcon />, path: '/rapor' },
-    { text: 'Ayarlar', icon: <SettingsIcon />, path: '/parametre' }, // Örnek ayarlar menüsü
+    { text: 'Ayarlar', icon: <SettingsIcon />, path: '/parametre' },
 ];
 
 function Layout({ children }: LayoutProps) {
@@ -54,28 +54,40 @@ function Layout({ children }: LayoutProps) {
     const [profileAnchorEl, setProfileAnchorEl] = useState<null | HTMLElement>(null);
     const [sirketAnchorEl, setSirketAnchorEl] = useState<null | HTMLElement>(null);
 
-    // useAuth hook'u ile tüm kritik verileri çek
-    // NOT: yetkiliSirketler ve aktifSirket'in AuthContext'te tutulduğu varsayılmıştır.
-    const { user, aktifSirket, yetkiliSirketler, logout, switchSirket, isLoggedIn } = useAuth();
+    // AuthContext'ten tüm gerekli değerleri çek
+    const { user, logout, isLoggedIn, yetkiliSirketler, aktifSirket, switchSirket } = useAuth();
     const navigate = useNavigate();
     const location = useLocation();
 
-    // ⛔ KRİTİK HATA DÜZELTMESİ: Veri yüklenene kadar beklet (veya yetkisiz erişimi engelle)
-    // isLoggedIn kontrolü zaten ProtectedRoutes'ta var, ancak Layout'a gelen user null ise NRE olur.
-    // yetkiliSirketler verisi login response'undan geldiği için ilk etapta user yoksa undefined olabilir.
-    if (!isLoggedIn || !user || !aktifSirket || !yetkiliSirketler) {
-        // Oturum açılmış ancak API'den gelen detaylar henüz Context'e yüklenmemişse null dön.
-        // Bu, ekranın render edilmesini engellerken verinin yüklenmesini bekler.
+    // Kullanıcı kontrolü
+    if (!isLoggedIn || !user) {
         if (isLoggedIn) {
-            return <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>Yükleniyor...</Box>;
+            return (
+                <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+                    Yükleniyor...
+                </Box>
+            );
         }
-        // isLoggedIn false ise (teorik olarak ProtectedRoute yakalamalıydı)
         return <Navigate to="/login" replace />;
     }
 
-    // yetkiliSirketler listesi artık güvende, ancak TypeScript'in map hatasını gidermek için Listeyi Array olarak kabul et
-    const sirketListesi = yetkiliSirketler as Array<any>;
+    const handleSirketMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
+        setSirketAnchorEl(event.currentTarget);
+    };
 
+    const handleSirketMenuClose = () => {
+        setSirketAnchorEl(null);
+    };
+
+    const handleSirketSwitch = async (sirketId: number) => {
+        try {
+            await switchSirket(sirketId);
+            handleSirketMenuClose();
+        } catch (error) {
+            console.error('Şirket değiştirme hatası:', error);
+            alert('Şirket değiştirilemedi!');
+        }
+    };
 
     const handleDrawerToggle = () => {
         setMobileOpen(!mobileOpen);
@@ -94,30 +106,9 @@ function Layout({ children }: LayoutProps) {
         setProfileAnchorEl(null);
     };
 
-    const handleSirketMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
-        setSirketAnchorEl(event.currentTarget);
-    };
-
-    const handleSirketMenuClose = () => {
-        setSirketAnchorEl(null);
-    };
-
     const handleLogout = () => {
         logout();
-        // logout fonksiyonu zaten Context içinde navigate('/login') veya window.location.href yapıyor olmalı
-    };
-
-    const handleSirketSwitch = async (sirketId: number) => {
-        try {
-            // switchSirket fonksiyonunun AuthContext'te tanımlı olduğu varsayılıyor
-            // await switchSirket(sirketId); 
-            handleSirketMenuClose();
-            // Başarılı geçiş sonrası sayfayı yenilemek en güvenli yoldur
-            // window.location.reload(); 
-        } catch (error) {
-            console.error('Şirket değiştirme hatası:', error);
-            alert('Şirket değiştirme başarısız oldu!');
-        }
+        navigate('/login');
     };
 
     const drawer = (
@@ -186,25 +177,36 @@ function Layout({ children }: LayoutProps) {
                         {menuItems.find((item) => item.path === location.pathname)?.text || 'PDKS'}
                     </Typography>
 
-                    {/* 🆕 Şirket Bilgisi ve Değiştirici */}
-                    {sirketListesi.length > 1 && (
+                    {/* Şirket Seçici - Birden fazla şirket varsa */}
+                    {yetkiliSirketler.length > 1 && aktifSirket && (
                         <Chip
                             icon={<BusinessIcon />}
                             label={aktifSirket.unvan}
                             onClick={handleSirketMenuOpen}
                             deleteIcon={<SwapHorizIcon />}
                             onDelete={handleSirketMenuOpen}
+                            sx={{ mr: 2, cursor: 'pointer' }}
+                            color="primary"
+                            variant="outlined"
+                        />
+                    )}
+
+                    {/* Tek şirket varsa sadece göster */}
+                    {yetkiliSirketler.length === 1 && aktifSirket && (
+                        <Chip
+                            icon={<BusinessIcon />}
+                            label={aktifSirket.unvan}
                             sx={{ mr: 2 }}
                             color="primary"
                             variant="outlined"
                         />
                     )}
 
-                    {/* Sadece şirket adını göster (değiştirme yok) */}
-                    {sirketListesi.length === 1 && (
+                    {/* Şirket bilgisi yüklenene kadar fallback */}
+                    {yetkiliSirketler.length === 0 && (
                         <Chip
                             icon={<BusinessIcon />}
-                            label={aktifSirket.unvan}
+                            label={user.sirketAdi || 'Şirket'}
                             sx={{ mr: 2 }}
                             color="primary"
                             variant="outlined"
@@ -226,17 +228,28 @@ function Layout({ children }: LayoutProps) {
                             </Typography>
                         </MenuItem>
                         <Divider />
-                        {/* ⭐ DÜZELTİLDİ: Tekrarlayan map kaldırıldı, güvenli map kullanıldı. */}
-                        {sirketListesi.map((sirket: any) => (
+                        {yetkiliSirketler.map((sirket) => (
                             <MenuItem
                                 key={sirket.id}
                                 onClick={() => handleSirketSwitch(sirket.id)}
-                                disabled={sirket.id === aktifSirket.id}
+                                disabled={sirket.id === aktifSirket?.id}
                             >
                                 <ListItemIcon>
-                                    <SwapHorizIcon fontSize="small" color={sirket.id === aktifSirket.id ? 'primary' : 'inherit'} />
+                                    <SwapHorizIcon
+                                        fontSize="small"
+                                        color={sirket.id === aktifSirket?.id ? 'primary' : 'inherit'}
+                                    />
                                 </ListItemIcon>
                                 {sirket.unvan}
+                                {sirket.varsayilan && (
+                                    <Chip
+                                        label="Varsayılan"
+                                        size="small"
+                                        sx={{ ml: 'auto' }}
+                                        color="success"
+                                        variant="outlined"
+                                    />
+                                )}
                             </MenuItem>
                         ))}
                     </Menu>

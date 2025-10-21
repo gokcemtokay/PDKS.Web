@@ -19,6 +19,8 @@ import {
 import type { SelectChangeEvent } from '@mui/material/Select'; // ⬅️ BURADAN IMPORT EDİN
 import { Save as SaveIcon, ArrowBack as ArrowBackIcon } from '@mui/icons-material';
 import api from '../../services/api';
+import { jwtDecode } from 'jwt-decode';
+import { useAuth } from '../../contexts/AuthContext';
 
 interface PersonelFormData {
     ad: string;
@@ -46,7 +48,9 @@ interface Departman {
 
 interface Vardiya {
     id: number;
-    vardiyaAdi: string;
+    ad?: string;           // Backend'den bu geliyor
+    baslangicSaati?: string;
+    bitisSaati?: string;
 }
 
 interface Parametre {
@@ -73,6 +77,7 @@ const KAN_GRUPLARI = [
 const CINSIYETLER = ['Erkek', 'Kadin', 'Belirtmek Istemiyorum'];
 
 function PersonelForm() {
+    const { currentSirketId } = useAuth();
     const { id } = useParams();
     const navigate = useNavigate();
     const [loading, setLoading] = useState(false);
@@ -109,25 +114,37 @@ function PersonelForm() {
         }
     }, [id]);
 
+    // PersonelForm.tsx - loadDependencies fonksiyonunu düzeltin
     const loadDependencies = async () => {
         try {
             const [departmanRes, vardiyaRes, gorevRes, unvanRes] = await Promise.all([
                 api.get('/Departman'),
                 api.get('/Vardiya'),
-                api.get('/Parametre/kategori/GOREV'),  // ⬅️ kategori kullan
-                api.get('/Parametre/kategori/UNVAN'),  // ⬅️ kategori kullan
+                api.get('/Parametre/kategori/GOREV'),
+                api.get('/Parametre/kategori/UNVAN'),
             ]);
 
-            setDepartmanlar(departmanRes.data || []);
-            setVardiyalar(vardiyaRes.data || []);
-            setGorevler(gorevRes.data || []);
-            setUnvanlar(unvanRes.data || []);
+            console.log('Departman Response:', departmanRes.data);
+            console.log('Vardiya Response:', vardiyaRes.data); // ⬅️ Bunu kontrol edin
+            console.log('Gorev Response:', gorevRes.data);
+            console.log('Unvan Response:', unvanRes.data);
+
+            setDepartmanlar(Array.isArray(departmanRes.data) ? departmanRes.data : []);
+            setVardiyalar(Array.isArray(vardiyaRes.data) ? vardiyaRes.data : []); // ⬅️ Güvenli set
+            setGorevler(Array.isArray(gorevRes.data) ? gorevRes.data : []);
+            setUnvanlar(Array.isArray(unvanRes.data) ? unvanRes.data : []);
         } catch (error) {
-            console.error('Bagimliliklarda hata:', error);
-            // Fallback
+            console.error('Bağımlılıklarda hata:', error);
+            if (error.response) {
+                console.error('API Hatası:', error.response.status, error.response.data);
+            }
+
+            // Fallback veriler
+            setDepartmanlar([]);
+            setVardiyalar([]);
             setGorevler([
-                { id: 1, ad: 'Yazilim Gelistirici', deger: 'Yazilim Gelistirici', kategori: 'GOREV' },
-                { id: 2, ad: 'Sistem Yoneticisi', deger: 'Sistem Yoneticisi', kategori: 'GOREV' },
+                { id: 1, ad: 'Yazılım Geliştirici', deger: 'Yazılım Geliştirici', kategori: 'GOREV' },
+                { id: 2, ad: 'Sistem Yöneticisi', deger: 'Sistem Yöneticisi', kategori: 'GOREV' },
             ]);
             setUnvanlar([
                 { id: 1, ad: 'Junior', deger: 'Junior', kategori: 'UNVAN' },
@@ -187,63 +204,63 @@ function PersonelForm() {
 
         // Validation
         if (!formData.ad || !formData.soyad || !formData.tcKimlikNo || !formData.email) {
-            setError('Lutfen zorunlu alanlari doldurun!');
+            setError('Lütfen zorunlu alanları doldurun!');
             setSubmitting(false);
             return;
         }
 
         if (!formData.gorev || !formData.unvan) {
-            setError('Gorev ve Unvan alanlari zorunludur!');
+            setError('Görev ve Unvan alanları zorunludur!');
+            setSubmitting(false);
+            return;
+        }
+
+        if (!currentSirketId) {
+            setError('Şirket bilgisi bulunamadı! Lütfen çıkış yapıp tekrar giriş yapın.');
             setSubmitting(false);
             return;
         }
 
         try {
-            // localStorage'dan sirketId al
-            const sirketId = localStorage.getItem('sirketId');
-
-            if (!sirketId) {
-                setError('Sirket bilgisi bulunamadi! Lutfen cikis yapip tekrar giris yapin.');
-                setSubmitting(false);
-                return;
-            }
-
             const payload = {
-                sirketId: Number(sirketId), // ✅ ZORUNLU
-                ad: formData.ad,
-                soyad: formData.soyad,
+                ...(id && { id: Number(id) }),
+                sirketId: currentSirketId,
                 adSoyad: `${formData.ad} ${formData.soyad}`,
-                tcKimlikNo: formData.tcKimlikNo,
                 sicilNo: formData.tcKimlikNo,
+                tcKimlikNo: formData.tcKimlikNo,
                 email: formData.email,
                 telefon: formData.telefon || '',
                 adres: formData.adres || '',
                 dogumTarihi: formData.dogumTarihi || null,
-                iseBaslamaTarihi: formData.iseBaslamaTarihi || null,
+                girisTarihi: formData.iseBaslamaTarihi || null,  // ✅ Backend "girisTarihi" bekliyor
+                cikisTarihi: null,
                 departmanId: formData.departmanId ? Number(formData.departmanId) : null,
                 vardiyaId: formData.vardiyaId ? Number(formData.vardiyaId) : null,
                 maas: formData.maas ? Number(formData.maas) : 0,
-                durum: formData.aktif,
+                durum: formData.aktif,  // ✅ Backend "durum" bekliyor
                 gorev: formData.gorev,
                 unvan: formData.unvan,
                 kanGrubu: formData.kanGrubu || '',
                 cinsiyet: formData.cinsiyet || '',
-                notlar: '',
+                avansLimiti: 0,
+                notlar: ''
             };
 
-            console.log('📦 Payload:', payload); // Debug için
-
             if (id) {
-                await api.put(`/Personel/${id}`, { ...payload, id: parseInt(id) });
+                // Güncelleme
+                await api.put(`/Personel/${id}`, payload);
+                alert('Personel başarıyla güncellendi!');
             } else {
+                // Yeni kayıt
                 await api.post('/Personel', payload);
+                alert('Personel başarıyla eklendi!');
             }
 
             navigate('/personel');
         } catch (err: any) {
-            console.error('❌ Hata:', err);
-            const errorMsg = err.response?.data || 'Islem basarisiz!';
-            setError(typeof errorMsg === 'string' ? errorMsg : JSON.stringify(errorMsg));
+            console.error('Kayıt hatası:', err);
+            const errorMsg = err.response?.data?.message || err.response?.data || err.message || 'Kayıt başarısız!';
+            setError(errorMsg);
         } finally {
             setSubmitting(false);
         }
@@ -487,7 +504,7 @@ function PersonelForm() {
                                     </MenuItem>
                                     {vardiyalar.map((vrd) => (
                                         <MenuItem key={vrd.id} value={vrd.id}>
-                                            {vrd.vardiyaAdi}
+                                            {vrd.ad || vrd.vardiyaAdi || 'İsimsiz Vardiya'}
                                         </MenuItem>
                                     ))}
                                 </Select>

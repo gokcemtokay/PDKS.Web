@@ -32,7 +32,9 @@ namespace PDKS.Business.Services
                 AdSoyad = p.AdSoyad,
                 SicilNo = p.SicilNo,
                 Departman = p.Departman?.Ad ?? string.Empty,
-                Gorev = p.Gorev,
+                DepartmanAdi = p.Departman?.Ad ?? string.Empty,
+                Gorev = p.Gorev ?? string.Empty,
+                Unvan = p.Unvan ?? string.Empty, // ✅ Bunu ekleyin
                 Email = p.Email,
                 Telefon = p.Telefon,
                 Durum = p.Durum,
@@ -67,10 +69,12 @@ namespace PDKS.Business.Services
         // ⭐ YENİ METOT İMPLEMENTASYONU: Şirket bazlı filtreleme
         public async Task<IEnumerable<PersonelListDTO>> GetBySirketAsync(int sirketId)
         {
-            // Şirket ID'sine göre personelleri filtrele
-            var personeller = await _unitOfWork.Personeller.FindAsync(p => p.SirketId == sirketId);
+            var personeller = await _unitOfWork.Personeller.FindWithIncludesAsync(
+                p => p.SirketId == sirketId,
+                p => p.Departman,
+                p => p.Vardiya
+            );
 
-            // Personel listesi için sadece ilgili şirketi bir kez çek
             var sirket = await _unitOfWork.Sirketler.GetByIdAsync(sirketId);
 
             return personeller.Select(p => new PersonelListDTO
@@ -79,16 +83,22 @@ namespace PDKS.Business.Services
                 SirketId = p.SirketId,
                 SirketAdi = sirket?.Unvan ?? "",
                 AdSoyad = p.AdSoyad,
+                Ad = p.AdSoyad.Contains(' ') ? p.AdSoyad.Split(' ')[0] : p.AdSoyad,
+                Soyad = p.AdSoyad.Contains(' ') ? p.AdSoyad.Substring(p.AdSoyad.IndexOf(' ') + 1) : "",
                 SicilNo = p.SicilNo,
-                // Departman ve Vardiya navigasyon property'lerinin Eager Loading ile geldiği varsayılmıştır.
+                TcKimlikNo = p.TcKimlikNo,
                 Departman = p.Departman?.Ad ?? string.Empty,
-                Gorev = p.Gorev,
+                DepartmanAdi = p.Departman?.Ad ?? string.Empty,
+                Gorev = p.Gorev ?? string.Empty,
+                Unvan = p.Unvan ?? string.Empty, // ✅ Bunu ekleyin
                 Email = p.Email,
                 Telefon = p.Telefon,
                 Durum = p.Durum,
+                Aktif = p.Durum,
                 GirisTarihi = p.GirisTarihi,
+                IseBaslamaTarihi = p.GirisTarihi,
                 CikisTarihi = p.CikisTarihi,
-                VardiyaAdi = p.Vardiya?.Ad
+                VardiyaAdi = p.Vardiya?.Ad ?? string.Empty
             }).OrderBy(p => p.AdSoyad);
         }
 
@@ -121,6 +131,8 @@ namespace PDKS.Business.Services
                 SirketId = personel.SirketId,
                 SirketAdi = sirket?.Unvan,
                 AdSoyad = personel.AdSoyad,
+                Ad = personel.AdSoyad.Contains(' ') ? personel.AdSoyad.Split(' ')[0] : personel.AdSoyad,
+                Soyad = personel.AdSoyad.Contains(' ') ? personel.AdSoyad.Substring(personel.AdSoyad.IndexOf(' ') + 1) : "",
                 SicilNo = personel.SicilNo,
                 TcKimlikNo = personel.TcKimlikNo,
                 Email = personel.Email,

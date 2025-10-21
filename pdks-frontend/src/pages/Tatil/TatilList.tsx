@@ -24,6 +24,7 @@ import {
 import { DataGrid } from '@mui/x-data-grid';
 import type { GridColDef } from '@mui/x-data-grid';
 import api from '../../services/api';
+import { useAuth } from '../../contexts/AuthContext'; // ✅ Import ekleyin
 
 interface Tatil {
     id: number;
@@ -39,6 +40,7 @@ interface TatilFormData {
 }
 
 function TatilList() {
+    const { currentSirketId } = useAuth(); // ✅ Ekleyin
     const [tatiller, setTatiller] = useState<Tatil[]>([]);
     const [loading, setLoading] = useState(false);
     const [formDialog, setFormDialog] = useState<{ open: boolean; data: TatilFormData | null }>({
@@ -100,13 +102,26 @@ function TatilList() {
             return;
         }
 
+        if (!currentSirketId) {
+            setSnackbar({ open: true, message: 'Şirket bilgisi bulunamadı!', severity: 'error' });
+            return;
+        }
+
         try {
-            await api.post('/Tatil', formDialog.data);
+            const payload = {
+                ...formDialog.data,
+                sirketId: currentSirketId, // ✅ SirketId ekle
+            };
+
+            await api.post('/Tatil', payload);
             setSnackbar({ open: true, message: 'Tatil eklendi!', severity: 'success' });
             handleCloseForm();
             loadTatiller();
         } catch (error: any) {
-            const errorMsg = error.response?.data || 'İşlem başarısız!';
+            console.error('Tatil kayıt hatası:', error);
+            const errorMsg = error.response?.data?.message
+                || JSON.stringify(error.response?.data?.errors)
+                || 'İşlem başarısız!';
             setSnackbar({ open: true, message: errorMsg, severity: 'error' });
         }
     };

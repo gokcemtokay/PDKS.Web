@@ -1,20 +1,25 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import axios from 'axios';
-import { jwtDecode } from 'jwt-decode'; // 'npm install jwt-decode' ile yüklenmeli
+import { jwtDecode } from 'jwt-decode';
 
-// SirketController'daki JWT yapýsýna göre token içindeki kullanýcý bilgileri
 interface UserClaims {
-    sub: string;        // KullaniciId
+    sub: string;
     email: string;
-    role: string;       // ClaimTypes.Role
+    role: string;
     personelId: string;
-    sirketId: string;   // Mevcut aktif þirket ID'si
+    sirketId: string;
     sirketAdi: string;
     jti: string;
-    exp: number;        // Token bitiþ zamaný (Unix timestamp)
+    exp: number;
 }
 
-// Context'in dýþ dünyaya saðladýðý deðerler
+interface Sirket {
+    id: number;
+    unvan: string;
+    logoUrl?: string;
+    varsayilan: boolean;
+}
+
 interface AuthContextType {
     isLoggedIn: boolean;
     user: UserClaims | null;
@@ -23,15 +28,16 @@ interface AuthContextType {
     logout: () => void;
     currentSirketId: number | null;
     currentRole: string | null;
+    yetkiliSirketler: Sirket[];
+    aktifSirket: Sirket | null;
+    switchSirket: (sirketId: number) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Yardýmcý Fonksiyon: Token'ý çözümle ve geçerliliðini kontrol et
 const decodeToken = (token: string): UserClaims | null => {
     try {
         const decoded = jwtDecode<UserClaims>(token);
-        // Token'ýn geçerliliðini kontrol et (eðer süre dolduysa null döndür)
         if (decoded.exp * 1000 < Date.now()) {
             localStorage.removeItem('token');
             return null;
@@ -47,6 +53,9 @@ const decodeToken = (token: string): UserClaims | null => {
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     const [token, setToken] = useState<string | null>(localStorage.getItem('token'));
     const [user, setUser] = useState<UserClaims | null>(null);
+    const [yetkiliSirketler, setYetkiliSirketler] = useState<Sirket[]>([]);
+    const [aktifSirket, setAktifSirket] = useState<Sirket | null>(null);
+
     const isLoggedIn = !!token && !!user;
 
     useEffect(() => {
@@ -54,43 +63,99 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             const decodedUser = decodeToken(token);
             if (decodedUser) {
                 setUser(decodedUser);
-                // Tüm API çaðrýlarýna token'ý Authorization baþlýðý olarak ekle
                 axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+
+                // Aktif þirketi token'dan set et
+                setAktifSirket({
+                    id: parseInt(decodedUser.sirketId),
+                    unvan: decodedUser.sirketAdi,
+                    varsayilan: true
+                });
+
+                // Yetkili þirketleri yükle
+                loadYetkiliSirketler();
             } else {
-                // Token geçersiz/süresi dolmuþsa çýkýþ yap (decodeToken zaten localStorage'dan siler)
                 setUser(null);
+                setYetkiliSirketler([]);
+                setAktifSirket(null);
             }
         } else {
             setUser(null);
+            setYetkiliSirketler([]);
+            setAktifSirket(null);
             delete axios.defaults.headers.common['Authorization'];
         }
     }, [token]);
 
+    const loadYetkiliSirketler = async () => {
+        try {
+            const response = await axios.get('/api/Kullanici/yetkili-sirketler');
+            setYetkiliSirketler(response.data);
+        } catch (error) {
+            console.error('Yetkili þirketler yüklenemedi:', error);
+            // Hata durumunda en azýndan aktif þirketi göster
+            if (user) {
+                setYetkiliSirketler([{
+                    id: parseInt(user.sirketId),
+                    unvan: user.sirketAdi,
+                    varsayilan: true
+                }]);
+            }
+        }
+    };
+
+    const switchSirket = async (sirketId: number) => {
+        try {
+            // Backend endpoint: /api/Sirket/switch/{sirketId}
+            const response = await axios.post(`/api/Sirket/switch/${sirketId}`);
+            const newToken = response.data.token;
+
+            if (newToken) {
+                localStorage.setItem('token', newToken);
+                setToken(newToken);
+                // Sayfayý yenile ki yeni token'la tüm veriler güncellensin
+                window.location.reload();
+            }
+        } catch (error) {
+            console.error('Þirket deðiþtirme hatasý:', error);
+            throw error;
+        }
+    };
+
     const login = (newToken: string) => {
         localStorage.setItem('token', newToken);
         setToken(newToken);
-        // App.tsx'teki yönlendirme mantýðýnýn çalýþmasý için yeniden yüklemeye gerek yok
     };
 
     const logout = () => {
         localStorage.removeItem('token');
         setToken(null);
         setUser(null);
-        // Çýkýþ yapýldýktan sonra tüm uygulamayý login'e yönlendirecek þekilde ayarlanmýþtýr.
+        setYetkiliSirketler([]);
+        setAktifSirket(null);
     };
 
-    // SirketController'daki mantýða uygun olarak JWT'den gelen deðerleri sayýya dönüþtür
     const currentSirketId = user?.sirketId ? parseInt(user.sirketId) : null;
     const currentRole = user?.role || null;
 
     return (
-        <AuthContext.Provider value={{ isLoggedIn, user, token, login, logout, currentSirketId, currentRole }}>
+        <AuthContext.Provider value={{
+            isLoggedIn,
+            user,
+            token,
+            login,
+            logout,
+            currentSirketId,
+            currentRole,
+            yetkiliSirketler,
+            aktifSirket,
+            switchSirket
+        }}>
             {children}
         </AuthContext.Provider>
     );
 };
 
-// Custom hook
 export const useAuth = () => {
     const context = useContext(AuthContext);
     if (context === undefined) {

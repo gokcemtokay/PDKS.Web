@@ -101,9 +101,10 @@ function RaporPage() {
             }
 
             const response = await api.post(endpoint, filtre);
-            setRaporData(response.data);
-        } catch (err) { // 'error' yerine 'err' kullan
-            const errorMessage = err instanceof Error ? err.message : 'Rapor oluşturulamadı!';
+            setRaporData(response.data || []);
+        } catch (err: any) {
+            console.error('Rapor hatası:', err);
+            const errorMessage = err.response?.data?.message || err.message || 'Rapor oluşturulamadı!';
             setError(errorMessage);
             setRaporData([]);
         } finally {
@@ -131,9 +132,9 @@ function RaporPage() {
             field: 'tarih',
             headerName: 'Tarih',
             width: 130,
-            valueFormatter: (value) => {
-                if (value) {
-                    return new Date(value).toLocaleDateString('tr-TR');
+            valueGetter: (_value, row) => {
+                if (row.tarih) {
+                    return new Date(row.tarih).toLocaleDateString('tr-TR');
                 }
                 return '';
             },
@@ -142,19 +143,19 @@ function RaporPage() {
             field: 'girisSaati',
             headerName: 'Giriş Saati',
             width: 120,
-            renderCell: (params) => <Chip label={params.value} color="success" size="small" />,
+            renderCell: (params) => params.value ? <Chip label={params.value} color="success" size="small" /> : '-',
         },
         {
             field: 'cikisSaati',
             headerName: 'Çıkış Saati',
             width: 120,
-            renderCell: (params) => <Chip label={params.value} color="error" size="small" />,
+            renderCell: (params) => params.value ? <Chip label={params.value} color="error" size="small" /> : '-',
         },
         {
             field: 'toplamSaat',
             headerName: 'Toplam Saat',
             width: 130,
-            renderCell: (params) => <Chip label={params.value} color="primary" size="small" />,
+            renderCell: (params) => params.value ? <Chip label={params.value} color="primary" size="small" /> : '-',
         },
     ];
 

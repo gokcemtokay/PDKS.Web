@@ -17,5 +17,11 @@ namespace PDKS.Data.Repositories
         void RemoveRange(IEnumerable<T> entities);
         Task<int> CountAsync();
         Task<int> CountAsync(Expression<Func<T, bool>> predicate);
+
+        Task<IEnumerable<T>> FindWithIncludesAsync(
+            Expression<Func<T, bool>> predicate,
+            params Expression<Func<T, object>>[] includes);
     }
+
+
 }

@@ -9,7 +9,7 @@ using PDKS.Data.Repositories;
 
 namespace PDKS.WebUI.Controllers
 {
-    [Authorize]
+    [AllowAnonymous]
     [ApiController]
     [Route("api/[controller]")]
     [Produces("application/json")]

@@ -1,9 +1,27 @@
-import React, { useEffect, useState } from 'react';
-import axios from 'axios';
+import { useEffect, useState } from 'react';
+import {
+    Box,
+    Button,
+    Paper,
+    Typography,
+    IconButton,
+    Alert,
+    Snackbar,
+    TextField,
+    InputAdornment,
+} from '@mui/material';
+import {
+    Edit as EditIcon,
+    Save as SaveIcon,
+    Cancel as CancelIcon,
+    Settings as SettingsIcon,
+} from '@mui/icons-material';
+import { DataGrid } from '@mui/x-data-grid';
+import type { GridColDef } from '@mui/x-data-grid';
+import api from '../../services/api';
 import { useAuth } from '../../contexts/AuthContext';
 
-// ParametreListDTO.cs'ye uygun TypeScript Interface
-interface ParametreListDTO {
+interface Parametre {
     id: number;
     ad: string;
     deger: string;
@@ -12,126 +30,217 @@ interface ParametreListDTO {
     kategori: string | null;
 }
 
-const API_BASE_URL = 'api/Parametre';
-
-const ParametreList = () => {
+function ParametreList() {
     const { currentRole } = useAuth();
-    const [parametreler, setParametreler] = useState<ParametreListDTO[]>([]);
-    const [loading, setLoading] = useState(true);
+    const [parametreler, setParametreler] = useState<Parametre[]>([]);
+    const [loading, setLoading] = useState(false);
     const [editingId, setEditingId] = useState<number | null>(null);
     const [newDeger, setNewDeger] = useState<string>('');
+    const [snackbar, setSnackbar] = useState<{
+        open: boolean;
+        message: string;
+        severity: 'success' | 'error';
+    }>({
+        open: false,
+        message: '',
+        severity: 'success',
+    });
 
     useEffect(() => {
-        fetchParametreler();
+        loadParametreler();
     }, []);
 
-    const fetchParametreler = async () => {
+    const loadParametreler = async () => {
         setLoading(true);
         try {
-            const response = await axios.get<ParametreListDTO[]>(API_BASE_URL);
+            const response = await api.get('/Parametre');
             setParametreler(response.data);
         } catch (error) {
-            console.error("Parametreler yüklenirken hata oluþtu:", error);
+            console.error('Parametreler yüklenemedi:', error);
+            setSnackbar({ open: true, message: 'Parametreler yüklenemedi!', severity: 'error' });
         } finally {
             setLoading(false);
         }
     };
 
-    const handleEditStart = (parametre: ParametreListDTO) => {
+    const handleEditStart = (parametre: Parametre) => {
         setEditingId(parametre.id);
         setNewDeger(parametre.deger);
     };
 
-    const handleEditSave = async (parametre: ParametreListDTO) => {
+    const handleEditSave = async (parametre: Parametre) => {
         if (!newDeger.trim()) {
-            alert("Deðer boþ olamaz.");
+            setSnackbar({ open: true, message: 'Deðer boþ olamaz!', severity: 'error' });
             return;
         }
 
-        // ParametreUpdateDTO'ya uygun veri yapýsýný oluþturma
         const updateDTO = {
             id: parametre.id,
             ad: parametre.ad,
             deger: newDeger,
             birim: parametre.birim,
             aciklama: parametre.aciklama,
-            kategori: parametre.kategori
+            kategori: parametre.kategori,
         };
 
         try {
-            await axios.put(`${API_BASE_URL}/${parametre.id}`, updateDTO);
+            await api.put(`/Parametre/${parametre.id}`, updateDTO);
+            setSnackbar({ open: true, message: 'Parametre güncellendi!', severity: 'success' });
             setEditingId(null);
-            fetchParametreler(); // Listeyi güncelleyerek deðiþikliði yansýt
+            loadParametreler();
         } catch (error) {
-            console.error("Parametre güncellenirken hata oluþtu:", error);
-            alert("Parametre güncellenirken bir hata oluþtu.");
+            console.error('Parametre güncellenemedi:', error);
+            setSnackbar({ open: true, message: 'Parametre güncellenemedi!', severity: 'error' });
         }
     };
 
-    if (loading) {
-        return <div className="container mt-4">Yükleniyor...</div>;
+    const handleEditCancel = () => {
+        setEditingId(null);
+        setNewDeger('');
+    };
+
+    // Admin kontrolü
+    if (currentRole !== 'Admin') {
+        return (
+            <Box>
+                <Alert severity="error">
+                    Bu sayfayý görüntüleme yetkiniz yoktur. Sadece Admin kullanýcýlarý parametreleri düzenleyebilir.
+                </Alert>
+            </Box>
+        );
     }
 
-    // Yalnýzca 'Admin' rolündekilerin eriþimi olmalýdýr
-    const isAdmin = currentRole === 'Admin';
-    if (!isAdmin) {
-        return <div className="container mt-4 alert alert-danger">Bu sayfayý görüntüleme yetkiniz yoktur.</div>;
-    }
-
+    const columns: GridColDef[] = [
+        {
+            field: 'ad',
+            headerName: 'Parametre Adý',
+            width: 250,
+            renderCell: (params) => (
+                <Box display="flex" alignItems="center" gap={1}>
+                    <SettingsIcon fontSize="small" color="primary" />
+                    <Typography fontWeight="500">{params.value}</Typography>
+                </Box>
+            ),
+        },
+        {
+            field: 'kategori',
+            headerName: 'Kategori',
+            width: 150,
+            valueGetter: (_value, row) => row.kategori || '-',
+        },
+        {
+            field: 'aciklama',
+            headerName: 'Açýklama',
+            flex: 1,
+            minWidth: 250,
+            valueGetter: (_value, row) => row.aciklama || '-',
+        },
+        {
+            field: 'deger',
+            headerName: 'Deðer',
+            width: 200,
+            renderCell: (params) => {
+                if (editingId === params.row.id) {
+                    return (
+                        <TextField
+                            size="small"
+                            value={newDeger}
+                            onChange={(e) => setNewDeger(e.target.value)}
+                            InputProps={{
+                                endAdornment: params.row.birim ? (
+                                    <InputAdornment position="end">{params.row.birim}</InputAdornment>
+                                ) : null,
+                            }}
+                            fullWidth
+                        />
+                    );
+                }
+                return (
+                    <Typography>
+                        {params.value} {params.row.birim && `(${params.row.birim})`}
+                    </Typography>
+                );
+            },
+        },
+        {
+            field: 'actions',
+            headerName: 'Ýþlemler',
+            width: 120,
+            sortable: false,
+            renderCell: (params) => {
+                if (editingId === params.row.id) {
+                    return (
+                        <Box>
+                            <IconButton
+                                size="small"
+                                color="success"
+                                onClick={() => handleEditSave(params.row)}
+                            >
+                                <SaveIcon fontSize="small" />
+                            </IconButton>
+                            <IconButton size="small" color="error" onClick={handleEditCancel}>
+                                <CancelIcon fontSize="small" />
+                            </IconButton>
+                        </Box>
+                    );
+                }
+                return (
+                    <IconButton
+                        size="small"
+                        color="primary"
+                        onClick={() => handleEditStart(params.row)}
+                    >
+                        <EditIcon fontSize="small" />
+                    </IconButton>
+                );
+            },
+        },
+    ];
 
     return (
-        <div className="container mt-4">
-            <h2>Sistem Parametreleri</h2>
-            <p>Sistem davranýþlarýný kontrol eden temel parametreler.</p>
-            <table className="table table-striped table-sm">
-                <thead>
-                    <tr>
-                        <th>Adý</th>
-                        <th>Kategori</th>
-                        <th>Açýklama</th>
-                        <th>Deðer</th>
-                        <th>Ýþlemler</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {parametreler.map(parametre => (
-                        <tr key={parametre.id}>
-                            <td>{parametre.ad}</td>
-                            <td>{parametre.kategori || '-'}</td>
-                            <td>{parametre.aciklama || '-'}</td>
-                            <td>
-                                {editingId === parametre.id ? (
-                                    <div className="input-group input-group-sm">
-                                        <input
-                                            type="text"
-                                            value={newDeger}
-                                            onChange={(e) => setNewDeger(e.target.value)}
-                                            className="form-control"
-                                        />
-                                        {parametre.birim && <span className="input-group-text">{parametre.birim}</span>}
-                                    </div>
-                                ) : (
-                                    <span>
-                                        {parametre.deger} {parametre.birim && `(${parametre.birim})`}
-                                    </span>
-                                )}
-                            </td>
-                            <td>
-                                {editingId === parametre.id ? (
-                                    <>
-                                        <button onClick={() => handleEditSave(parametre)} className="btn btn-sm btn-success me-2">Kaydet</button>
-                                        <button onClick={() => setEditingId(null)} className="btn btn-sm btn-secondary">Ýptal</button>
-                                    </>
-                                ) : (
-                                    <button onClick={() => handleEditStart(parametre)} className="btn btn-sm btn-warning">Düzenle</button>
-                                )}
-                            </td>
-                        </tr>
-                    ))}
-                </tbody>
-            </table>
-        </div>
+        <Box>
+            <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
+                <Box>
+                    <Typography variant="h4" fontWeight="bold">
+                        Sistem Parametreleri
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary" mt={1}>
+                        Sistem davranýþlarýný kontrol eden temel parametreler
+                    </Typography>
+                </Box>
+            </Box>
+
+            <Paper sx={{ p: 3 }}>
+                <DataGrid
+                    rows={parametreler}
+                    columns={columns}
+                    loading={loading}
+                    pageSizeOptions={[10, 25, 50]}
+                    initialState={{
+                        pagination: { paginationModel: { pageSize: 10 } },
+                    }}
+                    disableRowSelectionOnClick
+                    autoHeight
+                    sx={{
+                        '& .MuiDataGrid-cell:focus': {
+                            outline: 'none',
+                        },
+                    }}
+                />
+            </Paper>
+
+            {/* Snackbar */}
+            <Snackbar
+                open={snackbar.open}
+                autoHideDuration={4000}
+                onClose={() => setSnackbar({ ...snackbar, open: false })}
+            >
+                <Alert severity={snackbar.severity} onClose={() => setSnackbar({ ...snackbar, open: false })}>
+                    {snackbar.message}
+                </Alert>
+            </Snackbar>
+        </Box>
     );
-};
+}
 
 export default ParametreList;
