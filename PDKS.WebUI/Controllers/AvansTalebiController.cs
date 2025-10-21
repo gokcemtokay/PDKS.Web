@@ -43,81 +43,81 @@ namespace PDKS.WebUI.Controllers
         }
 
         // GET: api/AvansTalebi/5
-        [HttpGet("{id}")]
-        public async Task<ActionResult<object>> GetAvans(int id)
-        {
-            var avans = await _context.AvansTalepleri
-                .Include(a => a.Personel)
-                .Where(a => a.Id == id)
-                .Select(a => new
-                {
-                    a.Id,
-                    PersonelAdi = a.Personel.AdSoyad, // ✅ Düzeltildi
-                    a.PersonelId,
-                    a.Tutar,
-                    a.Sebep,
-                    a.TalepTarihi,
-                    a.OdemeSekli,
-                    a.TaksitSayisi,
-                    a.OnayDurumu,
-                    a.OdemeTarihi,
-                    a.DekontDosyasi,
-                    OnayAkisi = _context.OnayAkislari
-                        .Where(o => o.OnayTipi == "Avans" && o.ReferansId == a.Id)
-                        .Select(o => new
-                        {
-                            o.Sira,
-                            OnaylayiciAdi = o.Onaylayici.AdSoyad, // ✅ Düzeltildi
-                            o.OnayDurumu,
-                            o.OnayTarihi
-                        })
-                        .ToList()
-                })
-                .FirstOrDefaultAsync();
+        //[HttpGet("{id}")]
+        //public async Task<ActionResult<object>> GetAvans(int id)
+        //{
+        //    var avans = await _context.AvansTalepleri
+        //        .Include(a => a.Personel)
+        //        .Where(a => a.Id == id)
+        //        .Select(a => new
+        //        {
+        //            a.Id,
+        //            PersonelAdi = a.Personel.AdSoyad, // ✅ Düzeltildi
+        //            a.PersonelId,
+        //            a.Tutar,
+        //            a.Sebep,
+        //            a.TalepTarihi,
+        //            a.OdemeSekli,
+        //            a.TaksitSayisi,
+        //            a.OnayDurumu,
+        //            a.OdemeTarihi,
+        //            a.DekontDosyasi,
+        //            OnayAkisi = _context.OnayAkislari
+        //                .Where(o => o.OnayTipi == "Avans" && o.ReferansId == a.Id)
+        //                .Select(o => new
+        //                {
+        //                    o.Sira,
+        //                    OnaylayiciAdi = o.Onaylayici.AdSoyad, // ✅ Düzeltildi
+        //                    o.OnayDurumu,
+        //                    o.OnayTarihi
+        //                })
+        //                .ToList()
+        //        })
+        //        .FirstOrDefaultAsync();
 
-            if (avans == null)
-                return NotFound();
+        //    if (avans == null)
+        //        return NotFound();
 
-            return Ok(avans);
-        }
+        //    return Ok(avans);
+        //}
 
         // POST: api/AvansTalebi
-        [HttpPost]
-        public async Task<ActionResult<AvansTalebi>> PostAvans([FromBody] AvansTalebiDTO dto)
-        {
-            var avansTalebi = new AvansTalebi
-            {
-                PersonelId = dto.PersonelId,
-                Tutar = dto.Tutar,
-                Sebep = dto.Sebep,
-                OdemeSekli = dto.OdemeSekli,
-                TaksitSayisi = dto.TaksitSayisi,
-                SirketId = dto.SirketId
-            };
+        //[HttpPost]
+        //public async Task<ActionResult<AvansTalebi>> PostAvans([FromBody] AvansTalebiDTO dto)
+        //{
+        //    var avansTalebi = new AvansTalebi
+        //    {
+        //        PersonelId = dto.PersonelId,
+        //        Tutar = dto.Tutar,
+        //        Sebep = dto.Sebep,
+        //        OdemeSekli = dto.OdemeSekli,
+        //        TaksitSayisi = dto.TaksitSayisi,
+        //        SirketId = dto.SirketId
+        //    };
 
-            _context.AvansTalepleri.Add(avansTalebi);
-            await _context.SaveChangesAsync();
+        //    _context.AvansTalepleri.Add(avansTalebi);
+        //    await _context.SaveChangesAsync();
 
             // Onay akışı oluştur
-            if (dto.OnaylayiciIds != null && dto.OnaylayiciIds.Any())
-            {
-                for (int i = 0; i < dto.OnaylayiciIds.Count; i++)
-                {
-                    var onayAkisi = new OnayAkisi
-                    {
-                        OnayTipi = "Avans",
-                        ReferansId = avansTalebi.Id,
-                        Sira = i + 1,
-                        OnaylayiciPersonelId = dto.OnaylayiciIds[i],
-                        SirketId = dto.SirketId
-                    };
-                    _context.OnayAkislari.Add(onayAkisi);
-                }
-                await _context.SaveChangesAsync();
-            }
+            //if (dto.OnaylayiciIds != null && dto.OnaylayiciIds.Any())
+            //{
+            //    for (int i = 0; i < dto.OnaylayiciIds.Count; i++)
+            //    {
+            //        var onayAkisi = new OnayAkisi
+            //        {
+            //            OnayTipi = "Avans",
+            //            ReferansId = avansTalebi.Id,
+            //            Sira = i + 1,
+            //            OnaylayiciPersonelId = dto.OnaylayiciIds[i],
+            //            SirketId = dto.SirketId
+            //        };
+            //        _context.OnayAkislari.Add(onayAkisi);
+            //    }
+            //    await _context.SaveChangesAsync();
+            //}
 
-            return CreatedAtAction(nameof(GetAvans), new { id = avansTalebi.Id }, avansTalebi);
-        }
+        //    return CreatedAtAction(nameof(GetAvans), new { id = avansTalebi.Id }, avansTalebi);
+        //}
 
         // GET: api/AvansTalebi/Personel/{personelId}
         [HttpGet("Personel/{personelId}")]

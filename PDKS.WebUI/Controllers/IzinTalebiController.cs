@@ -43,102 +43,102 @@ namespace PDKS.WebUI.Controllers
         }
 
         // GET: api/IzinTalebi/5
-        [HttpGet("{id}")]
-        public async Task<ActionResult<object>> GetIzin(int id)
-        {
-            var izin = await _context.Izinler
-                .Include(i => i.Personel)
-                .Where(i => i.Id == id)
-                .Select(i => new
-                {
-                    i.Id,
-                    PersonelAdi = i.Personel.AdSoyad, // ✅ Düzeltildi
-                    i.PersonelId,
-                    i.IzinTipi,
-                    i.BaslangicTarihi,
-                    i.BitisTarihi,
-                    GunSayisi = CalculateGunSayisi(i.BaslangicTarihi, i.BitisTarihi), // ✅ Hesaplama
-                    i.OnayDurumu,
-                    i.Aciklama,
-                    // VekilPersonelId = null, // ✅ Entity'de yoksa kaldır
-                    OnayAkisi = _context.OnayAkislari
-                        .Where(o => o.OnayTipi == "Izin" && o.ReferansId == i.Id)
-                        .Select(o => new
-                        {
-                            o.Sira,
-                            OnaylayiciAdi = o.Onaylayici.AdSoyad, // ✅ Düzeltildi
-                            o.OnayDurumu,
-                            o.OnayTarihi
-                        })
-                        .ToList()
-                })
-                .FirstOrDefaultAsync();
+        //[HttpGet("{id}")]
+        //public async Task<ActionResult<object>> GetIzin(int id)
+        //{
+        //    var izin = await _context.Izinler
+        //        .Include(i => i.Personel)
+        //        .Where(i => i.Id == id)
+        //        .Select(i => new
+        //        {
+        //            i.Id,
+        //            PersonelAdi = i.Personel.AdSoyad, // ✅ Düzeltildi
+        //            i.PersonelId,
+        //            i.IzinTipi,
+        //            i.BaslangicTarihi,
+        //            i.BitisTarihi,
+        //            GunSayisi = CalculateGunSayisi(i.BaslangicTarihi, i.BitisTarihi), // ✅ Hesaplama
+        //            i.OnayDurumu,
+        //            i.Aciklama,
+        //            // VekilPersonelId = null, // ✅ Entity'de yoksa kaldır
+        //            OnayAkisi = _context.OnayAkislari
+        //                .Where(o => o.OnayTipi == "Izin" && o.ReferansId == i.Id)
+        //                .Select(o => new
+        //                {
+        //                    o.Sira,
+        //                    OnaylayiciAdi = o.Onaylayici.AdSoyad, // ✅ Düzeltildi
+        //                    o.OnayDurumu,
+        //                    o.OnayTarihi
+        //                })
+        //                .ToList()
+        //        })
+        //        .FirstOrDefaultAsync();
 
-            if (izin == null)
-                return NotFound();
+        //    if (izin == null)
+        //        return NotFound();
 
-            return Ok(izin);
-        }
+        //    return Ok(izin);
+        //}
 
         // POST: api/IzinTalebi
-        [HttpPost]
-        public async Task<ActionResult<Izin>> PostIzin([FromBody] IzinTalebiDTO dto)
-        {
-            // İzin bakiyesi kontrolü
-            var izinHakki = await _context.IzinHaklari
-                .FirstOrDefaultAsync(ih => ih.PersonelId == dto.PersonelId && ih.Yil == DateTime.UtcNow.Year);
+        //[HttpPost]
+        //public async Task<ActionResult<Izin>> PostIzin([FromBody] IzinTalebiDTO dto)
+        //{
+        //    // İzin bakiyesi kontrolü
+        //    var izinHakki = await _context.IzinHaklari
+        //        .FirstOrDefaultAsync(ih => ih.PersonelId == dto.PersonelId && ih.Yil == DateTime.UtcNow.Year);
 
-            if (izinHakki == null)
-            {
-                return BadRequest("İzin hakkı bulunamadı. Lütfen İK ile iletişime geçin.");
-            }
+        //    if (izinHakki == null)
+        //    {
+        //        return BadRequest("İzin hakkı bulunamadı. Lütfen İK ile iletişime geçin.");
+        //    }
 
-            // Gün sayısını hesapla
-            decimal gunSayisi = CalculateGunSayisi(dto.BaslangicTarihi, dto.BitisTarihi);
+        //    // Gün sayısını hesapla
+        //    decimal gunSayisi = CalculateGunSayisi(dto.BaslangicTarihi, dto.BitisTarihi);
 
-            if (izinHakki.KalanIzin < gunSayisi)
-            {
-                return BadRequest($"Yetersiz izin bakiyesi. Kalan izin: {izinHakki.KalanIzin} gün");
-            }
+        //    if (izinHakki.KalanIzin < gunSayisi)
+        //    {
+        //        return BadRequest($"Yetersiz izin bakiyesi. Kalan izin: {izinHakki.KalanIzin} gün");
+        //    }
 
-            // İzin talebi oluştur
-            var izin = new Izin
-            {
-                PersonelId = dto.PersonelId,
-                IzinTipi = dto.IzinTipi,
-                BaslangicTarihi = dto.BaslangicTarihi,
-                BitisTarihi = dto.BitisTarihi,
-                Aciklama = dto.Aciklama,
-                // VekilPersonelId = dto.VekilPersonelId, // ✅ Entity'de yoksa kaldır
-                OnayDurumu = "Beklemede"
-            };
+        //    // İzin talebi oluştur
+        //    var izin = new Izin
+        //    {
+        //        PersonelId = dto.PersonelId,
+        //        IzinTipi = dto.IzinTipi,
+        //        BaslangicTarihi = dto.BaslangicTarihi,
+        //        BitisTarihi = dto.BitisTarihi,
+        //        Aciklama = dto.Aciklama,
+        //        // VekilPersonelId = dto.VekilPersonelId, // ✅ Entity'de yoksa kaldır
+        //        OnayDurumu = "Beklemede"
+        //    };
 
-            _context.Izinler.Add(izin);
-            await _context.SaveChangesAsync();
+        //    _context.Izinler.Add(izin);
+        //    await _context.SaveChangesAsync();
 
             // Onay akışı oluştur
-            if (dto.OnaylayiciIds != null && dto.OnaylayiciIds.Any())
-            {
-                for (int i = 0; i < dto.OnaylayiciIds.Count; i++)
-                {
-                    var onayAkisi = new OnayAkisi
-                    {
-                        OnayTipi = "Izin",
-                        ReferansId = izin.Id,
-                        Sira = i + 1,
-                        OnaylayiciPersonelId = dto.OnaylayiciIds[i],
-                        SirketId = dto.SirketId
-                    };
-                    _context.OnayAkislari.Add(onayAkisi);
-                }
-                await _context.SaveChangesAsync();
+            //if (dto.OnaylayiciIds != null && dto.OnaylayiciIds.Any())
+            //{
+            //    for (int i = 0; i < dto.OnaylayiciIds.Count; i++)
+            //    {
+            //        var onayAkisi = new OnayAkisi
+            //        {
+            //            OnayTipi = "Izin",
+            //            ReferansId = izin.Id,
+            //            Sira = i + 1,
+            //            OnaylayiciPersonelId = dto.OnaylayiciIds[i],
+            //            SirketId = dto.SirketId
+            //        };
+            //        _context.OnayAkislari.Add(onayAkisi);
+            //    }
+            //    await _context.SaveChangesAsync();
 
-                // İlk onaylayıcıya bildirim gönder
-                await SendOnayBildirimi(dto.OnaylayiciIds[0], "Izin", izin.Id);
-            }
+            //    // İlk onaylayıcıya bildirim gönder
+            //    await SendOnayBildirimi(dto.OnaylayiciIds[0], "Izin", izin.Id);
+            //}
 
-            return CreatedAtAction(nameof(GetIzin), new { id = izin.Id }, izin);
-        }
+        //    return CreatedAtAction(nameof(GetIzin), new { id = izin.Id }, izin);
+        //}
 
         // GET: api/IzinTalebi/Personel/{personelId}
         [HttpGet("Personel/{personelId}")]

@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using PDKS.Data.Entities;
 
-namespace PDKS.WebUI.Services
+namespace PDKS.Business.Services
 {
     public interface IBildirimService
     {

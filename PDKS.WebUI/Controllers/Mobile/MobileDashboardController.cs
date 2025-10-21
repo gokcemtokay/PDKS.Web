@@ -57,9 +57,9 @@ namespace PDKS.WebUI.Controllers.Mobile
                 }
 
                 // Bekleyen onaylar
-                var bekleyenOnaylar = await _context.OnayAkislari
-                    .Where(o => o.OnaylayiciPersonelId == personelId && o.OnayDurumu == "Beklemede")
-                    .CountAsync();
+                //var bekleyenOnaylar = await _context.OnayAkislari
+                //    .Where(o => o.OnaylayiciPersonelId == personelId && o.OnayDurumu == "Beklemede")
+                //    .CountAsync();
 
                 // Okunmamış bildirimler
                 var kullaniciId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
@@ -88,7 +88,7 @@ namespace PDKS.WebUI.Controllers.Mobile
                             FazlaMesai = bugunGiris.FazlaMesaiSuresi > 0 ? $"{bugunGiris.FazlaMesaiSuresi} dk" : null
                         } : null,
                         AylikMesaiSaat = Math.Round((decimal)toplamDakika / 60, 1),
-                        BekleyenOnaylar = bekleyenOnaylar,
+                        //BekleyenOnaylar = bekleyenOnaylar,
                         OkunmamisBildirimler = okunmamisBildirimler,
                         IzinBakiyesi = izinHakki?.KalanIzin ?? 0,
                         Tarih = DateTime.UtcNow

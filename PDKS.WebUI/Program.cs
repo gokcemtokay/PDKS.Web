@@ -92,16 +92,16 @@ builder.Services.AddScoped<IExportAndEmailService, ExportAndEmailService>();
 builder.Services.AddScoped<IBackupService, BackupService>();
 builder.Services.AddScoped<ISirketService, SirketService>();
 builder.Services.AddScoped<ICihazService, CihazService>();
-builder.Services.AddScoped<IOnayAkisiService, OnayAkisiService>();
 // Register Services kısmında namespace değişikliği:
 
 builder.Services.AddScoped<IFileUploadService, FileUploadService>();
-
-builder.Services.AddScoped<PDKS.WebUI.Services.IBildirimService, PDKS.WebUI.Services.BildirimService>();
 builder.Services.AddScoped<PDKS.Business.Services.IFileUploadService, PDKS.Business.Services.FileUploadService>();
 
 // Push Notification Service
-builder.Services.AddScoped<PDKS.WebUI.Services.IPushNotificationService, PDKS.WebUI.Services.PushNotificationService>();
+builder.Services.AddScoped<PDKS.Business.Services.IBildirimService, PDKS.Business.Services.BildirimService>();
+builder.Services.AddScoped<PDKS.Business.Services.IPushNotificationService, PDKS.Business.Services.PushNotificationService>();
+builder.Services.AddScoped<IOnayAkisiService, OnayAkisiService>();
+builder.Services.AddScoped<IDashboardService, DashboardService>();
 
 // API Versioning ekle (builder.Services kısmına)
 builder.Services.AddApiVersioning(options =>

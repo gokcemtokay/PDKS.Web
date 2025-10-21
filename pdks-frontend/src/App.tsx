@@ -1,99 +1,53 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import React, { useEffect } from 'react';
-import { ThemeProvider, createTheme } from '@mui/material/styles';
-import CssBaseline from '@mui/material/CssBaseline';
-import { AuthProvider, useAuth } from './contexts/AuthContext'; // AuthProvider ve useAuth Context'ten gelmeli
-import LoginPage from './pages/LoginPage';
-import Dashboard from './pages/Dashboard';
-import PersonelList from './pages/Personel/PersonelList';
-import PersonelForm from './pages/Personel/PersonelForm';
-import DepartmanList from './pages/Departman/DepartmanList';
-import VardiyaList from './pages/Vardiya/VardiyaList';
-import TatilList from './pages/Tatil/TatilList';
-import RaporPage from './pages/Rapor/RaporPage';
+ï»¿// src/App.tsx - DAHA BASIT VE GÃœVENLÄ° VERSÄ°YON
+
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { AuthProvider } from './contexts/AuthContext';
 import Layout from './components/Layout';
-// --- Eksik Ekranlar için importlar (Önceki cevaplarda kodlarý verilmiþti) ---
-import CihazList from './pages/Cihaz/CihazList';
-import GirisCikisList from './pages/GirisCikis/GirisCikisList';
-import IzinList from './pages/Izin/IzinList';
-import KullaniciList from './pages/Kullanici/KullaniciList';
-import SirketList from './pages/Sirket/SirketList';
-import ParametreList from './pages/Parametre/ParametreList';
+import LoginPage from './pages/LoginPage';
+import PersonelList from './pages/personel/PersonelList';
+import PersonelForm from './pages/personel/PersonelForm';
+import DepartmanList from './pages/departman/DepartmanList';
+import VardiyaList from './pages/vardiya/VardiyaList';
+import TatilList from './pages/tatil/TatilList';
+import ParametreList from './pages/parametre/ParametreList';
+import RaporPage from './pages/rapor/RaporPage';
+import ErrorBoundary from './components/ErrorBoundary';
+import AnaDashboard from './pages/dashboard/AnaDashboard';
 
-// Tema oluþtur
-const theme = createTheme({
-    typography: {
-        fontFamily: [
-            'Roboto',
-            '-apple-system',
-            'BlinkMacSystemFont',
-            '"Segoe UI"',
-            'Arial',
-            'sans-serif',
-        ].join(','),
-    },
-});
-
-// 1. ADIM: Korumalý Rota Bileþeni (Tüm kimlik doðrulama mantýðý useAuth içinde olmalý)
-// Layout bileþeni burada sarýcý olarak kullanýlýr.
-function ProtectedRoutes() {
-    const { isLoggedIn, logout } = useAuth(); // AuthContext'teki isLoggedIn kullanýlýr.
-
-    if (!isLoggedIn) {
-        return <Navigate to="/login" replace />; // Giriþ yapýlmadýysa Login'e yönlendir
-    }
-
-    // Giriþ yapýlmýþsa, tüm uygulamayý Layout ile sararak korumalý rotalarý göster
-    return (
-        <Layout onLogout={logout}>
-            <Routes>
-                {/* Ana Sayfa */}
-                <Route path="/" element={<Dashboard />} />
-
-                {/* Personel */}
-                <Route path="/personel" element={<PersonelList />} />
-                <Route path="/personel/yeni" element={<PersonelForm />} />
-                <Route path="/personel/duzenle/:id" element={<PersonelForm />} />
-
-                {/* Yönetim */}
-                <Route path="/departman" element={<DepartmanList />} />
-                <Route path="/vardiya" element={<VardiyaList />} />
-                <Route path="/tatil" element={<TatilList />} />
-                <Route path="/sirket" element={<SirketList />} />
-                <Route path="/parametre" element={<ParametreList />} />
-
-                {/* Diðer Modüller */}
-                <Route path="/cihaz" element={<CihazList />} />
-                <Route path="/giriscikis" element={<GirisCikisList />} />
-                <Route path="/izin" element={<IzinList />} />
-                <Route path="/kullanici" element={<KullaniciList />} />
-                <Route path="/rapor" element={<RaporPage />} />
-
-                {/* Tanýmsýz Rotalarý Ana Sayfaya Yönlendir */}
-                <Route path="*" element={<Navigate to="/" replace />} />
-            </Routes>
-        </Layout>
-    );
-}
-
-// 2. ADIM: Ana Uygulama Bileþeni
 function App() {
     return (
-        <ThemeProvider theme={theme}>
-            <CssBaseline />
-            <Router>
-                <AuthProvider> {/* AuthProvider Router'ý deðil, rotalarý sarmalý */}
+        <AuthProvider>
+            <ErrorBoundary>
+                <BrowserRouter>
                     <Routes>
-                        {/* 1. Login Rotasý (Korumasýz) */}
+                        {/* Login - Layout olmadan */}
                         <Route path="/login" element={<LoginPage />} />
 
-                        {/* 2. Korumalý Rotalar */}
-                        {/* Tüm diðer rotalar ProtectedRoutes altýnda yönetilir */}
-                        <Route path="/*" element={<ProtectedRoutes />} />
+                        {/* TÃ¼m diÄŸer route'lar Layout iÃ§inde */}
+                        <Route
+                            path="/*"
+                            element={
+                                <Layout>
+                                    <Routes>
+                                        <Route path="/personel" element={<PersonelList />} />
+                                        <Route path="/personel/yeni" element={<PersonelForm />} />
+                                        <Route path="/personel/duzenle/:id" element={<PersonelForm />} />
+                                        <Route path="/departman" element={<DepartmanList />} />
+                                        <Route path="/vardiya" element={<VardiyaList />} />
+                                        <Route path="/tatil" element={<TatilList />} />
+                                        <Route path="/parametre" element={<ParametreList />} />
+                                        <Route path="/rapor" element={<RaporPage />} />
+                                        <Route path="*" element={<Navigate to="/" replace />} />
+                                        <Route path="/" element={<AnaDashboard />} />
+                                        <Route path="/dashboard" element={<AnaDashboard />} />
+                                    </Routes>
+                                </Layout>
+                            }
+                        />
                     </Routes>
-                </AuthProvider>
-            </Router>
-        </ThemeProvider>
+                </BrowserRouter>
+            </ErrorBoundary>
+        </AuthProvider>
     );
 }
 

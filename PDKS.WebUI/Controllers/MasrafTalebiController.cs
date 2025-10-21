@@ -44,95 +44,95 @@ namespace PDKS.WebUI.Controllers
         }
 
         // GET: api/MasrafTalebi/5
-        [HttpGet("{id}")]
-        public async Task<ActionResult<object>> GetMasrafTalebi(int id)
-        {
-            var talep = await _context.MasrafTalepleri
-                .Include(m => m.Personel)
-                .Where(m => m.Id == id)
-                .Select(m => new
-                {
-                    m.Id,
-                    PersonelAdi = m.Personel.AdSoyad,
-                    m.PersonelId,
-                    m.MasrafTipi,
-                    m.Tutar,
-                    m.Tarih,
-                    m.Aciklama,
-                    m.Faturalar,
-                    m.KdvOrani,
-                    m.KdvTutari,
-                    ToplamTutar = m.Tutar + (m.KdvTutari ?? 0),
-                    m.OnayDurumu,
-                    m.TalepTarihi,
-                    m.OdemeTarihi,
-                    OnayAkisi = _context.OnayAkislari
-                        .Where(o => o.OnayTipi == "Masraf" && o.ReferansId == m.Id)
-                        .Select(o => new
-                        {
-                            o.Sira,
-                            OnaylayiciAdi = o.Onaylayici.AdSoyad,
-                            o.OnayDurumu,
-                            o.OnayTarihi,
-                            o.Aciklama
-                        })
-                        .ToList()
-                })
-                .FirstOrDefaultAsync();
+        //[HttpGet("{id}")]
+        //public async Task<ActionResult<object>> GetMasrafTalebi(int id)
+        //{
+        //    var talep = await _context.MasrafTalepleri
+        //        .Include(m => m.Personel)
+        //        .Where(m => m.Id == id)
+        //        .Select(m => new
+        //        {
+        //            m.Id,
+        //            PersonelAdi = m.Personel.AdSoyad,
+        //            m.PersonelId,
+        //            m.MasrafTipi,
+        //            m.Tutar,
+        //            m.Tarih,
+        //            m.Aciklama,
+        //            m.Faturalar,
+        //            m.KdvOrani,
+        //            m.KdvTutari,
+        //            ToplamTutar = m.Tutar + (m.KdvTutari ?? 0),
+        //            m.OnayDurumu,
+        //            m.TalepTarihi,
+        //            m.OdemeTarihi,
+        //            OnayAkisi = _context.OnayAkislari
+        //                .Where(o => o.OnayTipi == "Masraf" && o.ReferansId == m.Id)
+        //                .Select(o => new
+        //                {
+        //                    o.Sira,
+        //                    OnaylayiciAdi = o.Onaylayici.AdSoyad,
+        //                    o.OnayDurumu,
+        //                    o.OnayTarihi,
+        //                    o.Aciklama
+        //                })
+        //                .ToList()
+        //        })
+        //        .FirstOrDefaultAsync();
 
-            if (talep == null)
-                return NotFound();
+        //    if (talep == null)
+        //        return NotFound();
 
-            return Ok(talep);
-        }
+        //    return Ok(talep);
+        //}
 
         // POST: api/MasrafTalebi
-        [HttpPost]
-        public async Task<ActionResult<MasrafTalebi>> PostMasrafTalebi([FromBody] MasrafTalebiDTO dto)
-        {
-            // KDV hesaplama
-            decimal? kdvTutari = null;
-            if (dto.KdvOrani.HasValue)
-            {
-                kdvTutari = dto.Tutar * (dto.KdvOrani.Value / 100);
-            }
+        //[HttpPost]
+        //public async Task<ActionResult<MasrafTalebi>> PostMasrafTalebi([FromBody] MasrafTalebiDTO dto)
+        //{
+        //    // KDV hesaplama
+        //    decimal? kdvTutari = null;
+        //    if (dto.KdvOrani.HasValue)
+        //    {
+        //        kdvTutari = dto.Tutar * (dto.KdvOrani.Value / 100);
+        //    }
 
-            var masrafTalebi = new MasrafTalebi
-            {
-                PersonelId = dto.PersonelId,
-                MasrafTipi = dto.MasrafTipi,
-                Tutar = dto.Tutar,
-                Tarih = dto.Tarih,
-                Aciklama = dto.Aciklama,
-                Faturalar = dto.Faturalar,
-                KdvOrani = dto.KdvOrani,
-                KdvTutari = kdvTutari,
-                SirketId = dto.SirketId
-            };
+        //    var masrafTalebi = new MasrafTalebi
+        //    {
+        //        PersonelId = dto.PersonelId,
+        //        MasrafTipi = dto.MasrafTipi,
+        //        Tutar = dto.Tutar,
+        //        Tarih = dto.Tarih,
+        //        Aciklama = dto.Aciklama,
+        //        Faturalar = dto.Faturalar,
+        //        KdvOrani = dto.KdvOrani,
+        //        KdvTutari = kdvTutari,
+        //        SirketId = dto.SirketId
+        //    };
 
-            _context.MasrafTalepleri.Add(masrafTalebi);
-            await _context.SaveChangesAsync();
+        //    _context.MasrafTalepleri.Add(masrafTalebi);
+        //    await _context.SaveChangesAsync();
 
             // Onay akışı oluştur
-            if (dto.OnaylayiciIds != null && dto.OnaylayiciIds.Any())
-            {
-                for (int i = 0; i < dto.OnaylayiciIds.Count; i++)
-                {
-                    var onayAkisi = new OnayAkisi
-                    {
-                        OnayTipi = "Masraf",
-                        ReferansId = masrafTalebi.Id,
-                        Sira = i + 1,
-                        OnaylayiciPersonelId = dto.OnaylayiciIds[i],
-                        SirketId = dto.SirketId
-                    };
-                    _context.OnayAkislari.Add(onayAkisi);
-                }
-                await _context.SaveChangesAsync();
-            }
+            //if (dto.OnaylayiciIds != null && dto.OnaylayiciIds.Any())
+            //{
+            //    for (int i = 0; i < dto.OnaylayiciIds.Count; i++)
+            //    {
+            //        var onayAkisi = new OnayAkisi
+            //        {
+            //            OnayTipi = "Masraf",
+            //            ReferansId = masrafTalebi.Id,
+            //            Sira = i + 1,
+            //            OnaylayiciPersonelId = dto.OnaylayiciIds[i],
+            //            SirketId = dto.SirketId
+            //        };
+            //        _context.OnayAkislari.Add(onayAkisi);
+            //    }
+            //    await _context.SaveChangesAsync();
+            //}
 
-            return CreatedAtAction(nameof(GetMasrafTalebi), new { id = masrafTalebi.Id }, masrafTalebi);
-        }
+        //    return CreatedAtAction(nameof(GetMasrafTalebi), new { id = masrafTalebi.Id }, masrafTalebi);
+        //}
 
         // PUT: api/MasrafTalebi/Odemesi/{id}
         [HttpPut("Odemesi/{id}")]

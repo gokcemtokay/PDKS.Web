@@ -1,10 +1,11 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿// PDKS.WebUI/Controllers/OnayAkisiController.cs - DÜZELTİLMİŞ
+
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using PDKS.Data.Context;
-using PDKS.Data.Entities;
 using PDKS.Business.Services;
-using PDKS.WebUI.Services;
+using PDKS.Business.DTOs;
+using System.Security.Claims;
+using System.Threading.Tasks;
 
 namespace PDKS.WebUI.Controllers
 {
@@ -13,151 +14,130 @@ namespace PDKS.WebUI.Controllers
     [ApiController]
     public class OnayAkisiController : ControllerBase
     {
-        private readonly PDKSDbContext _context;
         private readonly IOnayAkisiService _onayAkisiService;
-        private readonly IBildirimService _bildirimService;
-        public OnayAkisiController(PDKSDbContext context, IOnayAkisiService onayAkisiService, IBildirimService bildirimService)
+
+        public OnayAkisiController(IOnayAkisiService onayAkisiService)
         {
-            _context = context;
             _onayAkisiService = onayAkisiService;
-            _bildirimService = bildirimService;
         }
 
-        // GET: api/OnayAkisi/BekleyenOnaylar
-        [HttpGet("BekleyenOnaylar")]
-        public async Task<ActionResult<IEnumerable<object>>> GetBekleyenOnaylar()
+        // GET: api/OnayAkisi/sirket/{sirketId}
+        [HttpGet("sirket/{sirketId}")]
+        public async Task<IActionResult> GetBySirket(int sirketId)
         {
-            var personelId = int.Parse(User.FindFirst("personelId")?.Value ?? "0");
+            var akislar = await _onayAkisiService.GetAllOnayAkislariAsync(sirketId);
+            return Ok(akislar);
+        }
 
-            var onaylarTemp = await _context.OnayAkislari
-                .Where(o => o.OnaylayiciPersonelId == personelId && o.OnayDurumu == "Beklemede")
-                .OrderBy(o => o.Sira)
-                .ToListAsync();
+        // GET: api/OnayAkisi/{id}
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetById(int id)
+        {
+            var akis = await _onayAkisiService.GetOnayAkisiByIdAsync(id);
+            if (akis == null)
+                return NotFound();
+            return Ok(akis);
+        }
 
-            var onaylar = new List<object>();
+        // POST: api/OnayAkisi
+        [HttpPost]
+        [Authorize(Roles = "Admin,IK")]
+        public async Task<IActionResult> Create([FromBody] OnayAkisiDTO dto)
+        {
+            var akis = await _onayAkisiService.CreateOnayAkisiAsync(dto);
+            return CreatedAtAction(nameof(GetById), new { id = akis.Id }, akis);
+        }
 
-            foreach (var onay in onaylarTemp)
+        // PUT: api/OnayAkisi/{id}
+        [HttpPut("{id}")]
+        [Authorize(Roles = "Admin,IK")]
+        public async Task<IActionResult> Update(int id, [FromBody] OnayAkisiDTO dto)
+        {
+            var akis = await _onayAkisiService.UpdateOnayAkisiAsync(id, dto);
+            return Ok(akis);
+        }
+
+        // DELETE: api/OnayAkisi/{id}
+        [HttpDelete("{id}")]
+        [Authorize(Roles = "Admin,IK")]
+        public async Task<IActionResult> Delete(int id)
+        {
+            await _onayAkisiService.DeleteOnayAkisiAsync(id);
+            return NoContent();
+        }
+
+        // GET: api/OnayAkisi/bekleyen
+        [HttpGet("bekleyen")]
+        public async Task<IActionResult> GetBekleyenOnaylar()
+        {
+            // ❌ ESKİ - Hatalı
+            // var kullaniciId = int.Parse(User.FindFirst("sub")?.Value ?? "0");
+
+            // ✅ YENİ - Doğru claim okuma
+            var kullaniciIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)
+                                ?? User.FindFirst("sub")
+                                ?? User.FindFirst("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier");
+
+            if (kullaniciIdClaim == null || string.IsNullOrEmpty(kullaniciIdClaim.Value))
             {
-                var talepSahibiId = GetTalepSahibiId(onay.OnayTipi, onay.ReferansId);
-                var personelAdi = await _context.Personeller
-                    .Where(p => p.Id == talepSahibiId)
-                    .Select(p => p.AdSoyad)
-                    .FirstOrDefaultAsync();
-
-                onaylar.Add(new
-                {
-                    onay.Id,
-                    onay.OnayTipi,
-                    onay.ReferansId,
-                    onay.Sira,
-                    onay.OnayDurumu,
-                    onay.OlusturmaTarihi,
-                    TalepSahibi = personelAdi ?? "Bilinmiyor"
-                });
+                return Unauthorized(new { message = "Kullanıcı kimliği bulunamadı" });
             }
 
-            return Ok(onaylar);
-        }
-
-        // POST: api/OnayAkisi/Onayla
-        [HttpPost("Onayla")]
-        public async Task<IActionResult> Onayla([FromBody] OnayDTO onayDto)
-        {
-            var personelId = int.Parse(User.FindFirst("personelId")?.Value ?? "0");
-
-            var sonuc = await _onayAkisiService.OnaylaAsync(
-                onayDto.OnayAkisiId,
-                onayDto.Onaylandi,
-                onayDto.Aciklama,
-                personelId
-            );
-
-            if (!sonuc)
-                return BadRequest(new { message = "Onay işlemi başarısız." });
-
-            // Bildirim gönder
-            var onayAkisi = await _context.OnayAkislari.FindAsync(onayDto.OnayAkisiId);
-            if (onayAkisi != null)
+            if (!int.TryParse(kullaniciIdClaim.Value, out int kullaniciId) || kullaniciId <= 0)
             {
-                await SendBildirim(onayAkisi, onayDto.Onaylandi);
+                return BadRequest(new { message = "Geçersiz kullanıcı kimliği" });
             }
 
-            return Ok(new { message = onayDto.Onaylandi ? "Onaylandı" : "Reddedildi" });
+            var bekleyenler = await _onayAkisiService.GetBekleyenOnaylarAsync(kullaniciId);
+            return Ok(bekleyenler);
         }
 
-        // GET: api/OnayAkisi/OnayGecmisi/{onayTipi}/{referansId}
-        [HttpGet("OnayGecmisi/{onayTipi}/{referansId}")]
-        public async Task<ActionResult<IEnumerable<object>>> GetOnayGecmisi(string onayTipi, int referansId)
+        // POST: api/OnayAkisi/onayla
+        [HttpPost("onayla")]
+        public async Task<IActionResult> Onayla([FromBody] OnayIslemDTO dto)
         {
-            var gecmis = await _onayAkisiService.GetOnayGecmisiAsync(onayTipi, referansId);
+            var kullaniciIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)
+                                ?? User.FindFirst("sub");
 
-            var result = new List<object>();
-
-            foreach (var onay in gecmis.OrderBy(o => o.Sira))
+            if (kullaniciIdClaim == null || !int.TryParse(kullaniciIdClaim.Value, out int kullaniciId))
             {
-                var onaylayiciAdi = await _context.Personeller
-                    .Where(p => p.Id == onay.OnaylayiciPersonelId)
-                    .Select(p => p.AdSoyad)
-                    .FirstOrDefaultAsync();
-
-                result.Add(new
-                {
-                    onay.Id,
-                    onay.Sira,
-                    OnaylayiciAdi = onaylayiciAdi ?? "Bilinmiyor",
-                    onay.OnayDurumu,
-                    onay.OnayTarihi,
-                    onay.Aciklama
-                });
+                return Unauthorized(new { message = "Kullanıcı kimliği bulunamadı" });
             }
 
-            return Ok(result);
+            await _onayAkisiService.OnaylaAsync(dto.OnayKaydiId, kullaniciId, dto.Aciklama);
+            return Ok(new { message = "Onaylandı" });
         }
 
-        // Helper Methods
-        private int GetTalepSahibiId(string onayTipi, int referansId)
+        // POST: api/OnayAkisi/reddet
+        [HttpPost("reddet")]
+        public async Task<IActionResult> Reddet([FromBody] OnayIslemDTO dto)
         {
-            return onayTipi switch
+            var kullaniciIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)
+                                ?? User.FindFirst("sub");
+
+            if (kullaniciIdClaim == null || !int.TryParse(kullaniciIdClaim.Value, out int kullaniciId))
             {
-                "Izin" => _context.Izinler.Where(i => i.Id == referansId).Select(i => i.PersonelId).FirstOrDefault(),
-                "Avans" => _context.AvansTalepleri.Where(a => a.Id == referansId).Select(a => a.PersonelId).FirstOrDefault(),
-                "Masraf" => _context.MasrafTalepleri.Where(m => m.Id == referansId).Select(m => m.PersonelId).FirstOrDefault(),
-                "Arac" => _context.AracTalepleri.Where(a => a.Id == referansId).Select(a => a.PersonelId).FirstOrDefault(),
-                "Seyahat" => _context.SeyahatTalepleri.Where(s => s.Id == referansId).Select(s => s.PersonelId).FirstOrDefault(),
-                _ => 0
-            };
-        }
-
-        private async Task SendBildirim(OnayAkisi onayAkisi, bool onaylandi)
-        {
-            int talepSahibiId = GetTalepSahibiId(onayAkisi.OnayTipi, onayAkisi.ReferansId);
-
-            var kullanici = await _context.Kullanicilar
-                .FirstOrDefaultAsync(k => k.PersonelId == talepSahibiId);
-
-            if (kullanici != null)
-            {
-                var bildirim = new Bildirim
-                {
-                    KullaniciId = kullanici.Id,
-                    Baslik = $"{onayAkisi.OnayTipi} Talebi {(onaylandi ? "Onaylandı" : "Reddedildi")}",
-                    Mesaj = $"{onayAkisi.OnayTipi} talebiniz {(onaylandi ? "onaylanmıştır" : "reddedilmiştir")}.",
-                    Tip = onaylandi ? "Başarı" : "Uyarı",
-                    ReferansTip = onayAkisi.OnayTipi,
-                    ReferansId = onayAkisi.ReferansId
-                };
-
-                _context.Bildirimler.Add(bildirim);
-                await _context.SaveChangesAsync();
+                return Unauthorized(new { message = "Kullanıcı kimliği bulunamadı" });
             }
-        }
-    }
 
-    // DTO
-    public class OnayDTO
-    {
-        public int OnayAkisiId { get; set; }
-        public bool Onaylandi { get; set; }
-        public string? Aciklama { get; set; }
+            await _onayAkisiService.ReddetAsync(dto.OnayKaydiId, kullaniciId, dto.Aciklama);
+            return Ok(new { message = "Reddedildi" });
+        }
+
+        // GET: api/OnayAkisi/taleplerim
+        [HttpGet("taleplerim")]
+        public async Task<IActionResult> GetTaleplerim()
+        {
+            var kullaniciIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)
+                                ?? User.FindFirst("sub");
+
+            if (kullaniciIdClaim == null || !int.TryParse(kullaniciIdClaim.Value, out int kullaniciId))
+            {
+                return Unauthorized(new { message = "Kullanıcı kimliği bulunamadı" });
+            }
+
+            var talepler = await _onayAkisiService.GetKullaniciTaleplerAsync(kullaniciId);
+            return Ok(talepler);
+        }
     }
 }

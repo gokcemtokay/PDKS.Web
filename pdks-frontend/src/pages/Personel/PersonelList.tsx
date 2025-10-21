@@ -1,4 +1,6 @@
-﻿import { useEffect, useState } from 'react';
+﻿// src/pages/personel/PersonelList.tsx - DÜZELTİLMİŞ VERSİYON
+
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
     Box,
@@ -22,7 +24,6 @@ import {
     Delete as DeleteIcon,
     Search as SearchIcon,
 } from '@mui/icons-material';
-// Düzeltilmiş import
 import { DataGrid } from '@mui/x-data-grid';
 import type { GridColDef } from '@mui/x-data-grid';
 import api from '../../services/api';
@@ -37,10 +38,10 @@ interface Personel {
     telefon: string;
     departmanAdi: string;
     vardiyaAdi: string;
-    gorev: string;          // ✅ Ekleyin
-    unvan: string;          // ✅ Ekleyin
-    iseBaslamaTarihi?: string; // ✅ Ekleyin
-    cikisTarihi?: string;   // ✅ Ekleyin
+    gorev: string;
+    unvan: string;
+    iseBaslamaTarihi?: string;
+    cikisTarihi?: string;
     aktif: boolean;
 }
 
@@ -67,10 +68,10 @@ function PersonelList() {
         setLoading(true);
         try {
             const response = await api.get('/Personel');
-            console.log('Full Response:', response); // ✅ Tüm response
-            console.log('Response Data:', response.data); // ✅ Sadece data
-            console.log('Data Type:', typeof response.data); // ✅ Tip
-            console.log('Is Array?', Array.isArray(response.data)); // ✅ Array mi?
+            console.log('Full Response:', response);
+            console.log('Response Data:', response.data);
+            console.log('Data Type:', typeof response.data);
+            console.log('Is Array?', Array.isArray(response.data));
 
             if (response.data && Array.isArray(response.data)) {
                 console.log('Personel Count:', response.data.length);
@@ -157,7 +158,6 @@ function PersonelList() {
             headerName: 'Vardiya',
             width: 150,
             valueGetter: (_value: unknown, row: Personel) => {
-
                 return row.vardiyaAdi || '-';
             },
         },
@@ -290,7 +290,7 @@ function PersonelList() {
                 </Alert>
             </Snackbar>
         </Box>
-    );
+    ); // ✅ Burada kapatılıyor - aşağıdaki gereksiz tag'ler silindi
 }
 
 export default PersonelList;

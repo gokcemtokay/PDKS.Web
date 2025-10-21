@@ -9,7 +9,7 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace PDKS.WebUI.Services
+namespace PDKS.Business.Services
 {
     public interface IPushNotificationService
     {

@@ -46,105 +46,105 @@ namespace PDKS.WebUI.Controllers
         }
 
         // GET: api/SeyahatTalebi/5
-        [HttpGet("{id}")]
-        public async Task<ActionResult<object>> GetSeyahatTalebi(int id)
-        {
-            var talep = await _context.SeyahatTalepleri
-                .Include(s => s.Personel)
-                .Include(s => s.Masraflar)
-                .Where(s => s.Id == id)
-                .Select(s => new
-                {
-                    s.Id,
-                    PersonelAdi = s.Personel.AdSoyad,
-                    s.PersonelId,
-                    s.SeyahatTipi,
-                    s.GidisSehri,
-                    s.VarisSehri,
-                    s.UlkeAdi,
-                    s.KalkisTarihi,
-                    s.DonusTarihi,
-                    s.Amac,
-                    s.KonaklamaGerekli,
-                    s.UlasimTipi,
-                    s.BeklenenMaliyet,
-                    s.OnayDurumu,
-                    s.TalepTarihi,
-                    s.UcakBileti,
-                    s.OtelRezervasyon,
-                    Masraflar = s.Masraflar.Select(m => new
-                    {
-                        m.Id,
-                        m.MasrafTipi,
-                        m.Tutar,
-                        m.Tarih,
-                        m.Aciklama,
-                        m.FaturaDosyasi
-                    }).ToList(),
-                    ToplamMasraf = s.Masraflar.Sum(m => m.Tutar),
-                    OnayAkisi = _context.OnayAkislari
-                        .Where(o => o.OnayTipi == "Seyahat" && o.ReferansId == s.Id)
-                        .Select(o => new
-                        {
-                            o.Sira,
-                            OnaylayiciAdi = o.Onaylayici.AdSoyad,
-                            o.OnayDurumu,
-                            o.OnayTarihi,
-                            o.Aciklama
-                        })
-                        .ToList()
-                })
-                .FirstOrDefaultAsync();
+        //[HttpGet("{id}")]
+        //public async Task<ActionResult<object>> GetSeyahatTalebi(int id)
+        //{
+        //    var talep = await _context.SeyahatTalepleri
+        //        .Include(s => s.Personel)
+        //        .Include(s => s.Masraflar)
+        //        .Where(s => s.Id == id)
+        //        .Select(s => new
+        //        {
+        //            s.Id,
+        //            PersonelAdi = s.Personel.AdSoyad,
+        //            s.PersonelId,
+        //            s.SeyahatTipi,
+        //            s.GidisSehri,
+        //            s.VarisSehri,
+        //            s.UlkeAdi,
+        //            s.KalkisTarihi,
+        //            s.DonusTarihi,
+        //            s.Amac,
+        //            s.KonaklamaGerekli,
+        //            s.UlasimTipi,
+        //            s.BeklenenMaliyet,
+        //            s.OnayDurumu,
+        //            s.TalepTarihi,
+        //            s.UcakBileti,
+        //            s.OtelRezervasyon,
+        //            Masraflar = s.Masraflar.Select(m => new
+        //            {
+        //                m.Id,
+        //                m.MasrafTipi,
+        //                m.Tutar,
+        //                m.Tarih,
+        //                m.Aciklama,
+        //                m.FaturaDosyasi
+        //            }).ToList(),
+        //            ToplamMasraf = s.Masraflar.Sum(m => m.Tutar),
+        //            OnayAkisi = _context.OnayAkislari
+        //                .Where(o => o.OnayTipi == "Seyahat" && o.ReferansId == s.Id)
+        //                .Select(o => new
+        //                {
+        //                    o.Sira,
+        //                    OnaylayiciAdi = o.Onaylayici.AdSoyad,
+        //                    o.OnayDurumu,
+        //                    o.OnayTarihi,
+        //                    o.Aciklama
+        //                })
+        //                .ToList()
+        //        })
+        //        .FirstOrDefaultAsync();
 
-            if (talep == null)
-                return NotFound();
+        //    if (talep == null)
+        //        return NotFound();
 
-            return Ok(talep);
-        }
+        //    return Ok(talep);
+        //}
 
         // POST: api/SeyahatTalebi
-        [HttpPost]
-        public async Task<ActionResult<SeyahatTalebi>> PostSeyahatTalebi([FromBody] SeyahatTalebiDTO dto)
-        {
-            var seyahatTalebi = new SeyahatTalebi
-            {
-                PersonelId = dto.PersonelId,
-                SeyahatTipi = dto.SeyahatTipi,
-                GidisSehri = dto.GidisSehri,
-                VarisSehri = dto.VarisSehri,
-                UlkeAdi = dto.UlkeAdi,
-                KalkisTarihi = dto.KalkisTarihi,
-                DonusTarihi = dto.DonusTarihi,
-                Amac = dto.Amac,
-                KonaklamaGerekli = dto.KonaklamaGerekli,
-                UlasimTipi = dto.UlasimTipi,
-                BeklenenMaliyet = dto.BeklenenMaliyet,
-                SirketId = dto.SirketId
-            };
+        //[HttpPost]
+        //public async Task<ActionResult<SeyahatTalebi>> PostSeyahatTalebi([FromBody] SeyahatTalebiDTO dto)
+        //{
+        //    var seyahatTalebi = new SeyahatTalebi
+        //    {
+        //        PersonelId = dto.PersonelId,
+        //        SeyahatTipi = dto.SeyahatTipi,
+        //        GidisSehri = dto.GidisSehri,
+        //        VarisSehri = dto.VarisSehri,
+        //        UlkeAdi = dto.UlkeAdi,
+        //        KalkisTarihi = dto.KalkisTarihi,
+        //        DonusTarihi = dto.DonusTarihi,
+        //        Amac = dto.Amac,
+        //        KonaklamaGerekli = dto.KonaklamaGerekli,
+        //        UlasimTipi = dto.UlasimTipi,
+        //        BeklenenMaliyet = dto.BeklenenMaliyet,
+        //        SirketId = dto.SirketId
+        //    };
 
-            _context.SeyahatTalepleri.Add(seyahatTalebi);
-            await _context.SaveChangesAsync();
+        //    _context.SeyahatTalepleri.Add(seyahatTalebi);
+        //    await _context.SaveChangesAsync();
 
             // Onay akışı oluştur
-            if (dto.OnaylayiciIds != null && dto.OnaylayiciIds.Any())
-            {
-                for (int i = 0; i < dto.OnaylayiciIds.Count; i++)
-                {
-                    var onayAkisi = new OnayAkisi
-                    {
-                        OnayTipi = "Seyahat",
-                        ReferansId = seyahatTalebi.Id,
-                        Sira = i + 1,
-                        OnaylayiciPersonelId = dto.OnaylayiciIds[i],
-                        SirketId = dto.SirketId
-                    };
-                    _context.OnayAkislari.Add(onayAkisi);
-                }
-                await _context.SaveChangesAsync();
-            }
+            //if (dto.OnaylayiciIds != null && dto.OnaylayiciIds.Any())
+            //{
+            //    for (int i = 0; i < dto.OnaylayiciIds.Count; i++)
+            //    {
+            //        var onayAkisi = new OnayAkisi
+            //        {
+            //            OnayTipi = "Seyahat",
+            //            ReferansId = seyahatTalebi.Id,
+            //            Sira = i + 1,
+            //            OnaylayiciPersonelId = dto.OnaylayiciIds[i],
+            //            SirketId = dto.SirketId
+            //        };
+            //        _context.OnayAkislari.Add(onayAkisi);
+            //    }
+            //    await _context.SaveChangesAsync();
+            //}
 
-            return CreatedAtAction(nameof(GetSeyahatTalebi), new { id = seyahatTalebi.Id }, seyahatTalebi);
-        }
+        //    return CreatedAtAction(nameof(GetSeyahatTalebi), new { id = seyahatTalebi.Id }, seyahatTalebi);
+        //}
 
         // POST: api/SeyahatTalebi/{id}/Masraf
         [HttpPost("{id}/Masraf")]

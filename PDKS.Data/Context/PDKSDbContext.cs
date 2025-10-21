@@ -35,6 +35,9 @@ namespace PDKS.Data.Context
         public DbSet<GorevTanimi> GorevTanimlari { get; set; }
         public DbSet<IzinHakki> IzinHaklari { get; set; }
         public DbSet<OnayAkisi> OnayAkislari { get; set; }
+        public DbSet<OnayAdimi> OnayAdimlari { get; set; }
+        public DbSet<OnayKaydi> OnayKayitlari { get; set; }
+        public DbSet<OnayDetay> OnayDetaylari { get; set; }
         public DbSet<AvansTalebi> AvansTalepleri { get; set; }
         public DbSet<Arac> Araclar { get; set; }
         public DbSet<AracTalebi> AracTalepleri { get; set; }
@@ -127,8 +130,7 @@ namespace PDKS.Data.Context
                 .HasIndex(a => a.Plaka)
                 .IsUnique();
 
-            modelBuilder.Entity<OnayAkisi>()
-                .HasIndex(o => new { o.OnayTipi, o.ReferansId, o.Sira });
+
 
             modelBuilder.Entity<Bildirim>()
                 .HasIndex(b => new { b.KullaniciId, b.Okundu });
@@ -336,19 +338,64 @@ namespace PDKS.Data.Context
                 .HasForeignKey(ih => ih.SirketId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            // OnayAkisi - Onaylayici
-            modelBuilder.Entity<OnayAkisi>()
-                .HasOne(oa => oa.Onaylayici)
-                .WithMany()
-                .HasForeignKey(oa => oa.OnaylayiciPersonelId)
-                .OnDelete(DeleteBehavior.Restrict);
+            modelBuilder.Entity<OnayAkisi>(entity =>
+            {
+                entity.ToTable("OnayAkislari");
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.AkisAdi).IsRequired().HasMaxLength(100);
+                entity.Property(e => e.ModulTipi).IsRequired().HasMaxLength(50);
 
-            // OnayAkisi - Sirket
-            modelBuilder.Entity<OnayAkisi>()
-                .HasOne(oa => oa.Sirket)
-                .WithMany()
-                .HasForeignKey(oa => oa.SirketId)
-                .OnDelete(DeleteBehavior.Restrict);
+                entity.HasOne(e => e.Sirket)
+                    .WithMany()
+                    .HasForeignKey(e => e.SirketId)
+                    .OnDelete(DeleteBehavior.Restrict);
+            });
+
+            // 🆕 OnayAdimi konfigürasyonu
+            modelBuilder.Entity<OnayAdimi>(entity =>
+            {
+                entity.ToTable("OnayAdimlari");
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.AdimAdi).IsRequired().HasMaxLength(100);
+                entity.Property(e => e.OnaylayanTipi).HasMaxLength(50);
+
+                entity.HasOne(e => e.OnayAkisi)
+                    .WithMany(a => a.OnayAdimlari)
+                    .HasForeignKey(e => e.OnayAkisiId)
+                    .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            // 🆕 OnayKaydi konfigürasyonu
+            modelBuilder.Entity<OnayKaydi>(entity =>
+            {
+                entity.ToTable("OnayKayitlari");
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.ModulTipi).IsRequired().HasMaxLength(50);
+                entity.Property(e => e.GenelDurum).IsRequired().HasMaxLength(50);
+
+                entity.HasOne(e => e.OnayAkisi)
+                    .WithMany()
+                    .HasForeignKey(e => e.OnayAkisiId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(e => e.TalepEdenKullanici)
+                    .WithMany()
+                    .HasForeignKey(e => e.TalepEdenKullaniciId)
+                    .OnDelete(DeleteBehavior.Restrict);
+            });
+
+            // 🆕 OnayDetay konfigürasyonu
+            modelBuilder.Entity<OnayDetay>(entity =>
+            {
+                entity.ToTable("OnayDetaylari");
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Durum).IsRequired().HasMaxLength(50);
+
+                entity.HasOne(e => e.OnayKaydi)
+                    .WithMany(k => k.OnayDetaylari)
+                    .HasForeignKey(e => e.OnayKaydiId)
+                    .OnDelete(DeleteBehavior.Cascade);
+            });
 
             // AvansTalebi - Personel
             modelBuilder.Entity<AvansTalebi>()

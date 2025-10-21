@@ -1,4 +1,6 @@
-﻿import { useEffect, useState } from 'react';
+﻿// src/pages/personel/PersonelForm.tsx - MİNİMAL ÇALIŞAN VERSİYON
+
+import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
     Box,
@@ -16,10 +18,9 @@ import {
     Alert,
     CircularProgress,
 } from '@mui/material';
-import type { SelectChangeEvent } from '@mui/material/Select'; // ⬅️ BURADAN IMPORT EDİN
 import { Save as SaveIcon, ArrowBack as ArrowBackIcon } from '@mui/icons-material';
+import type { SelectChangeEvent } from '@mui/material/Select';
 import api from '../../services/api';
-import { jwtDecode } from 'jwt-decode';
 import { useAuth } from '../../contexts/AuthContext';
 
 interface PersonelFormData {
@@ -48,33 +49,18 @@ interface Departman {
 
 interface Vardiya {
     id: number;
-    ad?: string;           // Backend'den bu geliyor
-    baslangicSaati?: string;
-    bitisSaati?: string;
+    ad?: string;
+    vardiyaAdi?: string;
 }
 
 interface Parametre {
     id: number;
     ad: string;
     deger: string;
-    birim?: string;
-    aciklama?: string;
-    kategori?: string;
 }
 
-// Sabit listeler
-const KAN_GRUPLARI = [
-    'A Rh+',
-    'A Rh-',
-    'B Rh+',
-    'B Rh-',
-    'AB Rh+',
-    'AB Rh-',
-    '0 Rh+',
-    '0 Rh-',
-];
-
-const CINSIYETLER = ['Erkek', 'Kadin', 'Belirtmek Istemiyorum'];
+const KAN_GRUPLARI = ['A Rh+', 'A Rh-', 'B Rh+', 'B Rh-', 'AB Rh+', 'AB Rh-', '0 Rh+', '0 Rh-'];
+const CINSIYETLER = ['Erkek', 'Kadın', 'Belirtmek İstemiyorum'];
 
 function PersonelForm() {
     const { currentSirketId } = useAuth();
@@ -114,7 +100,6 @@ function PersonelForm() {
         }
     }, [id]);
 
-    // PersonelForm.tsx - loadDependencies fonksiyonunu düzeltin
     const loadDependencies = async () => {
         try {
             const [departmanRes, vardiyaRes, gorevRes, unvanRes] = await Promise.all([
@@ -124,31 +109,19 @@ function PersonelForm() {
                 api.get('/Parametre/kategori/UNVAN'),
             ]);
 
-            console.log('Departman Response:', departmanRes.data);
-            console.log('Vardiya Response:', vardiyaRes.data); // ⬅️ Bunu kontrol edin
-            console.log('Gorev Response:', gorevRes.data);
-            console.log('Unvan Response:', unvanRes.data);
-
             setDepartmanlar(Array.isArray(departmanRes.data) ? departmanRes.data : []);
-            setVardiyalar(Array.isArray(vardiyaRes.data) ? vardiyaRes.data : []); // ⬅️ Güvenli set
+            setVardiyalar(Array.isArray(vardiyaRes.data) ? vardiyaRes.data : []);
             setGorevler(Array.isArray(gorevRes.data) ? gorevRes.data : []);
             setUnvanlar(Array.isArray(unvanRes.data) ? unvanRes.data : []);
         } catch (error) {
-            console.error('Bağımlılıklarda hata:', error);
-            if (error.response) {
-                console.error('API Hatası:', error.response.status, error.response.data);
-            }
-
-            // Fallback veriler
-            setDepartmanlar([]);
-            setVardiyalar([]);
+            console.error('Bağımlılıklar yüklenemedi:', error);
             setGorevler([
-                { id: 1, ad: 'Yazılım Geliştirici', deger: 'Yazılım Geliştirici', kategori: 'GOREV' },
-                { id: 2, ad: 'Sistem Yöneticisi', deger: 'Sistem Yöneticisi', kategori: 'GOREV' },
+                { id: 1, ad: 'Yazılım Geliştirici', deger: 'Yazılım Geliştirici' },
+                { id: 2, ad: 'Sistem Yöneticisi', deger: 'Sistem Yöneticisi' },
             ]);
             setUnvanlar([
-                { id: 1, ad: 'Junior', deger: 'Junior', kategori: 'UNVAN' },
-                { id: 2, ad: 'Senior', deger: 'Senior', kategori: 'UNVAN' },
+                { id: 1, ad: 'Junior', deger: 'Junior' },
+                { id: 2, ad: 'Senior', deger: 'Senior' },
             ]);
         }
     };
@@ -180,8 +153,8 @@ function PersonelForm() {
                 cinsiyet: data.cinsiyet || '',
             });
         } catch (err) {
-            console.error('Personel yuklenemedi:', err);
-            setError('Personel bilgileri yuklenemedi!');
+            console.error('Personel yüklenemedi:', err);
+            setError('Personel bilgileri yüklenemedi!');
         } finally {
             setLoading(false);
         }
@@ -197,29 +170,25 @@ function PersonelForm() {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        e.stopPropagation();
-
         setError('');
-        setSubmitting(true);
 
-        // Validation
+        // Basit validation
         if (!formData.ad || !formData.soyad || !formData.tcKimlikNo || !formData.email) {
-            setError('Lütfen zorunlu alanları doldurun!');
-            setSubmitting(false);
+            setError('Ad, Soyad, TC Kimlik No ve E-posta zorunludur!');
             return;
         }
 
         if (!formData.gorev || !formData.unvan) {
-            setError('Görev ve Unvan alanları zorunludur!');
-            setSubmitting(false);
+            setError('Görev ve Ünvan zorunludur!');
             return;
         }
 
         if (!currentSirketId) {
-            setError('Şirket bilgisi bulunamadı! Lütfen çıkış yapıp tekrar giriş yapın.');
-            setSubmitting(false);
+            setError('Şirket bilgisi bulunamadı!');
             return;
         }
+
+        setSubmitting(true);
 
         try {
             const payload = {
@@ -232,26 +201,24 @@ function PersonelForm() {
                 telefon: formData.telefon || '',
                 adres: formData.adres || '',
                 dogumTarihi: formData.dogumTarihi || null,
-                girisTarihi: formData.iseBaslamaTarihi || null,  // ✅ Backend "girisTarihi" bekliyor
+                girisTarihi: formData.iseBaslamaTarihi || null,
                 cikisTarihi: null,
                 departmanId: formData.departmanId ? Number(formData.departmanId) : null,
                 vardiyaId: formData.vardiyaId ? Number(formData.vardiyaId) : null,
                 maas: formData.maas ? Number(formData.maas) : 0,
-                durum: formData.aktif,  // ✅ Backend "durum" bekliyor
+                durum: formData.aktif,
                 gorev: formData.gorev,
                 unvan: formData.unvan,
                 kanGrubu: formData.kanGrubu || '',
                 cinsiyet: formData.cinsiyet || '',
                 avansLimiti: 0,
-                notlar: ''
+                notlar: '',
             };
 
             if (id) {
-                // Güncelleme
                 await api.put(`/Personel/${id}`, payload);
                 alert('Personel başarıyla güncellendi!');
             } else {
-                // Yeni kayıt
                 await api.post('/Personel', payload);
                 alert('Personel başarıyla eklendi!');
             }
@@ -259,7 +226,8 @@ function PersonelForm() {
             navigate('/personel');
         } catch (err: any) {
             console.error('Kayıt hatası:', err);
-            const errorMsg = err.response?.data?.message || err.response?.data || err.message || 'Kayıt başarısız!';
+            const errorMsg =
+                err.response?.data?.message || err.response?.data || err.message || 'Kayıt başarısız!';
             setError(errorMsg);
         } finally {
             setSubmitting(false);
@@ -281,7 +249,7 @@ function PersonelForm() {
                     Geri
                 </Button>
                 <Typography variant="h4" fontWeight="bold">
-                    {id ? 'Personel Duzenle' : 'Yeni Personel'}
+                    {id ? 'Personel Düzenle' : 'Yeni Personel'}
                 </Typography>
             </Box>
 
@@ -345,33 +313,30 @@ function PersonelForm() {
                             <TextField
                                 fullWidth
                                 label="Telefon"
+                                placeholder="5XXXXXXXXX"
                                 value={formData.telefon}
                                 onChange={(e) => handleChange('telefon', e.target.value)}
                             />
                         </Grid>
 
-                        {/* Maas */}
+                        {/* Maaş */}
                         <Grid item xs={12} md={6}>
                             <TextField
                                 fullWidth
-                                label="Maas"
+                                label="Maaş"
                                 type="number"
                                 value={formData.maas}
                                 onChange={(e) => handleChange('maas', e.target.value)}
                             />
                         </Grid>
 
-                        {/* Gorev */}
+                        {/* Görev */}
                         <Grid item xs={12} md={6}>
                             <FormControl fullWidth required>
-                                <InputLabel>Gorev</InputLabel>
-                                <Select
-                                    value={formData.gorev}
-                                    onChange={handleSelectChange('gorev')}
-                                    label="Gorev"
-                                >
+                                <InputLabel>Görev</InputLabel>
+                                <Select value={formData.gorev} onChange={handleSelectChange('gorev')} label="Görev">
                                     <MenuItem value="">
-                                        <em>Seciniz</em>
+                                        <em>Seçiniz</em>
                                     </MenuItem>
                                     {gorevler.map((gorev) => (
                                         <MenuItem key={gorev.id} value={gorev.deger}>
@@ -382,17 +347,13 @@ function PersonelForm() {
                             </FormControl>
                         </Grid>
 
-                        {/* Unvan - Parametreden */}
+                        {/* Ünvan */}
                         <Grid item xs={12} md={6}>
                             <FormControl fullWidth required>
-                                <InputLabel>Unvan</InputLabel>
-                                <Select
-                                    value={formData.unvan}
-                                    onChange={handleSelectChange('unvan')}
-                                    label="Unvan"
-                                >
+                                <InputLabel>Ünvan</InputLabel>
+                                <Select value={formData.unvan} onChange={handleSelectChange('unvan')} label="Ünvan">
                                     <MenuItem value="">
-                                        <em>Seciniz</em>
+                                        <em>Seçiniz</em>
                                     </MenuItem>
                                     {unvanlar.map((unvan) => (
                                         <MenuItem key={unvan.id} value={unvan.deger}>
@@ -403,7 +364,7 @@ function PersonelForm() {
                             </FormControl>
                         </Grid>
 
-                        {/* Kan Grubu - Sabit */}
+                        {/* Kan Grubu */}
                         <Grid item xs={12} md={6}>
                             <FormControl fullWidth>
                                 <InputLabel>Kan Grubu</InputLabel>
@@ -413,7 +374,7 @@ function PersonelForm() {
                                     label="Kan Grubu"
                                 >
                                     <MenuItem value="">
-                                        <em>Seciniz</em>
+                                        <em>Seçiniz</em>
                                     </MenuItem>
                                     {KAN_GRUPLARI.map((kan) => (
                                         <MenuItem key={kan} value={kan}>
@@ -424,7 +385,7 @@ function PersonelForm() {
                             </FormControl>
                         </Grid>
 
-                        {/* Cinsiyet - Sabit */}
+                        {/* Cinsiyet */}
                         <Grid item xs={12} md={6}>
                             <FormControl fullWidth>
                                 <InputLabel>Cinsiyet</InputLabel>
@@ -434,7 +395,7 @@ function PersonelForm() {
                                     label="Cinsiyet"
                                 >
                                     <MenuItem value="">
-                                        <em>Seciniz</em>
+                                        <em>Seçiniz</em>
                                     </MenuItem>
                                     {CINSIYETLER.map((cinsiyet) => (
                                         <MenuItem key={cinsiyet} value={cinsiyet}>
@@ -445,24 +406,24 @@ function PersonelForm() {
                             </FormControl>
                         </Grid>
 
-                        {/* Dogum Tarihi */}
+                        {/* Doğum Tarihi */}
                         <Grid item xs={12} md={6}>
                             <TextField
                                 fullWidth
                                 type="date"
-                                label="Dogum Tarihi"
+                                label="Doğum Tarihi"
                                 value={formData.dogumTarihi}
                                 onChange={(e) => handleChange('dogumTarihi', e.target.value)}
                                 InputLabelProps={{ shrink: true }}
                             />
                         </Grid>
 
-                        {/* Ise Baslama Tarihi */}
+                        {/* İşe Başlama Tarihi */}
                         <Grid item xs={12} md={6}>
                             <TextField
                                 fullWidth
                                 type="date"
-                                label="Ise Baslama Tarihi"
+                                label="İşe Başlama Tarihi"
                                 value={formData.iseBaslamaTarihi}
                                 onChange={(e) => handleChange('iseBaslamaTarihi', e.target.value)}
                                 InputLabelProps={{ shrink: true }}
@@ -479,7 +440,7 @@ function PersonelForm() {
                                     label="Departman"
                                 >
                                     <MenuItem value="">
-                                        <em>Seciniz</em>
+                                        <em>Seçiniz</em>
                                     </MenuItem>
                                     {departmanlar.map((dep) => (
                                         <MenuItem key={dep.id} value={dep.id}>
@@ -500,7 +461,7 @@ function PersonelForm() {
                                     label="Vardiya"
                                 >
                                     <MenuItem value="">
-                                        <em>Seciniz</em>
+                                        <em>Seçiniz</em>
                                     </MenuItem>
                                     {vardiyalar.map((vrd) => (
                                         <MenuItem key={vrd.id} value={vrd.id}>
@@ -550,12 +511,8 @@ function PersonelForm() {
                                 >
                                     {submitting ? 'Kaydediliyor...' : 'Kaydet'}
                                 </Button>
-                                <Button
-                                    variant="outlined"
-                                    onClick={() => navigate('/personel')}
-                                    disabled={submitting}
-                                >
-                                    Iptal
+                                <Button variant="outlined" onClick={() => navigate('/personel')} disabled={submitting}>
+                                    İptal
                                 </Button>
                             </Box>
                         </Grid>
