@@ -11,7 +11,11 @@ namespace PDKS.WebUI.Controllers
 {
     [Authorize] // Bu controller'a erişim için yetkilendirme (geçerli token) gerekir.
     [ApiController]
-    [Route("api/[controller]")]
+#if DEBUG
+    [Route("api/[controller]")] // ⬅️ Development: /api/auth/login
+#else
+[Route("[controller]")] // ⬅️ Production: /auth/login (IIS /api ekler)
+#endif
     [Produces("application/json")]
     [Consumes("application/json")]
     public class PersonelController : ControllerBase

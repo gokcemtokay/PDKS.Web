@@ -9,7 +9,11 @@ namespace PDKS.WebUI.Controllers
 {
     [Authorize(Roles = "Admin,IK")]
     [ApiController]
-    [Route("api/[controller]")]
+#if DEBUG
+    [Route("api/[controller]")] // ⬅️ Development: /api/auth/login
+#else
+[Route("[controller]")] // ⬅️ Production: /auth/login (IIS /api ekler)
+#endif
     public class ParametreController : ControllerBase
     {
         private readonly IParametreService _parametreService;

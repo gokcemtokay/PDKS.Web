@@ -26,7 +26,10 @@ builder.Services.AddAutoMapper(typeof(IVardiyaService).Assembly);
 builder.Services.AddDbContext<PDKSDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-
+builder.Services.AddRouting(options =>
+{
+    options.LowercaseUrls = true; 
+});
 // Add services to the container.
 // MVC yerine API Controller'larını kullanacağımızı belirtiyoruz.
 builder.Services.AddControllers().AddJsonOptions(options =>
@@ -231,11 +234,11 @@ var app = builder.Build();
 // --- 4. HTTP Request Pipeline (Middleware) Yapılandırması ---
 
 // Development ortamında Swagger arayüzünü aktif hale getiriyoruz.
-if (app.Environment.IsDevelopment())
-{
+//if (app.Environment.IsDevelopment())
+//{
     app.UseSwagger();
     app.UseSwaggerUI();
-}
+//}
 
 // Development ortamında migration'ları otomatik uygula (opsiyonel)
 if (app.Environment.IsDevelopment())
@@ -259,7 +262,7 @@ app.UseHttpsRedirection();
 app.UseResponseCompression();
 app.UseIpRateLimiting();
 // CORS politikasını aktif hale getiriyoruz. Bu satır UseRouting'den önce olmalı.
-app.UseCors("AllowReactApp");
+app.UseCors("AllowAll");
 
 app.UseRouting();
 

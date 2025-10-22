@@ -15,7 +15,7 @@ import { Visibility, VisibilityOff, Login as LoginIcon } from '@mui/icons-materi
 import axios from 'axios'; // Doğrudan axios'u kullanacağız. api.ts kullanılıyorsa, onu da kullanabilirsiniz.
 import { useAuth } from '../contexts/AuthContext'; // ⭐ KRİTİK: useAuth'u import ettik
 
-const API_LOGIN_URL = '/api/Auth/login';
+const API_LOGIN_URL = '/api/auth/login';
 
 // LoginPageProps artık kullanılmayacak, onLogin kaldırıldı.
 // function LoginPage({ onLogin }: LoginPageProps) {

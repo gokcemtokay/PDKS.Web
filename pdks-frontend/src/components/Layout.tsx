@@ -1,5 +1,6 @@
 ﻿// pdks-frontend/src/components/Layout.tsx
-import { useState, ReactNode } from 'react';
+import { useState } from 'react';
+import type { ReactNode } from 'react';
 import { useNavigate, useLocation, Navigate } from 'react-router-dom';
 import {
     Box,

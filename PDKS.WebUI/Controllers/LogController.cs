@@ -9,7 +9,11 @@ namespace PDKS.WebUI.Controllers
 {
     [Authorize(Roles = "Admin")]
     [ApiController]
-    [Route("api/[controller]")]
+#if DEBUG
+    [Route("api/[controller]")] // ⬅️ Development: /api/auth/login
+#else
+[Route("[controller]")] // ⬅️ Production: /auth/login (IIS /api ekler)
+#endif
     public class LogController : ControllerBase
     {
         private readonly IUnitOfWork _unitOfWork;

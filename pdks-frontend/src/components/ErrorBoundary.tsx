@@ -1,6 +1,7 @@
 ﻿// src/components/ErrorBoundary.tsx - YENİ DOSYA
 
-import React, { Component, ErrorInfo, ReactNode } from 'react';
+import React, { Component } from 'react';
+import type { ErrorInfo, ReactNode } from 'react';
 import { Alert, Button, Box, Typography, Paper, Stack } from '@mui/material';
 import { Error as ErrorIcon, Refresh as RefreshIcon, Home as HomeIcon } from '@mui/icons-material';
 
@@ -106,7 +107,7 @@ class ErrorBoundary extends Component<Props, State> {
                         </Typography>
 
                         {/* Geliştirme modunda hata detaylarını göster */}
-                        {process.env.NODE_ENV === 'development' && this.state.error && (
+                        {import.meta.env.MODE === 'development' && this.state.error && (
                             <Alert severity="error" sx={{ mt: 3, textAlign: 'left' }}>
                                 <Typography variant="subtitle2" fontWeight="bold" gutterBottom>
                                     Hata Detayları (Sadece Development):

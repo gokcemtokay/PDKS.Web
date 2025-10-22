@@ -32,6 +32,7 @@ interface PersonelFormData {
     adres: string;
     dogumTarihi: string;
     iseBaslamaTarihi: string;
+    cikisTarihi: Date | string | null;
     departmanId: number | string;
     vardiyaId: number | string;
     maas: number | string;
@@ -83,6 +84,7 @@ function PersonelForm() {
         adres: '',
         dogumTarihi: '',
         iseBaslamaTarihi: '',
+        cikisTarihi: null as string | null,
         departmanId: '',
         vardiyaId: '',
         maas: '',
@@ -143,6 +145,7 @@ function PersonelForm() {
                 adres: data.adres || '',
                 dogumTarihi: data.dogumTarihi ? data.dogumTarihi.split('T')[0] : '',
                 iseBaslamaTarihi: data.iseBaslamaTarihi ? data.iseBaslamaTarihi.split('T')[0] : '',
+                cikisTarihi: data.cikisTarihi || null,
                 departmanId: data.departmanId || '',
                 vardiyaId: data.vardiyaId || '',
                 maas: data.maas || '',
@@ -202,7 +205,7 @@ function PersonelForm() {
                 adres: formData.adres || '',
                 dogumTarihi: formData.dogumTarihi || null,
                 girisTarihi: formData.iseBaslamaTarihi || null,
-                cikisTarihi: null,
+                cikisTarihi: null as string | null,
                 departmanId: formData.departmanId ? Number(formData.departmanId) : null,
                 vardiyaId: formData.vardiyaId ? Number(formData.vardiyaId) : null,
                 maas: formData.maas ? Number(formData.maas) : 0,
@@ -435,7 +438,7 @@ function PersonelForm() {
                             <FormControl fullWidth>
                                 <InputLabel>Departman</InputLabel>
                                 <Select
-                                    value={formData.departmanId}
+                                    value={formData.departmanId?.toString() || ''}
                                     onChange={handleSelectChange('departmanId')}
                                     label="Departman"
                                 >
@@ -456,7 +459,7 @@ function PersonelForm() {
                             <FormControl fullWidth>
                                 <InputLabel>Vardiya</InputLabel>
                                 <Select
-                                    value={formData.vardiyaId}
+                                    value={formData.vardiyaId?.toString() || ''}
                                     onChange={handleSelectChange('vardiyaId')}
                                     label="Vardiya"
                                 >

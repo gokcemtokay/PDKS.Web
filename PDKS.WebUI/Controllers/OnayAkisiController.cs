@@ -10,7 +10,11 @@ using System.Threading.Tasks;
 namespace PDKS.WebUI.Controllers
 {
     [Authorize]
-    [Route("api/[controller]")]
+#if DEBUG
+    [Route("api/[controller]")] // ⬅️ Development: /api/auth/login
+#else
+[Route("[controller]")] // ⬅️ Production: /auth/login (IIS /api ekler)
+#endif
     [ApiController]
     public class OnayAkisiController : ControllerBase
     {

@@ -9,7 +9,11 @@ namespace PDKS.WebUI.Controllers
 {
     [Authorize(Roles = "Admin,IK")]
     [ApiController]
-    [Route("api/[controller]")]
+#if DEBUG
+    [Route("api/[controller]")] // ⬅️ Development: /api/auth/login
+#else
+[Route("[controller]")] // ⬅️ Production: /auth/login (IIS /api ekler)
+#endif
     [Produces("application/json")]
     [Consumes("application/json")]
     public class GirisCikisController : ControllerBase

@@ -140,7 +140,7 @@ function PersonelList() {
             headerName: 'Departman',
             width: 150,
             valueGetter: (_value: unknown, row: Personel) => {
-                return row.departmanAdi || row.departman || '-';
+                return row.departmanAdi || '-';
             },
         },
         {
