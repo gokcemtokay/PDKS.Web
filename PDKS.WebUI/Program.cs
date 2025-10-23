@@ -188,16 +188,18 @@ builder.Services.AddHttpContextAccessor();
 // React uygulamasından gelecek isteklere izin vermek için ekliyoruz.
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowReactApp", policy =>
+    options.AddPolicy("AllowAll", builder =>
     {
-        policy.WithOrigins(
-            "http://localhost:56899",  // ⬅️ Frontend'in portu
-            "http://localhost:5173",
-            "http://localhost:3000"
-        )
-        .AllowAnyHeader()
-        .AllowAnyMethod()
-        .AllowCredentials();
+        builder
+            .WithOrigins(
+                "http://localhost:56899",           // ⬅️ Development
+                "http://localhost:5104",            // ⬅️ Development
+                "http://pdks.ardenyazilim.com",     // ⬅️ Production
+                "https://pdks.ardenyazilim.com"     // ⬅️ Production HTTPS
+            )
+            .AllowAnyMethod()
+            .AllowAnyHeader()
+            .AllowCredentials();
     });
 });
 
