@@ -4,7 +4,7 @@ using PDKS.Data.Entities;
 
 namespace PDKS.Data.Repositories
 {
-    public class RolRepository : GenericRepository<Rol>, IRolRepository
+    public class RolRepository : Repository<Rol>, IRepository<Rol>
     {
         public RolRepository(PDKSDbContext context) : base(context)
         {

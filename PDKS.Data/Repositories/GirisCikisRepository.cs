@@ -4,7 +4,7 @@ using PDKS.Data.Entities;
 
 namespace PDKS.Data.Repositories
 {
-    public class GirisCikisRepository : GenericRepository<GirisCikis>, IGirisCikisRepository
+    public class GirisCikisRepository : Repository<GirisCikis>, IRepository<GirisCikis>
     {
         public GirisCikisRepository(PDKSDbContext context) : base(context)
         {

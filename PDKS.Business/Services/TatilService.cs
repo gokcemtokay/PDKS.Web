@@ -87,7 +87,7 @@ namespace PDKS.Business.Services
             if (tatil == null)
                 throw new Exception("Tatil bulunamadı");
 
-            _unitOfWork.Tatiller.Remove(tatil);
+            _unitOfWork.Tatiller.Delete(tatil);
             await _unitOfWork.SaveChangesAsync();
         }
 

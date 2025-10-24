@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using PDKS.Data.Context;
@@ -11,9 +12,11 @@ using PDKS.Data.Context;
 namespace PDKS.Data.Migrations
 {
     [DbContext(typeof(PDKSDbContext))]
-    partial class PDKSDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251023194845_KapsamliPersonelYonetimi")]
+    partial class KapsamliPersonelYonetimi
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1388,66 +1391,45 @@ namespace PDKS.Data.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("Ad")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("ad");
-
                     b.Property<bool>("Aktif")
-                        .HasColumnType("boolean")
-                        .HasColumnName("aktif");
+                        .HasColumnType("boolean");
 
                     b.Property<string>("Email")
                         .IsRequired()
                         .HasMaxLength(100)
-                        .HasColumnType("character varying(100)")
-                        .HasColumnName("email");
+                        .HasColumnType("character varying(100)");
 
                     b.Property<DateTime?>("GuncellemeTarihi")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("guncellemeTarihi");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<DateTime>("KayitTarihi")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("kayittarihi");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("KullaniciAdi")
                         .IsRequired()
                         .HasMaxLength(50)
-                        .HasColumnType("character varying(50)")
-                        .HasColumnName("kullaniciadi");
+                        .HasColumnType("character varying(50)");
 
                     b.Property<DateTime?>("OlusturmaTarihi")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("olusturmatarihi");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<int?>("PersonelId")
-                        .HasColumnType("integer")
-                        .HasColumnName("personelid");
+                        .HasColumnType("integer");
 
                     b.Property<int>("RolId")
-                        .HasColumnType("integer")
-                        .HasColumnName("rolid");
+                        .HasColumnType("integer");
 
                     b.Property<string>("Sifre")
                         .IsRequired()
                         .HasMaxLength(255)
-                        .HasColumnType("character varying(255)")
-                        .HasColumnName("sifre");
+                        .HasColumnType("character varying(255)");
 
                     b.Property<string>("SifreHash")
                         .HasMaxLength(255)
-                        .HasColumnType("character varying(255)")
-                        .HasColumnName("sifrehash");
+                        .HasColumnType("character varying(255)");
 
                     b.Property<DateTime?>("SonGirisTarihi")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("songiristarihi");
-
-                    b.Property<string>("Soyad")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("soyad");
+                        .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");
 
@@ -2865,14 +2847,8 @@ namespace PDKS.Data.Migrations
                         .HasMaxLength(2000)
                         .HasColumnType("character varying(2000)");
 
-                    b.Property<string>("IsTanimi")
-                        .HasColumnType("text");
-
                     b.Property<DateTime>("KayitTarihi")
                         .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Notlar")
-                        .HasColumnType("text");
 
                     b.Property<int>("PersonelId")
                         .HasColumnType("integer");
@@ -2886,21 +2862,9 @@ namespace PDKS.Data.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
 
-                    b.Property<string>("ReferansKisiAdi")
-                        .HasColumnType("text");
-
-                    b.Property<string>("ReferansKisiEmail")
-                        .HasColumnType("text");
-
-                    b.Property<string>("ReferansKisiTelefon")
-                        .HasColumnType("text");
-
                     b.Property<string>("ReferansTelefon")
                         .HasMaxLength(15)
                         .HasColumnType("character varying(15)");
-
-                    b.Property<bool>("SGKTescilliMi")
-                        .HasColumnType("boolean");
 
                     b.Property<string>("Sektor")
                         .HasMaxLength(50)

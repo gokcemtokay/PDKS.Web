@@ -22,13 +22,13 @@ namespace PDKS.Business.Services
 
         public async Task<IEnumerable<VardiyaListDTO>> GetAllAsync()
         {
-            var vardiyalar = await _unitOfWork.GetRepository<Vardiya>().GetAllAsync();
+            var vardiyalar = await _unitOfWork.Vardiyalar.GetAllAsync();
             return _mapper.Map<IEnumerable<VardiyaListDTO>>(vardiyalar);
         }
 
         public async Task<IEnumerable<VardiyaListDTO>> GetAktifVardiyalarAsync()
         {
-            var vardiyalar = await _unitOfWork.GetRepository<Vardiya>()
+            var vardiyalar = await _unitOfWork.Vardiyalar
                 .FindAsync(v => v.Durum == true);
 
             return _mapper.Map<IEnumerable<VardiyaListDTO>>(vardiyalar);
@@ -38,7 +38,7 @@ namespace PDKS.Business.Services
         public async Task<IEnumerable<VardiyaListDTO>> GetBySirketAsync(int sirketId)
         {
             // Vardiya Entity'sindeki SirketId alanına göre filtreleme yapar.
-            var vardiyalar = await _unitOfWork.GetRepository<Vardiya>()
+            var vardiyalar = await _unitOfWork.Vardiyalar
                 .FindAsync(v => v.SirketId == sirketId); // Vardiya Entity'sinde SirketId olması şarttır.
 
             return _mapper.Map<IEnumerable<VardiyaListDTO>>(vardiyalar);
@@ -46,7 +46,7 @@ namespace PDKS.Business.Services
 
         public async Task<VardiyaDetailDTO> GetByIdAsync(int id)
         {
-            var vardiya = await _unitOfWork.GetRepository<Vardiya>().GetByIdAsync(id);
+            var vardiya = await _unitOfWork.Vardiyalar.GetByIdAsync(id);
 
             if (vardiya == null)
             {
@@ -64,7 +64,7 @@ namespace PDKS.Business.Services
             vardiya.Durum = true;
             // DTO'da SirketId olduğu varsayılmıştır.
 
-            await _unitOfWork.GetRepository<Vardiya>().AddAsync(vardiya);
+            await _unitOfWork.Vardiyalar.AddAsync(vardiya);
             await _unitOfWork.SaveChangesAsync();
 
             return vardiya.Id;
@@ -72,7 +72,7 @@ namespace PDKS.Business.Services
 
         public async Task UpdateAsync(VardiyaUpdateDTO dto)
         {
-            var vardiya = await _unitOfWork.GetRepository<Vardiya>().GetByIdAsync(dto.Id);
+            var vardiya = await _unitOfWork.Vardiyalar.GetByIdAsync(dto.Id);
 
             if (vardiya == null)
             {
@@ -87,13 +87,13 @@ namespace PDKS.Business.Services
 
             _mapper.Map(dto, vardiya);
 
-            _unitOfWork.GetRepository<Vardiya>().Update(vardiya);
+            _unitOfWork.Vardiyalar.Update(vardiya);
             await _unitOfWork.SaveChangesAsync();
         }
 
         public async Task DeleteAsync(int id)
         {
-            var vardiya = await _unitOfWork.GetRepository<Vardiya>().GetByIdAsync(id);
+            var vardiya = await _unitOfWork.Vardiyalar.GetByIdAsync(id);
 
             if (vardiya == null)
             {
@@ -102,7 +102,7 @@ namespace PDKS.Business.Services
 
             // Soft Delete (Durum'u pasif yap)
             vardiya.Durum = false;
-            _unitOfWork.GetRepository<Vardiya>().Update(vardiya);
+            _unitOfWork.Vardiyalar.Update(vardiya);
 
             await _unitOfWork.SaveChangesAsync();
         }

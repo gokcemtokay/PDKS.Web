@@ -220,7 +220,7 @@ namespace PDKS.Business.Services
             if (departmanSayisi > 0)
                 throw new Exception("Şirkete bağlı departmanlar bulunmaktadır.");
 
-            _unitOfWork.Sirketler.Remove(sirket);
+            _unitOfWork.Sirketler.Delete(sirket);
             await _unitOfWork.SaveChangesAsync();
         }
 

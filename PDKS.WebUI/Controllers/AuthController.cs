@@ -65,7 +65,7 @@ namespace PDKS.WebUI.Controllers
             kullanici.Rol = rol;
 
             // 3. Kullanıcının yetkili olduğu KullaniciSirket kayıtlarını getir
-            var yetkiliSirketKayitlari = await _unitOfWork.GetRepository<KullaniciSirket>()
+            var yetkiliSirketKayitlari = await _unitOfWork.KullaniciSirketler
                 .FindAsync(ks => ks.KullaniciId == kullanici.Id && ks.Aktif);
 
             if (!yetkiliSirketKayitlari.Any())

@@ -26,7 +26,9 @@ namespace PDKS.Data.Entities
         [StringLength(11)]
         public string TcKimlikNo { get; set; }
 
-        public string? ProfilResmi { get; set; }
+        [StringLength(500)]
+        public string? ProfilResmi { get; set; } // Profil fotoğrafı yolu
+
         [Required]
         [StringLength(100)]
         public string Email { get; set; }
@@ -67,6 +69,16 @@ namespace PDKS.Data.Entities
         public int? DepartmanId { get; set; }
         public int? VardiyaId { get; set; }
 
+        // 🆕 Yeni Foreign Keys
+        public int? YoneticiPersonelId { get; set; } // Direkt amir/yönetici
+        public int? IkinciAmirPersonelId { get; set; } // İkincil amir (Matrix organizasyon için)
+
+        [StringLength(50)]
+        public string? CalismaModeli { get; set; } // Tam Zamanlı, Yarı Zamanlı, Uzaktan, Hibrit
+
+        [StringLength(100)]
+        public string? CalismaLokasyonu { get; set; } // Hangi ofis/şube
+
         [StringLength(500)]
         public string? Notlar { get; set; }
 
@@ -74,22 +86,55 @@ namespace PDKS.Data.Entities
         public DateTime? OlusturmaTarihi { get; set; } = DateTime.UtcNow;
         public DateTime? GuncellemeTarihi { get; set; }
 
-        // Navigation Properties
+        // ============== NAVIGATION PROPERTIES ==============
+
+        // Mevcut Navigation Properties
         [ForeignKey("SirketId")]
         public virtual Sirket Sirket { get; set; }
 
         [ForeignKey("DepartmanId")]
-        public Departman? Departman { get; set; }
+        public virtual Departman? Departman { get; set; }
 
         [ForeignKey("VardiyaId")]
-        public Vardiya? Vardiya { get; set; }
+        public virtual Vardiya? Vardiya { get; set; }
 
-        public Kullanici? Kullanici { get; set; }
+        // 🆕 Yönetici Bağlantıları
+        [ForeignKey("YoneticiPersonelId")]
+        public virtual Personel? YoneticiPersonel { get; set; }
 
-        public ICollection<GirisCikis> GirisCikislar { get; set; } = new List<GirisCikis>();
-        public ICollection<Izin> Izinler { get; set; } = new List<Izin>();
-        public ICollection<Mesai> Mesailer { get; set; } = new List<Mesai>();
-        public ICollection<Avans> Avanslar { get; set; } = new List<Avans>();
-        public ICollection<Prim> Primler { get; set; } = new List<Prim>();
+        [ForeignKey("IkinciAmirPersonelId")]
+        public virtual Personel? IkinciAmirPersonel { get; set; }
+
+        public virtual Kullanici? Kullanici { get; set; }
+
+        // Mevcut Collections
+        public virtual ICollection<GirisCikis> GirisCikislar { get; set; } = new List<GirisCikis>();
+        public virtual ICollection<Izin> Izinler { get; set; } = new List<Izin>();
+        public virtual ICollection<Mesai> Mesailer { get; set; } = new List<Mesai>();
+        public virtual ICollection<Avans> Avanslar { get; set; } = new List<Avans>();
+        public virtual ICollection<Prim> Primler { get; set; } = new List<Prim>();
+
+        // 🆕 YENİ Collections - Özlük Bilgileri
+        public virtual ICollection<PersonelAile> AileBilgileri { get; set; } = new List<PersonelAile>();
+        public virtual ICollection<PersonelAcilDurum> AcilDurumBilgileri { get; set; } = new List<PersonelAcilDurum>();
+        public virtual PersonelSaglik? SaglikBilgisi { get; set; } // One-to-One
+        public virtual ICollection<PersonelEgitim> EgitimGecmisi { get; set; } = new List<PersonelEgitim>();
+        public virtual ICollection<PersonelIsDeneyimi> IsDeneyimleri { get; set; } = new List<PersonelIsDeneyimi>();
+        public virtual ICollection<PersonelDil> DilBecerileri { get; set; } = new List<PersonelDil>();
+        public virtual ICollection<PersonelSertifika> Sertifikalar { get; set; } = new List<PersonelSertifika>();
+        public virtual ICollection<PersonelPerformans> PerformansKayitlari { get; set; } = new List<PersonelPerformans>();
+        public virtual ICollection<PersonelDisiplin> DisiplinKayitlari { get; set; } = new List<PersonelDisiplin>();
+        public virtual ICollection<PersonelTerfi> TerfiGecmisi { get; set; } = new List<PersonelTerfi>();
+        public virtual ICollection<PersonelUcretDegisiklik> UcretDegisiklikleri { get; set; } = new List<PersonelUcretDegisiklik>();
+        public virtual ICollection<PersonelReferans> Referanslar { get; set; } = new List<PersonelReferans>();
+        public virtual ICollection<PersonelZimmet> ZimmetliEsyalar { get; set; } = new List<PersonelZimmet>();
+        public virtual ICollection<PersonelYetkinlik> Yetkinlikler { get; set; } = new List<PersonelYetkinlik>();
+        public virtual ICollection<PersonelEgitimKayit> EgitimKayitlari { get; set; } = new List<PersonelEgitimKayit>();
+        public virtual PersonelMaliBilgi? MaliBilgi { get; set; } // One-to-One
+        public virtual PersonelEkBilgi? EkBilgi { get; set; } // One-to-One
+
+        // Self-referencing for Yönetici-Çalışan ilişkisi
+        public virtual ICollection<Personel> AltCalisanlar { get; set; } = new List<Personel>();
+        public virtual ICollection<Personel> IkinciAmirOlduguCalisanlar { get; set; } = new List<Personel>();
     }
 }

@@ -138,12 +138,12 @@ namespace PDKS.WebUI.Controllers.Mobile
             // FCM Token'ı sil
             if (!string.IsNullOrEmpty(dto.FcmToken))
             {
-                var deviceToken = await _unitOfWork.GetRepository<DeviceToken>()
+                var deviceToken = await _unitOfWork.DeviceTokenlari
                     .FirstOrDefaultAsync(dt => dt.KullaniciId == kullaniciId && dt.Token == dto.FcmToken);
 
                 if (deviceToken != null)
                 {
-                    _unitOfWork.GetRepository<DeviceToken>().Remove(deviceToken);
+                    _unitOfWork.DeviceTokenlari.Delete(deviceToken);
                     await _unitOfWork.SaveChangesAsync();
                 }
             }
@@ -185,7 +185,7 @@ namespace PDKS.WebUI.Controllers.Mobile
 
         private async Task SaveFcmToken(int kullaniciId, string fcmToken, string? deviceInfo)
         {
-            var existingToken = await _unitOfWork.GetRepository<DeviceToken>()
+            var existingToken = await _unitOfWork.DeviceTokenlari
                 .FirstOrDefaultAsync(dt => dt.KullaniciId == kullaniciId && dt.Token == fcmToken);
 
             if (existingToken == null)
@@ -201,14 +201,14 @@ namespace PDKS.WebUI.Controllers.Mobile
                     Aktif = true
                 };
 
-                await _unitOfWork.GetRepository<DeviceToken>().AddAsync(deviceToken);
+                await _unitOfWork.DeviceTokenlari.AddAsync(deviceToken);
                 await _unitOfWork.SaveChangesAsync();
             }
             else
             {
                 existingToken.SonKullanimTarihi = DateTime.UtcNow;
                 existingToken.Aktif = true;
-                _unitOfWork.GetRepository<DeviceToken>().Update(existingToken);
+                _unitOfWork.DeviceTokenlari.Update(existingToken);
                 await _unitOfWork.SaveChangesAsync();
             }
         }

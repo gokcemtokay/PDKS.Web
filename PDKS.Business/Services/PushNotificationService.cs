@@ -66,7 +66,7 @@ namespace PDKS.Business.Services
             try
             {
                 // Kullanıcının aktif cihaz token'larını al
-                var deviceTokens = await _unitOfWork.GetRepository<DeviceToken>()
+                var deviceTokens = await _unitOfWork.DeviceTokenlari
                     .FindAsync(dt => dt.KullaniciId == kullaniciId && dt.Aktif);
 
                 if (!deviceTokens.Any())
@@ -106,7 +106,7 @@ namespace PDKS.Business.Services
 
                 foreach (var kullaniciId in kullaniciIds)
                 {
-                    var deviceTokens = await _unitOfWork.GetRepository<DeviceToken>()
+                    var deviceTokens = await _unitOfWork.DeviceTokenlari
                         .FindAsync(dt => dt.KullaniciId == kullaniciId && dt.Aktif);
 
                     tokens.AddRange(deviceTokens.Select(dt => dt.Token));
@@ -231,13 +231,13 @@ namespace PDKS.Business.Services
         {
             try
             {
-                var deviceToken = await _unitOfWork.GetRepository<DeviceToken>()
+                var deviceToken = await _unitOfWork.DeviceTokenlari
                     .FirstOrDefaultAsync(dt => dt.Token == token);
 
                 if (deviceToken != null)
                 {
                     deviceToken.Aktif = false;
-                    _unitOfWork.GetRepository<DeviceToken>().Update(deviceToken);
+                    _unitOfWork.DeviceTokenlari.Update(deviceToken);
                     await _unitOfWork.SaveChangesAsync();
 
                     _logger.LogInformation("Deactivated invalid token: {Token}", token);

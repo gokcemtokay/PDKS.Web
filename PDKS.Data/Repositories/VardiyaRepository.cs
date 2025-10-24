@@ -4,7 +4,7 @@ using PDKS.Data.Entities;
 
 namespace PDKS.Data.Repositories
 {
-    public class VardiyaRepository : GenericRepository<Vardiya>, IVardiyaRepository
+    public class VardiyaRepository : Repository<Vardiya>, IRepository<Vardiya>
     {
         public VardiyaRepository(PDKSDbContext context) : base(context)
         {

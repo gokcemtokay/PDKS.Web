@@ -4,7 +4,7 @@ using PDKS.Data.Entities;
 
 namespace PDKS.Data.Repositories
 {
-    public class IzinRepository : GenericRepository<Izin>, IIzinRepository
+    public class IzinRepository : Repository<Izin>, IRepository<Izin>
     {
         public IzinRepository(PDKSDbContext context) : base(context)
         {

@@ -133,7 +133,7 @@ namespace PDKS.WebUI.Controllers
             {
                 var kullaniciId = GetCurrentUserId();
 
-                var yetkiliSirketler = await _unitOfWork.GetRepository<KullaniciSirket>()
+                var yetkiliSirketler = await _unitOfWork.KullaniciSirketler
                     .FindAsync(ks => ks.KullaniciId == kullaniciId && ks.Aktif);
 
                 var sirketler = new List<object>();

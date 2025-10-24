@@ -5,7 +5,7 @@ using PDKS.Data.Entities;
 
 namespace PDKS.Data.Repositories
 {
-    public class ParametreRepository : GenericRepository<Parametre>, IParametreRepository
+    public class ParametreRepository : Repository<Parametre>, IRepository<Parametre>
     {
         public ParametreRepository(PDKSDbContext context) : base(context)
         {

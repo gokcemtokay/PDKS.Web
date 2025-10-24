@@ -4,7 +4,7 @@ using PDKS.Data.Entities;
 
 namespace PDKS.Data.Repositories
 {
-    public class BildirimRepository : GenericRepository<Bildirim>, IBildirimRepository
+    public class BildirimRepository : Repository<Bildirim>, IRepository<Bildirim>
     {
         public BildirimRepository(PDKSDbContext context) : base(context)
         {

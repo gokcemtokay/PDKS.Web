@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace PDKS.Data.Repositories
 {
-    public class CihazLogRepository : GenericRepository<CihazLog>, ICihazLogRepository
+    public class CihazLogRepository : GenericRepository<CihazLog>, IGenericRepository<CihazLog>
     {
         private readonly PDKSDbContext _context;
 

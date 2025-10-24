@@ -191,7 +191,7 @@ namespace PDKS.WebUI.Controllers
                 var kullaniciId = GetCurrentUserId();
 
                 // Kullanıcının bu şirkete yetkisi var mı kontrol et
-                var yetki = await _unitOfWork.GetRepository<KullaniciSirket>()
+                var yetki = await _unitOfWork.KullaniciSirketler
                     .FirstOrDefaultAsync(ks =>
                         ks.KullaniciId == kullaniciId &&
                         ks.SirketId == sirketId &&

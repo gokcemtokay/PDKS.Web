@@ -4,7 +4,7 @@ using PDKS.Data.Entities;
 
 namespace PDKS.Data.Repositories
 {
-    public class MesaiRepository : GenericRepository<Mesai>, IMesaiRepository
+    public class MesaiRepository : Repository<Mesai>, IRepository<Mesai>
     {
         public MesaiRepository(PDKSDbContext context) : base(context)
         {

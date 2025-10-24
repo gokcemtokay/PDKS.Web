@@ -4,7 +4,7 @@ using PDKS.Data.Entities;
 
 namespace PDKS.Data.Repositories
 {
-    public class KullaniciRepository : GenericRepository<Kullanici>, IKullaniciRepository
+    public class KullaniciRepository : Repository<Kullanici>, IRepository<Kullanici>
     {
         public KullaniciRepository(PDKSDbContext context) : base(context)
         {

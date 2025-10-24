@@ -26,13 +26,13 @@ namespace PDKS.Business.Services
 
         public async Task<IEnumerable<OnayAkisi>> GetAllOnayAkislariAsync(int sirketId)
         {
-            return await _unitOfWork.GetRepository<OnayAkisi>()
+            return await _unitOfWork.OnayAkislari
                 .FindAsync(x => x.SirketId == sirketId);
         }
 
         public async Task<OnayAkisi> GetOnayAkisiByIdAsync(int id)
         {
-            return await _unitOfWork.GetRepository<OnayAkisi>()
+            return await _unitOfWork.OnayAkislari
                 .GetByIdAsync(id);
         }
 
@@ -48,7 +48,7 @@ namespace PDKS.Business.Services
                 OlusturmaTarihi = DateTime.UtcNow
             };
 
-            await _unitOfWork.GetRepository<OnayAkisi>().AddAsync(onayAkisi);
+            await _unitOfWork.OnayAkislari.AddAsync(onayAkisi);
             await _unitOfWork.SaveChangesAsync();
 
             // Adımları ekle
@@ -69,7 +69,7 @@ namespace PDKS.Business.Services
                     OlusturmaTarihi = DateTime.UtcNow
                 };
 
-                await _unitOfWork.GetRepository<OnayAdimi>().AddAsync(adim);
+                await _unitOfWork.OnayAdimlari.AddAsync(adim);
             }
 
             await _unitOfWork.SaveChangesAsync();
@@ -79,7 +79,7 @@ namespace PDKS.Business.Services
 
         public async Task<OnayAkisi> UpdateOnayAkisiAsync(int id, OnayAkisiDTO dto)
         {
-            var onayAkisi = await _unitOfWork.GetRepository<OnayAkisi>()
+            var onayAkisi = await _unitOfWork.OnayAkislari
                 .GetByIdAsync(id);
 
             if (onayAkisi == null)
@@ -93,12 +93,12 @@ namespace PDKS.Business.Services
             onayAkisi.GuncellemeTarihi = DateTime.UtcNow;
 
             // Eski adımları sil
-            var eskiAdimlar = await _unitOfWork.GetRepository<OnayAdimi>()
+            var eskiAdimlar = await _unitOfWork.OnayAdimlari
                 .FindAsync(x => x.OnayAkisiId == id);
 
             foreach (var eskiAdim in eskiAdimlar)
             {
-                _unitOfWork.GetRepository<OnayAdimi>().Remove(eskiAdim);
+                _unitOfWork.OnayAdimlari.Delete(eskiAdim);
             }
 
             await _unitOfWork.SaveChangesAsync();
@@ -121,10 +121,10 @@ namespace PDKS.Business.Services
                     OlusturmaTarihi = DateTime.UtcNow
                 };
 
-                await _unitOfWork.GetRepository<OnayAdimi>().AddAsync(adim);
+                await _unitOfWork.OnayAdimlari.AddAsync(adim);
             }
 
-            _unitOfWork.GetRepository<OnayAkisi>().Update(onayAkisi);
+            _unitOfWork.OnayAkislari.Update(onayAkisi);
             await _unitOfWork.SaveChangesAsync();
 
             return onayAkisi;
@@ -132,20 +132,20 @@ namespace PDKS.Business.Services
 
         public async Task<bool> DeleteOnayAkisiAsync(int id)
         {
-            var onayAkisi = await _unitOfWork.GetRepository<OnayAkisi>()
+            var onayAkisi = await _unitOfWork.OnayAkislari
                 .GetByIdAsync(id);
 
             if (onayAkisi == null)
                 throw new Exception("Onay akışı bulunamadı");
 
             // Kullanımda olan akış silinemez
-            var kullanimdakiKayitlar = await _unitOfWork.GetRepository<OnayKaydi>()
+            var kullanimdakiKayitlar = await _unitOfWork.OnayKayitlari
                 .FindAsync(x => x.OnayAkisiId == id);
 
             if (kullanimdakiKayitlar.Any())
                 throw new Exception("Bu onay akışı kullanımda olduğu için silinemez");
 
-            _unitOfWork.GetRepository<OnayAkisi>().Remove(onayAkisi);
+            _unitOfWork.OnayAkislari.Delete(onayAkisi);
             await _unitOfWork.SaveChangesAsync();
 
             return true;
@@ -153,7 +153,7 @@ namespace PDKS.Business.Services
 
         public async Task<OnayAkisi> GetOnayAkisiByModulAsync(string modulTipi, int sirketId)
         {
-            var akislar = await _unitOfWork.GetRepository<OnayAkisi>()
+            var akislar = await _unitOfWork.OnayAkislari
                 .FindAsync(x => x.ModulTipi == modulTipi && x.SirketId == sirketId && x.Aktif);
 
             return akislar.FirstOrDefault();
@@ -186,11 +186,11 @@ namespace PDKS.Business.Services
                 OlusturmaTarihi = DateTime.UtcNow
             };
 
-            await _unitOfWork.GetRepository<OnayKaydi>().AddAsync(onayKaydi);
+            await _unitOfWork.OnayKayitlari.AddAsync(onayKaydi);
             await _unitOfWork.SaveChangesAsync();
 
             // Adımları çek
-            var adimlar = await _unitOfWork.GetRepository<OnayAdimi>()
+            var adimlar = await _unitOfWork.OnayAdimlari
                 .FindAsync(x => x.OnayAkisiId == onayAkisi.Id);
 
             // Her adım için OnayDetay oluştur
@@ -205,7 +205,7 @@ namespace PDKS.Business.Services
                     OlusturmaTarihi = DateTime.UtcNow
                 };
 
-                await _unitOfWork.GetRepository<OnayDetay>().AddAsync(detay);
+                await _unitOfWork.OnayDetaylari.AddAsync(detay);
             }
 
             await _unitOfWork.SaveChangesAsync();
@@ -222,17 +222,17 @@ namespace PDKS.Business.Services
 
         public async Task<bool> OnaylaAsync(int onayKaydiId, int kullaniciId, string aciklama)
         {
-            var onayKaydi = await _unitOfWork.GetRepository<OnayKaydi>()
+            var onayKaydi = await _unitOfWork.OnayKayitlari
                 .GetByIdAsync(onayKaydiId);
 
             if (onayKaydi == null)
                 throw new Exception("Onay kaydı bulunamadı");
 
             // Detayları ve adımları çek
-            var detaylar = await _unitOfWork.GetRepository<OnayDetay>()
+            var detaylar = await _unitOfWork.OnayDetaylari
                 .FindAsync(x => x.OnayKaydiId == onayKaydiId);
 
-            var adimlar = await _unitOfWork.GetRepository<OnayAdimi>()
+            var adimlar = await _unitOfWork.OnayAdimlari
                 .FindAsync(x => x.OnayAkisiId == onayKaydi.OnayAkisiId);
 
             // Mevcut adımı bul
@@ -253,7 +253,7 @@ namespace PDKS.Business.Services
             mevcutDetay.Aciklama = aciklama;
             mevcutDetay.GuncellemeTarihi = DateTime.UtcNow;
 
-            _unitOfWork.GetRepository<OnayDetay>().Update(mevcutDetay);
+            _unitOfWork.OnayDetaylari.Update(mevcutDetay);
 
             // Son adım mı?
             var sonAdim = adimlar.Max(x => x.Sira);
@@ -278,14 +278,14 @@ namespace PDKS.Business.Services
 
                 var sonrakiDetay = detaylar.First(x => x.AdimSira == onayKaydi.MevcutAdimSira);
                 sonrakiDetay.Durum = "Beklemede";
-                _unitOfWork.GetRepository<OnayDetay>().Update(sonrakiDetay);
+                _unitOfWork.OnayDetaylari.Update(sonrakiDetay);
 
                 var sonrakiAdim = adimlar.First(x => x.Sira == onayKaydi.MevcutAdimSira);
                 await BildirimGonderAsync(onayKaydi, sonrakiAdim);
             }
 
             onayKaydi.GuncellemeTarihi = DateTime.UtcNow;
-            _unitOfWork.GetRepository<OnayKaydi>().Update(onayKaydi);
+            _unitOfWork.OnayKayitlari.Update(onayKaydi);
             await _unitOfWork.SaveChangesAsync();
 
             return true;
@@ -293,13 +293,13 @@ namespace PDKS.Business.Services
 
         public async Task<bool> ReddetAsync(int onayKaydiId, int kullaniciId, string aciklama)
         {
-            var onayKaydi = await _unitOfWork.GetRepository<OnayKaydi>()
+            var onayKaydi = await _unitOfWork.OnayKayitlari
                 .GetByIdAsync(onayKaydiId);
 
             if (onayKaydi == null)
                 throw new Exception("Onay kaydı bulunamadı");
 
-            var detaylar = await _unitOfWork.GetRepository<OnayDetay>()
+            var detaylar = await _unitOfWork.OnayDetaylari
                 .FindAsync(x => x.OnayKaydiId == onayKaydiId);
 
             var mevcutDetay = detaylar.FirstOrDefault(x => x.AdimSira == onayKaydi.MevcutAdimSira && x.Durum == "Beklemede");
@@ -318,8 +318,8 @@ namespace PDKS.Business.Services
             onayKaydi.TamamlanmaTarihi = DateTime.UtcNow;
             onayKaydi.GuncellemeTarihi = DateTime.UtcNow;
 
-            _unitOfWork.GetRepository<OnayDetay>().Update(mevcutDetay);
-            _unitOfWork.GetRepository<OnayKaydi>().Update(onayKaydi);
+            _unitOfWork.OnayDetaylari.Update(mevcutDetay);
+            _unitOfWork.OnayKayitlari.Update(onayKaydi);
             await _unitOfWork.SaveChangesAsync();
 
             // Talep edene bildirim
@@ -369,14 +369,14 @@ namespace PDKS.Business.Services
             }
 
             // Bekleyen onayları çek
-            var bekleyenOnaylar = await _unitOfWork.GetRepository<OnayKaydi>()
+            var bekleyenOnaylar = await _unitOfWork.OnayKayitlari
                 .FindAsync(x => x.GenelDurum == "Beklemede");
 
             var sonuc = new List<BekleyenOnayDTO>();
 
             foreach (var kayit in bekleyenOnaylar)
             {
-                var adimlar = await _unitOfWork.GetRepository<OnayAdimi>()
+                var adimlar = await _unitOfWork.OnayAdimlari
                     .FindAsync(x => x.OnayAkisiId == kayit.OnayAkisiId);
 
                 var mevcutAdim = adimlar.FirstOrDefault(x => x.Sira == kayit.MevcutAdimSira);
@@ -427,7 +427,7 @@ namespace PDKS.Business.Services
 
         public async Task<OnayDurumuDTO> GetOnayDurumuAsync(string modulTipi, int referansId)
         {
-            var kayitlar = await _unitOfWork.GetRepository<OnayKaydi>()
+            var kayitlar = await _unitOfWork.OnayKayitlari
                 .FindAsync(x => x.ModulTipi == modulTipi && x.ReferansId == referansId);
 
             var onayKaydi = kayitlar.FirstOrDefault();
@@ -435,10 +435,10 @@ namespace PDKS.Business.Services
             if (onayKaydi == null)
                 return null;
 
-            var adimlar = await _unitOfWork.GetRepository<OnayAdimi>()
+            var adimlar = await _unitOfWork.OnayAdimlari
                 .FindAsync(x => x.OnayAkisiId == onayKaydi.OnayAkisiId);
 
-            var detaylar = await _unitOfWork.GetRepository<OnayDetay>()
+            var detaylar = await _unitOfWork.OnayDetaylari
                 .FindAsync(x => x.OnayKaydiId == onayKaydi.Id);
 
             var mevcutAdim = adimlar.FirstOrDefault(x => x.Sira == onayKaydi.MevcutAdimSira);
@@ -485,7 +485,7 @@ namespace PDKS.Business.Services
 
         public async Task<IEnumerable<OnayDurumuDTO>> GetKullaniciTaleplerAsync(int kullaniciId)
         {
-            var kayitlar = await _unitOfWork.GetRepository<OnayKaydi>()
+            var kayitlar = await _unitOfWork.OnayKayitlari
                 .FindAsync(x => x.TalepEdenKullaniciId == kullaniciId);
 
             var sonuc = new List<OnayDurumuDTO>();

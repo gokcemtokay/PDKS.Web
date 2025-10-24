@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace PDKS.Data.Repositories
 {
-    public class LogRepository : GenericRepository<Log>, ILogRepository
+    public class LogRepository : Repository<Log>, IRepository<Log>
     {
         private readonly PDKSDbContext _context;
 

@@ -65,8 +65,24 @@ namespace PDKS.Data.Context
         public DbSet<AnketCevap> AnketCevaplari { get; set; }
         public DbSet<Oneri> Oneriler { get; set; }
         public DbSet<Sikayet> Sikayetler { get; set; }
-
         public DbSet<DeviceToken> DeviceTokens { get; set; }
+        public DbSet<PersonelAile> PersonelAileBilgileri { get; set; }
+        public DbSet<PersonelAcilDurum> PersonelAcilDurumlar { get; set; }
+        public DbSet<PersonelSaglik> PersonelSagliklar { get; set; }
+        public DbSet<PersonelEgitim> PersonelEgitimler { get; set; }
+        public DbSet<PersonelIsDeneyimi> PersonelIsDeneyimleri { get; set; }
+        public DbSet<PersonelDil> PersonelDiller { get; set; }
+        public DbSet<PersonelSertifika> PersonelSertifikalar { get; set; }
+        public DbSet<PersonelPerformans> PersonelPerformanslar { get; set; }
+        public DbSet<PersonelDisiplin> PersonelDisiplinler { get; set; }
+        public DbSet<PersonelTerfi> PersonelTerfiler { get; set; }
+        public DbSet<PersonelUcretDegisiklik> PersonelUcretDegisiklikler { get; set; }
+        public DbSet<PersonelReferans> PersonelReferanslar { get; set; }
+        public DbSet<PersonelZimmet> PersonelZimmetler { get; set; }
+        public DbSet<PersonelYetkinlik> PersonelYetkinlikler { get; set; }
+        public DbSet<PersonelEgitimKayit> PersonelEgitimKayitlari { get; set; }
+        public DbSet<PersonelMaliBilgi> PersonelMaliBilgileri { get; set; }
+        public DbSet<PersonelEkBilgi> PersonelEkBilgileri { get; set; }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             // Bu ValueConverter hem DateTime hem de DateTime? tipleri için çalışacak.
@@ -558,6 +574,247 @@ namespace PDKS.Data.Context
                     .HasForeignKey(e => e.KullaniciId)
                     .OnDelete(DeleteBehavior.Cascade);
             });
+
+            // ============== YENİ PERSONEL ÖZLÜK İLİŞKİLERİ ==============
+
+            // PersonelAile - Personel (Many-to-One)
+            modelBuilder.Entity<PersonelAile>()
+                .HasOne(pa => pa.Personel)
+                .WithMany(p => p.AileBilgileri)
+                .HasForeignKey(pa => pa.PersonelId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // PersonelAcilDurum - Personel (Many-to-One)
+            modelBuilder.Entity<PersonelAcilDurum>()
+                .HasOne(pad => pad.Personel)
+                .WithMany(p => p.AcilDurumBilgileri)
+                .HasForeignKey(pad => pad.PersonelId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // PersonelSaglik - Personel (One-to-One)
+            modelBuilder.Entity<PersonelSaglik>()
+                .HasOne(ps => ps.Personel)
+                .WithOne(p => p.SaglikBilgisi)
+                .HasForeignKey<PersonelSaglik>(ps => ps.PersonelId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // PersonelEgitim - Personel (Many-to-One)
+            modelBuilder.Entity<PersonelEgitim>()
+                .HasOne(pe => pe.Personel)
+                .WithMany(p => p.EgitimGecmisi)
+                .HasForeignKey(pe => pe.PersonelId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // PersonelIsDeneyimi - Personel (Many-to-One)
+            modelBuilder.Entity<PersonelIsDeneyimi>()
+                .HasOne(pid => pid.Personel)
+                .WithMany(p => p.IsDeneyimleri)
+                .HasForeignKey(pid => pid.PersonelId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // PersonelDil - Personel (Many-to-One)
+            modelBuilder.Entity<PersonelDil>()
+                .HasOne(pd => pd.Personel)
+                .WithMany(p => p.DilBecerileri)
+                .HasForeignKey(pd => pd.PersonelId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // PersonelSertifika - Personel (Many-to-One)
+            modelBuilder.Entity<PersonelSertifika>()
+                .HasOne(ps => ps.Personel)
+                .WithMany(p => p.Sertifikalar)
+                .HasForeignKey(ps => ps.PersonelId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // PersonelPerformans - Personel (Many-to-One)
+            modelBuilder.Entity<PersonelPerformans>()
+                .HasOne(pp => pp.Personel)
+                .WithMany(p => p.PerformansKayitlari)
+                .HasForeignKey(pp => pp.PersonelId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // PersonelPerformans - DegerlendiriciKullanici (Many-to-One)
+            modelBuilder.Entity<PersonelPerformans>()
+                .HasOne(pp => pp.DegerlendiriciKullanici)
+                .WithMany()
+                .HasForeignKey(pp => pp.DegerlendiriciKullaniciId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // PersonelPerformans - OnaylayanKullanici (Many-to-One)
+            modelBuilder.Entity<PersonelPerformans>()
+                .HasOne(pp => pp.OnaylayanKullanici)
+                .WithMany()
+                .HasForeignKey(pp => pp.OnaylayanKullaniciId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // PersonelDisiplin - Personel (Many-to-One)
+            modelBuilder.Entity<PersonelDisiplin>()
+                .HasOne(pd => pd.Personel)
+                .WithMany(p => p.DisiplinKayitlari)
+                .HasForeignKey(pd => pd.PersonelId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // PersonelDisiplin - KararVerenYetkili (Many-to-One)
+            modelBuilder.Entity<PersonelDisiplin>()
+                .HasOne(pd => pd.KararVerenYetkili)
+                .WithMany()
+                .HasForeignKey(pd => pd.KararVerenYetkiliId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // PersonelDisiplin - IptalEdenKullanici (Many-to-One)
+            modelBuilder.Entity<PersonelDisiplin>()
+                .HasOne(pd => pd.IptalEdenKullanici)
+                .WithMany()
+                .HasForeignKey(pd => pd.IptalEdenKullaniciId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // PersonelTerfi - Personel (Many-to-One)
+            modelBuilder.Entity<PersonelTerfi>()
+                .HasOne(pt => pt.Personel)
+                .WithMany(p => p.TerfiGecmisi)
+                .HasForeignKey(pt => pt.PersonelId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // PersonelTerfi - OnaylayanKullanici (Many-to-One)
+            modelBuilder.Entity<PersonelTerfi>()
+                .HasOne(pt => pt.OnaylayanKullanici)
+                .WithMany()
+                .HasForeignKey(pt => pt.OnaylayanKullaniciId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // PersonelTerfi - EskiDepartman (Many-to-One)
+            modelBuilder.Entity<PersonelTerfi>()
+                .HasOne(pt => pt.EskiDepartman)
+                .WithMany()
+                .HasForeignKey(pt => pt.EskiDepartmanId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // PersonelTerfi - YeniDepartman (Many-to-One)
+            modelBuilder.Entity<PersonelTerfi>()
+                .HasOne(pt => pt.YeniDepartman)
+                .WithMany()
+                .HasForeignKey(pt => pt.YeniDepartmanId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // PersonelUcretDegisiklik - Personel (Many-to-One)
+            modelBuilder.Entity<PersonelUcretDegisiklik>()
+                .HasOne(pud => pud.Personel)
+                .WithMany(p => p.UcretDegisiklikleri)
+                .HasForeignKey(pud => pud.PersonelId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // PersonelUcretDegisiklik - OnaylayanKullanici (Many-to-One)
+            modelBuilder.Entity<PersonelUcretDegisiklik>()
+                .HasOne(pud => pud.OnaylayanKullanici)
+                .WithMany()
+                .HasForeignKey(pud => pud.OnaylayanKullaniciId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // PersonelReferans - Personel (Many-to-One)
+            modelBuilder.Entity<PersonelReferans>()
+                .HasOne(pr => pr.Personel)
+                .WithMany(p => p.Referanslar)
+                .HasForeignKey(pr => pr.PersonelId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // PersonelZimmet - Personel (Many-to-One)
+            modelBuilder.Entity<PersonelZimmet>()
+                .HasOne(pz => pz.Personel)
+                .WithMany(p => p.ZimmetliEsyalar)
+                .HasForeignKey(pz => pz.PersonelId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // PersonelZimmet - ZimmetVerenKullanici (Many-to-One)
+            modelBuilder.Entity<PersonelZimmet>()
+                .HasOne(pz => pz.ZimmetVerenKullanici)
+                .WithMany()
+                .HasForeignKey(pz => pz.ZimmetVerenKullaniciId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // PersonelZimmet - IadeTeslimAlanKullanici (Many-to-One)
+            modelBuilder.Entity<PersonelZimmet>()
+                .HasOne(pz => pz.IadeTeslimAlanKullanici)
+                .WithMany()
+                .HasForeignKey(pz => pz.IadeTeslimAlanKullaniciId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // PersonelYetkinlik - Personel (Many-to-One)
+            modelBuilder.Entity<PersonelYetkinlik>()
+                .HasOne(py => py.Personel)
+                .WithMany(p => p.Yetkinlikler)
+                .HasForeignKey(py => py.PersonelId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // PersonelYetkinlik - DegerlendiriciKullanici (Many-to-One)
+            modelBuilder.Entity<PersonelYetkinlik>()
+                .HasOne(py => py.DegerlendiriciKullanici)
+                .WithMany()
+                .HasForeignKey(py => py.DegerlendiriciKullaniciId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // PersonelEgitimKayit - Personel (Many-to-One)
+            modelBuilder.Entity<PersonelEgitimKayit>()
+                .HasOne(pek => pek.Personel)
+                .WithMany(p => p.EgitimKayitlari)
+                .HasForeignKey(pek => pek.PersonelId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // PersonelMaliBilgi - Personel (One-to-One)
+            modelBuilder.Entity<PersonelMaliBilgi>()
+                .HasOne(pmb => pmb.Personel)
+                .WithOne(p => p.MaliBilgi)
+                .HasForeignKey<PersonelMaliBilgi>(pmb => pmb.PersonelId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // PersonelEkBilgi - Personel (One-to-One)
+            modelBuilder.Entity<PersonelEkBilgi>()
+                .HasOne(peb => peb.Personel)
+                .WithOne(p => p.EkBilgi)
+                .HasForeignKey<PersonelEkBilgi>(peb => peb.PersonelId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // ============== PERSONEL SELF-REFERENCING İLİŞKİLER ==============
+
+            // Personel - YoneticiPersonel (Self-Referencing Many-to-One)
+            modelBuilder.Entity<Personel>()
+                .HasOne(p => p.YoneticiPersonel)
+                .WithMany(p => p.AltCalisanlar)
+                .HasForeignKey(p => p.YoneticiPersonelId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Personel - IkinciAmirPersonel (Self-Referencing Many-to-One)
+            modelBuilder.Entity<Personel>()
+                .HasOne(p => p.IkinciAmirPersonel)
+                .WithMany(p => p.IkinciAmirOlduguCalisanlar)
+                .HasForeignKey(p => p.IkinciAmirPersonelId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // ============== INDEXES ==============
+
+            // PersonelSertifika için sertifika numarası index
+            modelBuilder.Entity<PersonelSertifika>()
+                .HasIndex(ps => ps.SertifikaNumarasi);
+
+            // PersonelSertifika için durum ve geçerlilik tarihi index (hatırlatma sistemi için)
+            modelBuilder.Entity<PersonelSertifika>()
+                .HasIndex(ps => new { ps.Durum, ps.GecerlilikTarihi });
+
+            // PersonelPerformans için dönem ve tarih index
+            modelBuilder.Entity<PersonelPerformans>()
+                .HasIndex(pp => new { pp.PersonelId, pp.DegerlendirmeTarihi });
+
+            // PersonelZimmet için zimmet durumu index
+            modelBuilder.Entity<PersonelZimmet>()
+                .HasIndex(pz => new { pz.PersonelId, pz.ZimmetDurumu });
+
+            // PersonelTerfi için terfi tarihi index
+            modelBuilder.Entity<PersonelTerfi>()
+                .HasIndex(pt => new { pt.PersonelId, pt.TerfiTarihi });
+
+            // PersonelUcretDegisiklik için değişiklik tarihi index
+            modelBuilder.Entity<PersonelUcretDegisiklik>()
+                .HasIndex(pud => new { pud.PersonelId, pud.DegisiklikTarihi });
+
 
 
             // ============== SEED DATA - ROLLER ==============

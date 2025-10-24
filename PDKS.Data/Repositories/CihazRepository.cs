@@ -4,7 +4,7 @@ using PDKS.Data.Entities;
 
 namespace PDKS.Data.Repositories
 {
-    public class CihazRepository : GenericRepository<Cihaz>, ICihazRepository
+    public class CihazRepository : Repository<Cihaz>, IRepository<Cihaz>
     {
         public CihazRepository(PDKSDbContext context) : base(context)
         {

@@ -4,7 +4,7 @@ using PDKS.Data.Entities;
 
 namespace PDKS.Data.Repositories
 {
-    public class DepartmanRepository : GenericRepository<Departman>, IDepartmanRepository
+    public class DepartmanRepository : Repository<Departman>, IRepository<Departman>
     {
         public DepartmanRepository(PDKSDbContext context) : base(context)
         {
