@@ -95,6 +95,15 @@ builder.Services.AddScoped<IExportAndEmailService, ExportAndEmailService>();
 builder.Services.AddScoped<IBackupService, BackupService>();
 builder.Services.AddScoped<ISirketService, SirketService>();
 builder.Services.AddScoped<ICihazService, CihazService>();
+//builder.Services.AddScoped<IAvansService, AvansService>();
+//builder.Services.AddScoped<IMasrafService, MasrafService>();
+//builder.Services.AddScoped<IAracService, AracService>();
+//builder.Services.AddScoped<ISeyahatService, SeyahatService>();
+builder.Services.AddScoped<IOnayAkisiService, OnayAkisiService>();
+//builder.Services.AddScoped<IForumService, ForumService>();
+//builder.Services.AddScoped<IToplantiService, ToplantiService>();
+//builder.Services.AddScoped<IRaporService, RaporService>();
+//builder.Services.AddScoped<IMobilPDKSService, MobilPDKSService>();
 // Register Services kısmında namespace değişikliği:
 
 builder.Services.AddScoped<IFileUploadService, FileUploadService>();
