@@ -81,25 +81,22 @@ namespace PDKS.Business.Services
         public async Task UpdateAsync(KullaniciUpdateDTO dto)
         {
             var kullanici = await _unitOfWork.Kullanicilar.GetByIdAsync(dto.Id);
-            if (kullanici == null)
-                throw new Exception("Kullanıcı bulunamadı.");
 
-            var existingEmail = await _unitOfWork.Kullanicilar.FirstOrDefaultAsync(k => k.Email == dto.Email && k.Id != dto.Id);
-            if (existingEmail != null)
-                throw new Exception("Bu e-posta adresi başka bir kullanıcı tarafından kullanılıyor.");
+            if (kullanici == null)
+                throw new Exception($"Kullanıcı bulunamadı");
+
+            // ✅ Sadece bu alanları güncelle
 
             kullanici.Email = dto.Email;
             kullanici.RolId = dto.RolId;
             kullanici.Aktif = dto.Aktif;
-            kullanici.PersonelId = dto.PersonelId;
-            kullanici.GuncellemeTarihi = DateTime.UtcNow;
+            // ❌ PersonelId'yi GÜNCELLEME (mevcut değeri koru)
 
             if (!string.IsNullOrEmpty(dto.Sifre))
             {
                 kullanici.SifreHash = dto.Sifre;
             }
 
-            _unitOfWork.Kullanicilar.Update(kullanici);
             await _unitOfWork.SaveChangesAsync();
         }
     }

@@ -55,16 +55,25 @@ const kullaniciService = {
     return response.data;
   },
 
-  async update(id: number, data: KullaniciUpdateDTO): Promise<void> {
-    await api.put(`/Kullanici/${id}`, data);
-  },
+    async update(id: number, data: any): Promise<void> {
+        await api.put(`/kullanici/${id}`, {
+            id: data.id,
+            personelId: data.personelId,
+            email: data.email,
+            rolId: data.rolId,
+            aktif: data.aktif,
+            kullaniciAdi: data.email, 
+            sifre: "", 
+            yeniSifre: data.yeniSifre || "" 
+        });
+    },
 
   async delete(id: number): Promise<void> {
     await api.delete(`/Kullanici/${id}`);
   },
 
   async getRoller(): Promise<Rol[]> {
-    const response = await api.get('/Rol');
+      const response = await api.get('/rolyetki');
     return response.data;
   },
 };

@@ -52,7 +52,11 @@ namespace PDKS.Data.Repositories
         IGenericRepository<OnayKaydi> OnayKayitlari { get; }
         IGenericRepository<OnayDetay> OnayDetaylari { get; }
         IGenericRepository<DeviceToken> DeviceTokenlari { get; }
-
+        // YENİ: Yetkilendirme repositoryleri
+        IMenuRepository Menuler { get; }
+        IMenuRolRepository MenuRoller { get; }
+        IIslemYetkiRepository IslemYetkiler { get; }
+        IRolIslemYetkiRepository RolIslemYetkiler { get; }
         // ============================================
         // TEMEL METODLAR
         // ============================================

@@ -105,6 +105,8 @@ builder.Services.AddScoped<IOnayAkisiService, OnayAkisiService>();
 //builder.Services.AddScoped<IRaporService, RaporService>();
 //builder.Services.AddScoped<IMobilPDKSService, MobilPDKSService>();
 // Register Services kısmında namespace değişikliği:
+builder.Services.AddScoped<IMenuService, MenuService>();
+builder.Services.AddScoped<IRolYetkiService, RolYetkiService>();
 
 builder.Services.AddScoped<IFileUploadService, FileUploadService>();
 builder.Services.AddScoped<PDKS.Business.Services.IFileUploadService, PDKS.Business.Services.FileUploadService>();

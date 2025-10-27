@@ -50,6 +50,10 @@ namespace PDKS.Data.Repositories
         private IPersonelMaliBilgiRepository? _personelMaliBilgileri;
         private IPersonelEkBilgiRepository? _personelEkBilgileri;
         private IGenericRepository<DeviceToken>? _deviceTokenlari;
+        private IMenuRepository? _menuler;
+        private IMenuRolRepository? _menuRoller;
+        private IIslemYetkiRepository? _islemYetkiler;
+        private IRolIslemYetkiRepository? _rolIslemYetkiler;
         public UnitOfWork(PDKSDbContext context)
         {
             _context = context;
@@ -419,6 +423,18 @@ namespace PDKS.Data.Repositories
             }
         }
         #endregion
+
+        public IMenuRepository Menuler =>
+            _menuler ??= new MenuRepository(_context);
+
+        public IMenuRolRepository MenuRoller =>
+            _menuRoller ??= new MenuRolRepository(_context);
+
+        public IIslemYetkiRepository IslemYetkiler =>
+            _islemYetkiler ??= new IslemYetkiRepository(_context);
+
+        public IRolIslemYetkiRepository RolIslemYetkiler =>
+            _rolIslemYetkiler ??= new RolIslemYetkiRepository(_context);
 
         public async Task<int> SaveChangesAsync()
         {

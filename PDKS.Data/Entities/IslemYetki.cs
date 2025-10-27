@@ -3,15 +3,22 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace PDKS.Data.Entities
 {
-    [Table("Roller")]
-    public class Rol
+    [Table("IslemYetkiler")]
+    public class IslemYetki
     {
         [Key]
         public int Id { get; set; }
 
         [Required]
-        [StringLength(50)]
-        public string RolAdi { get; set; }
+        [StringLength(200)]
+        public string IslemKodu { get; set; } // ornek: "personel.ekle", "izin.onayla"
+
+        [Required]
+        [StringLength(200)]
+        public string IslemAdi { get; set; }
+
+        [StringLength(100)]
+        public string? ModulAdi { get; set; } // Personel, Izin, Avans vb.
 
         [StringLength(500)]
         public string? Aciklama { get; set; }
@@ -19,8 +26,6 @@ namespace PDKS.Data.Entities
         public bool Aktif { get; set; } = true;
 
         // Navigation Properties
-        public ICollection<Kullanici> Kullanicilar { get; set; } = new List<Kullanici>();
-        public ICollection<MenuRol> MenuRoller { get; set; } = new List<MenuRol>();
         public ICollection<RolIslemYetki> RolIslemYetkiler { get; set; } = new List<RolIslemYetki>();
     }
 }

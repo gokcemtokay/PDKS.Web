@@ -84,31 +84,31 @@ function PersonelForm() {
     setLoading(true);
     try {
       const data = await personelService.getById(parseInt(id));
-      setFormData({
-        sicilNo: data.sicilNo || '',
-        adSoyad: data.adSoyad || '',
-        tcKimlik: data.tcKimlik || '',
-        dogumTarihi: data.dogumTarihi ? data.dogumTarihi.split('T')[0] : '',
-        cinsiyet: data.cinsiyet || '',
-        medeniDurum: data.medeniDurum || '',
-        departmanId: data.departmanId || '',
-        gorev: data.gorev || '',
-        girisTarihi: data.girisTarihi ? data.girisTarihi.split('T')[0] : '',
-        durum: data.durum !== false,
-        email: data.email || '',
-        telefon: data.telefon || '',
-        isTelefon: data.isTelefon || '',
-        adres: data.adres || '',
-        il: data.il || '',
-        ilce: data.ilce || '',
-        acilDurumKisi: data.acilDurumKisi || '',
-        acilDurumTelefon: data.acilDurumTelefon || '',
-        kanGrubu: data.kanGrubu || '',
-        kronikHastalik: data.kronikHastalik || '',
-        bankaAdi: data.bankaAdi || '',
-        iban: data.iban || '',
-      });
-      if (data.profilFoto) setPhotoPreview(data.profilFoto);
+        setFormData({
+            sicilNo: data.sicilNo || '',
+            adSoyad: data.adSoyad || '',
+            tcKimlik: data.tcKimlik || '',
+            dogumTarihi: data.dogumTarihi ? data.dogumTarihi.split('T')[0] : '',
+            cinsiyet: data.cinsiyet || '',
+            medeniDurum: data.medeniDurum || '',
+            departmanId: '', // ✅ EKLE
+            gorev: '', // ✅ EKLE
+            girisTarihi: data.iseGirisTarihi ? data.iseGirisTarihi.split('T')[0] : '', // ✅ DEĞİŞTİ
+            durum: data.durum ?? true,
+            email: data.email || '',
+            telefon: data.telefon || '',
+            isTelefon: data.telefon || '', // ✅ DEĞİŞTİ
+            adres: '', // ✅ EKLE
+            il: '', // ✅ EKLE
+            ilce: '', // ✅ EKLE
+            acilDurumKisi: '', // ✅ EKLE
+            acilDurumTelefon: '', // ✅ EKLE
+            kanGrubu: '', // ✅ EKLE
+            kronikHastalik: '', // ✅ EKLE
+            bankaAdi: '', // ✅ EKLE
+            iban: '' // ✅ EKLE
+        });
+/*      if (data.profilFoto) setPhotoPreview(data.profilFoto);*/
     } catch (error) {
       console.error('Personel yüklenemedi:', error);
     } finally {
@@ -287,8 +287,8 @@ function PersonelForm() {
                   <TextField
                     fullWidth
                     label="Sicil No"
-                    value={formData.sicilNo}
-                    onChange={(e) => handleChange('sicilNo', e.target.value)}
+                    value={formData.sicilNo || ''}
+                    onChange={(e) => setFormData({ ...formData, sicilNo: e.target.value })}
                     margin="normal"
                     required
                   />

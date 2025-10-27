@@ -83,6 +83,10 @@ namespace PDKS.Data.Context
         public DbSet<PersonelEgitimKayit> PersonelEgitimKayitlari { get; set; }
         public DbSet<PersonelMaliBilgi> PersonelMaliBilgileri { get; set; }
         public DbSet<PersonelEkBilgi> PersonelEkBilgileri { get; set; }
+        public DbSet<Menu> Menuler { get; set; }
+        public DbSet<MenuRol> MenuRoller { get; set; }
+        public DbSet<IslemYetki> IslemYetkiler { get; set; }
+        public DbSet<RolIslemYetki> RolIslemYetkiler { get; set; }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             // Bu ValueConverter hem DateTime hem de DateTime? tipleri için çalışacak.
@@ -815,7 +819,73 @@ namespace PDKS.Data.Context
             modelBuilder.Entity<PersonelUcretDegisiklik>()
                 .HasIndex(pud => new { pud.PersonelId, pud.DegisiklikTarihi });
 
+            modelBuilder.Entity<Menu>(entity =>
+            {
+                entity.ToTable("Menuler");
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.MenuAdi).IsRequired().HasMaxLength(100);
+                entity.Property(e => e.MenuKodu).HasMaxLength(200);
+                entity.Property(e => e.Url).HasMaxLength(200);
+                entity.Property(e => e.Icon).HasMaxLength(100);
 
+                entity.HasOne(e => e.UstMenu)
+                    .WithMany(e => e.AltMenuler)
+                    .HasForeignKey(e => e.UstMenuId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasIndex(e => e.MenuKodu).IsUnique();
+            });
+
+            // YENİ: MenuRol konfigürasyonu
+            modelBuilder.Entity<MenuRol>(entity =>
+            {
+                entity.ToTable("MenuRoller");
+                entity.HasKey(e => e.Id);
+
+                entity.HasOne(e => e.Menu)
+                    .WithMany(m => m.MenuRoller)
+                    .HasForeignKey(e => e.MenuId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne(e => e.Rol)
+                    .WithMany(r => r.MenuRoller)
+                    .HasForeignKey(e => e.RolId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasIndex(e => new { e.MenuId, e.RolId }).IsUnique();
+            });
+
+            // YENİ: IslemYetki konfigürasyonu
+            modelBuilder.Entity<IslemYetki>(entity =>
+            {
+                entity.ToTable("IslemYetkiler");
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.IslemKodu).IsRequired().HasMaxLength(200);
+                entity.Property(e => e.IslemAdi).IsRequired().HasMaxLength(200);
+                entity.Property(e => e.ModulAdi).HasMaxLength(100);
+                entity.Property(e => e.Aciklama).HasMaxLength(500);
+
+                entity.HasIndex(e => e.IslemKodu).IsUnique();
+            });
+
+            // YENİ: RolIslemYetki konfigürasyonu
+            modelBuilder.Entity<RolIslemYetki>(entity =>
+            {
+                entity.ToTable("RolIslemYetkiler");
+                entity.HasKey(e => e.Id);
+
+                entity.HasOne(e => e.Rol)
+                    .WithMany(r => r.RolIslemYetkiler)
+                    .HasForeignKey(e => e.RolId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne(e => e.IslemYetki)
+                    .WithMany(i => i.RolIslemYetkiler)
+                    .HasForeignKey(e => e.IslemYetkiId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasIndex(e => new { e.RolId, e.IslemYetkiId }).IsUnique();
+            });
 
             // ============== SEED DATA - ROLLER ==============
 

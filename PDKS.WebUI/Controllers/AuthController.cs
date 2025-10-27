@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using PDKS.Business.DTOs;
 using PDKS.Business.Services;
 using Microsoft.Extensions.Configuration;
@@ -30,13 +30,14 @@ namespace PDKS.WebUI.Controllers
         private readonly IConfiguration _configuration;
         private readonly IKullaniciService _kullaniciService;
         private readonly IUnitOfWork _unitOfWork;
-
-        public AuthController(IAuthService authService, IConfiguration configuration, IKullaniciService kullaniciService, IUnitOfWork unitOfWork)
+        private readonly IRolYetkiService _rolYetkiService;
+        public AuthController(IAuthService authService, IConfiguration configuration, IKullaniciService kullaniciService, IUnitOfWork unitOfWork, IRolYetkiService rolYetkiService)
         {
             _authService = authService;
             _configuration = configuration;
             _kullaniciService = kullaniciService;
             _unitOfWork = unitOfWork;
+            _rolYetkiService = rolYetkiService;
         }
 
         [HttpPost("login")]
@@ -107,7 +108,10 @@ namespace PDKS.WebUI.Controllers
             }
 
 
-            // 7. JWT Token oluştur
+            // Kullanıcı yetkilerini al
+            var kullaniciYetkileri = await _rolYetkiService.GetKullaniciYetkileriAsync(kullanici.Id);
+
+            // JWT Token oluştur (mevcut kod)
             var token = GenerateJwtToken(kullanici, aktifSirket.Id, aktifSirket.Unvan);
 
             return Ok(new
@@ -126,7 +130,13 @@ namespace PDKS.WebUI.Controllers
                     unvan = aktifSirket.Unvan,
                     logoUrl = aktifSirket.LogoUrl
                 },
-                yetkiliSirketler = yetkiliSirketDetaylari
+                yetkiliSirketler = yetkiliSirketDetaylari,
+                // YENİ: Kullanıcı yetkileri
+                yetkiler = new
+                {
+                    menuler = kullaniciYetkileri.Menuler,
+                    islemler = kullaniciYetkileri.IslemKodlari
+                }
             });
         }
 

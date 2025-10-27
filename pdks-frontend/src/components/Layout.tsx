@@ -26,6 +26,7 @@ const drawerWidth = 260;
 
 interface MenuItemType {
     text: string;
+    menuAdi?: string;
     icon: ReactNode;
     path?: string;
     roles?: string[];
@@ -151,7 +152,7 @@ function Layout({ children }: { children: ReactNode }) {
                 <Box key={item.text}>
                     <ListItemButton onClick={() => handleSubMenuToggle(item.text)}>
                         <ListItemIcon>{item.icon}</ListItemIcon>
-                        <ListItemText primary={item.text} />
+                        <ListItemText primary={item.menuAdi} />
                         {openSubMenus[item.text] ? <ExpandLess /> : <ExpandMore />}
                     </ListItemButton>
                     <Collapse in={openSubMenus[item.text]} timeout="auto" unmountOnExit>
@@ -196,7 +197,7 @@ function Layout({ children }: { children: ReactNode }) {
             <Divider />
             <Box sx={{ overflow: 'auto', flexGrow: 1 }}>
                 <List>
-                    {menuItems.map(item => renderMenuItem(item))}
+                    {menuItems.map(menu => renderMenuItem(menu))}
                 </List>
             </Box>
             <Divider />

@@ -25,9 +25,9 @@ import VardiyaList from './pages/Vardiya/VardiyaList';
 import ToplantiList from './pages/Toplanti/ToplantiList';
 import OneriList from './pages/Oneri/OneriList';
 import GorevList from './pages/Gorev/GorevList';
-// ✅ YENİ EKLENEN IMPORT'LAR
 import SirketList from './pages/Sirket/SirketList';
 import KullaniciList from './pages/Kullanici/KullaniciList';
+import RolYetkiAtama from './pages/Rol/RolYetkiAtama';
 
 const theme = createTheme({
     palette: {
@@ -71,6 +71,8 @@ function App() {
                                         {/* ✅ YENİ EKLENEN ROUTE'LAR */}
                                         <Route path="/sirket" element={<SirketList />} />
                                         <Route path="/kullanici" element={<KullaniciList />} />
+                                        <Route path="/rol" element={<RolList />} />
+                                        <Route path="/rol/:id/yetki-ata" element={<RolYetkiAtama />} />
                                         
                                         <Route path="/cihaz" element={<CihazList />} />
                                         <Route path="/rol" element={<RolList />} />

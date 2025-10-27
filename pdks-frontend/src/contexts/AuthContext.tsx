@@ -24,7 +24,10 @@ interface AuthContextType {
   logout: () => void;
   yetkiliSirketler: Sirket[];
   aktifSirket: Sirket | null;
-  switchSirket: (sirketId: number) => Promise<void>;
+    switchSirket: (sirketId: number) => Promise<void>;
+    menuler: any[]; // ✅ EKLE
+    islemler: string[]; // ✅ EKLE
+    hasPermission: (islemKodu: string) => boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -119,16 +122,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const isLoggedIn = !!user;
+
   return (
-    <AuthContext.Provider value={{
-      user,
-      isLoggedIn: !!user,
-      login,
-      logout,
-      yetkiliSirketler,
-      aktifSirket,
-      switchSirket,
-    }}>
+      <AuthContext.Provider value={{
+          user,
+          isLoggedIn,
+          login,
+          logout,
+          yetkiliSirketler,
+          aktifSirket,
+          switchSirket,
+          menuler: [], // ✅ EKLE
+          islemler: [], // ✅ EKLE
+          hasPermission: () => false // ✅ EKLE
+      }}>
       {children}
     </AuthContext.Provider>
   );
