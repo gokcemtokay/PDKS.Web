@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import authService from '../services/authService';
+import authService, { LoginResponse } from '../services/authService';
+import api from '../services/api';
 
 interface User {
   id: number;
@@ -13,12 +14,13 @@ interface User {
 interface Sirket {
   sirketId: number;
   sirketAdi: string;
+  logoUrl?: string;
 }
 
 interface AuthContextType {
   user: User | null;
   isLoggedIn: boolean;
-  login: (token: string) => void;
+  login: (response: LoginResponse) => void;
   logout: () => void;
   yetkiliSirketler: Sirket[];
   aktifSirket: Sirket | null;
@@ -38,40 +40,57 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const decoded = authService.decodeToken(token);
       const storedUser = localStorage.getItem('user');
       const storedSirketler = localStorage.getItem('yetkiliSirketler');
-      const storedAktifSirket = localStorage.getItem('aktifSirketId');
+      const storedAktifSirket = localStorage.getItem('aktifSirket');
       
       if (decoded && storedUser) {
         setUser(JSON.parse(storedUser));
       }
+      
       if (storedSirketler) {
         const sirketler = JSON.parse(storedSirketler);
         setYetkiliSirketler(sirketler);
-        if (storedAktifSirket) {
-          const aktif = sirketler.find((s: Sirket) => s.sirketId === parseInt(storedAktifSirket));
-          setAktifSirket(aktif || sirketler[0]);
-        } else if (sirketler.length > 0) {
-          setAktifSirket(sirketler[0]);
-          localStorage.setItem('aktifSirketId', sirketler[0].sirketId.toString());
-        }
+      }
+      
+      if (storedAktifSirket) {
+        setAktifSirket(JSON.parse(storedAktifSirket));
       }
     }
   }, []);
 
-  const login = (token: string) => {
-    localStorage.setItem('token', token);
-    const decoded = authService.decodeToken(token);
-    if (decoded) {
-      const userData: User = {
-        id: parseInt(decoded.sub),
-        email: decoded.email,
-        ad: decoded.email.split('@')[0],
-        soyad: '',
-        role: decoded.role,
-        personelId: decoded.personelId ? parseInt(decoded.personelId) : undefined,
-      };
-      setUser(userData);
-      localStorage.setItem('user', JSON.stringify(userData));
-    }
+  const login = (response: LoginResponse) => {
+    // Token'ı kaydet
+    localStorage.setItem('token', response.token);
+    
+    // Kullanıcı bilgilerini kaydet
+    const userData: User = {
+      id: response.kullanici.id,
+      email: response.kullanici.email,
+      ad: response.kullanici.email.split('@')[0], // Backend'den ad/soyad gelmezse email'den al
+      soyad: '',
+      role: response.kullanici.rol,
+      personelId: response.kullanici.personelId,
+    };
+    setUser(userData);
+    localStorage.setItem('user', JSON.stringify(userData));
+    
+    // Yetkili şirketleri kaydet
+    const sirketler: Sirket[] = response.yetkiliSirketler.map(s => ({
+      sirketId: s.id,
+      sirketAdi: s.unvan,
+      logoUrl: s.logoUrl,
+    }));
+    setYetkiliSirketler(sirketler);
+    localStorage.setItem('yetkiliSirketler', JSON.stringify(sirketler));
+    
+    // Aktif şirketi kaydet
+    const aktif: Sirket = {
+      sirketId: response.aktifSirket.id,
+      sirketAdi: response.aktifSirket.unvan,
+      logoUrl: response.aktifSirket.logoUrl,
+    };
+    setAktifSirket(aktif);
+    localStorage.setItem('aktifSirket', JSON.stringify(aktif));
+    localStorage.setItem('aktifSirketId', aktif.sirketId.toString());
   };
 
   const logout = () => {
@@ -79,13 +98,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null);
     setYetkiliSirketler([]);
     setAktifSirket(null);
+    localStorage.removeItem('aktifSirket');
   };
 
   const switchSirket = async (sirketId: number) => {
     const sirket = yetkiliSirketler.find((s) => s.sirketId === sirketId);
     if (sirket) {
       setAktifSirket(sirket);
+      localStorage.setItem('aktifSirket', JSON.stringify(sirket));
       localStorage.setItem('aktifSirketId', sirketId.toString());
+      
+      // Backend'e şirket değişikliğini bildir (varsa token yenileme endpoint'i)
+      try {
+        // Token yenilemek için backend endpoint'i çağırılabilir
+        // const response = await api.post('/auth/switch-sirket', { sirketId });
+        // localStorage.setItem('token', response.data.token);
+      } catch (error) {
+        console.error('Şirket değiştirme hatası:', error);
+      }
     }
   };
 

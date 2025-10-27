@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+ï»¿import { useEffect, useState } from 'react';
 import { Box, Typography, Button, IconButton, Chip } from '@mui/material';
 import { DataGrid, GridColDef } from '@mui/x-data-grid';
 import { Add as AddIcon, Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material';
@@ -17,14 +17,14 @@ function CihazList() {
             const data = await cihazService.getAll();
             setCihazlar(data);
         } catch (error) {
-            console.error('Cihazlar yüklenemedi:', error);
+            console.error('Cihazlar yÃ¼klenemedi:', error);
         } finally {
             setLoading(false);
         }
     };
 
     const columns: GridColDef[] = [
-        { field: 'cihazAdi', headerName: 'Cihaz Adý', width: 200 },
+        { field: 'cihazAdi', headerName: 'Cihaz AdÄ±', width: 200 },
         { field: 'cihazTipi', headerName: 'Tip', width: 150 },
         { field: 'ipAdresi', headerName: 'IP Adresi', width: 150 },
         { field: 'port', headerName: 'Port', width: 100 },
@@ -39,7 +39,7 @@ function CihazList() {
         },
         {
             field: 'actions',
-            headerName: 'Ýþlemler',
+            headerName: 'Ä°ÅŸlemler',
             width: 120,
             renderCell: () => (
                 <Box>
@@ -53,7 +53,7 @@ function CihazList() {
     return (
         <Box>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3 }}>
-                <Typography variant="h4" fontWeight="bold">Cihaz Yönetimi</Typography>
+                <Typography variant="h4" fontWeight="bold">Cihaz YÃ¶netimi</Typography>
                 <Button variant="contained" startIcon={<AddIcon />}>Yeni Cihaz Ekle</Button>
             </Box>
 

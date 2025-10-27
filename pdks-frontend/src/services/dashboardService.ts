@@ -32,17 +32,17 @@ export interface DogumGunu {
 
 const dashboardService = {
   async getBugunkunDurum(): Promise<BugunkunDurum> {
-    const response = await api.get('/Dashboard/bugunun-durumu');
+    const response = await api.get('/Dashboard/widgets/bugunku-durum');
     return response.data;
   },
 
   async getBekleyenOnaylar(): Promise<BekleyenOnay[]> {
-    const response = await api.get('/Dashboard/bekleyen-onaylar');
+    const response = await api.get('/Dashboard/widgets/bekleyen-onaylar');
     return response.data;
   },
 
   async getDogumGunleri(): Promise<DogumGunu[]> {
-    const response = await api.get('/Dashboard/dogum-gunleri');
+    const response = await api.get('/Dashboard/widgets/dogum-gunleri');
     return response.data;
   },
 };

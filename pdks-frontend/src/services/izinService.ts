@@ -23,22 +23,22 @@ export interface IzinTalepDTO {
 
 const izinService = {
   async getAll(): Promise<Izin[]> {
-    const response = await api.get('/Izin');
+    const response = await api.get('/izin');
     return response.data;
   },
 
   async getByPersonel(personelId: number): Promise<Izin[]> {
-    const response = await api.get(`/Izin/personel/${personelId}`);
+      const response = await api.get(`/izin/personel/${personelId}`);
     return response.data;
   },
 
   async create(data: IzinTalepDTO): Promise<number> {
-    const response = await api.post('/Izin', data);
+      const response = await api.post('/izin', data);
     return response.data;
   },
 
   async getBakiye(personelId: number): Promise<any> {
-    const response = await api.get(`/Izin/bakiye/${personelId}`);
+      const response = await api.get(`/izin/bakiye/${personelId}`);
     return response.data;
   },
 };

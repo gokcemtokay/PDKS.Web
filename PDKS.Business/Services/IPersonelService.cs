@@ -15,5 +15,6 @@ namespace PDKS.Business.Services
         Task<IEnumerable<PersonelListDTO>> GetByDepartmentAsync(string departman);
         Task<IEnumerable<PersonelListDTO>> GetBySirketAsync(int sirketId);
         Task<int> GetSirketPersonelSayisiAsync(int sirketId);
+        Task UpdateProfilFotoAsync(int personelId, string fotoUrl);
     }
 }

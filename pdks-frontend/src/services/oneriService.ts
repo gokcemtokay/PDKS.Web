@@ -14,12 +14,12 @@ export interface Oneri {
 
 const oneriService = {
     async getAll(): Promise<Oneri[]> {
-        const response = await api.get('/Oneri');
+        const response = await api.get('/oneri');
         return response.data;
     },
 
     async create(data: Partial<Oneri>): Promise<number> {
-        const response = await api.post('/Oneri', data);
+        const response = await api.post('/oneri', data);
         return response.data;
     },
 };

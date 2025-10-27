@@ -14,12 +14,12 @@ export interface SeyahatTalebi {
 
 const seyahatService = {
   async getAll(): Promise<SeyahatTalebi[]> {
-    const response = await api.get('/SeyahatTalebi');
+    const response = await api.get('/seyahattalebi');
     return response.data;
   },
   
   async create(data: Partial<SeyahatTalebi>): Promise<number> {
-    const response = await api.post('/SeyahatTalebi', data);
+      const response = await api.post('/seyahattalebi', data);
     return response.data;
   },
 };

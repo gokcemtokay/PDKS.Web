@@ -44,7 +44,34 @@ const personelService = {
 
   async delete(id: number): Promise<void> {
     await api.delete(`/Personel/${id}`);
-  },
+    },
+
+    // Fotoðraf yükleme
+    async uploadPhoto(personelId: number, file: File): Promise<any> {
+        const formData = new FormData();
+        formData.append('file', file);
+
+        const response = await api.post(`/personel/${personelId}/foto`, formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data',
+            },
+        });
+
+        return response.data;
+    },
+
+    // Fotoðraf silme
+    async deletePhoto(personelId: number): Promise<any> {
+        const response = await api.delete(`/personel/${personelId}/foto`);
+        return response.data;
+    },
+
+    // Fotoðraf URL'i alma
+    getPhotoUrl(personelId: number): string {
+        return `${api.defaults.baseURL}/personel/${personelId}/foto`;
+    },
 };
+
+
 
 export default personelService;

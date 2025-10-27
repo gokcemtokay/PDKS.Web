@@ -22,17 +22,17 @@ export interface ToplantiRezervasyonu {
 
 const toplantiService = {
     async getAllOdalar(): Promise<ToplantiOdasi[]> {
-        const response = await api.get('/ToplantiOdasi');
+        const response = await api.get('/toplantiodasi');
         return response.data;
     },
 
     async getAllRezervasyonlar(): Promise<ToplantiRezervasyonu[]> {
-        const response = await api.get('/ToplantiRezervasyonu');
+        const response = await api.get('/toplantirezervasyon');
         return response.data;
     },
 
     async createRezervasyon(data: Partial<ToplantiRezervasyonu>): Promise<number> {
-        const response = await api.post('/ToplantiRezervasyonu', data);
+        const response = await api.post('/toplantirezervasyon', data);
         return response.data;
     },
 };

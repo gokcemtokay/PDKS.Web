@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+ï»¿import { useEffect, useState } from 'react';
 import { Box, Typography, Button, IconButton } from '@mui/material';
 import { DataGrid, GridColDef } from '@mui/x-data-grid';
 import { Add as AddIcon, Edit as EditIcon } from '@mui/icons-material';
@@ -17,20 +17,20 @@ function VardiyaList() {
             const data = await vardiyaService.getAll();
             setVardiyalar(data);
         } catch (error) {
-            console.error('Vardiyalar yüklenemedi:', error);
+            console.error('Vardiyalar yÃ¼klenemedi:', error);
         } finally {
             setLoading(false);
         }
     };
 
     const columns: GridColDef[] = [
-        { field: 'vardiyaAdi', headerName: 'Vardiya Adý', width: 200 },
-        { field: 'baslangicSaati', headerName: 'Baþlangýç', width: 150 },
-        { field: 'bitisSaati', headerName: 'Bitiþ', width: 150 },
-        { field: 'aciklama', headerName: 'Açýklama', width: 300 },
+        { field: 'vardiyaAdi', headerName: 'Vardiya AdÄ±', width: 200 },
+        { field: 'baslangicSaati', headerName: 'BaÅŸlangÄ±Ã§', width: 150 },
+        { field: 'bitisSaati', headerName: 'BitiÅŸ', width: 150 },
+        { field: 'aciklama', headerName: 'AÃ§Ä±klama', width: 300 },
         {
             field: 'actions',
-            headerName: 'Ýþlemler',
+            headerName: 'Ä°ÅŸlemler',
             width: 100,
             renderCell: () => (
                 <IconButton size="small"><EditIcon fontSize="small" /></IconButton>
@@ -41,7 +41,7 @@ function VardiyaList() {
     return (
         <Box>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3 }}>
-                <Typography variant="h4" fontWeight="bold">Vardiya Yönetimi</Typography>
+                <Typography variant="h4" fontWeight="bold">Vardiya YÃ¶netimi</Typography>
                 <Button variant="contained" startIcon={<AddIcon />}>Yeni Vardiya Ekle</Button>
             </Box>
 

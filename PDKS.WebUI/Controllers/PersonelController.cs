@@ -217,5 +217,164 @@ namespace PDKS.WebUI.Controllers
                 return StatusCode(500, $"Internal Server Error: {ex.Message}");
             }
         }
+
+        [HttpPost("{id}/foto")]
+        [Authorize(Roles = "Admin,IK")]
+        public async Task<IActionResult> UploadFoto(int id, IFormFile file)
+        {
+            try
+            {
+                // Dosya kontrolü
+                if (file == null || file.Length == 0)
+                    return BadRequest(new { message = "Dosya seçilmedi" });
+
+                // Personel kontrolü - SERVİS KULLAN
+                var personel = await _personelService.GetByIdAsync(id);
+                if (personel == null)
+                    return NotFound(new { message = "Personel bulunamadı" });
+
+                // Güvenlik kontrolü - Şirket ID
+                var sirketId = GetCurrentSirketId();
+                if (personel.SirketId != sirketId)
+                    return Forbid("Bu personel, yetkili olduğunuz şirkete ait değildir.");
+
+                // Dosya uzantısı kontrolü
+                var extension = Path.GetExtension(file.FileName).ToLower();
+                var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".gif" };
+                if (!allowedExtensions.Contains(extension))
+                    return BadRequest(new { message = "Sadece JPG, PNG ve GIF formatları desteklenir" });
+
+                // Dosya boyutu kontrolü (5MB)
+                if (file.Length > 5 * 1024 * 1024)
+                    return BadRequest(new { message = "Dosya boyutu 5MB'dan büyük olamaz" });
+
+                // Uploads klasörü yolu
+                var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads", "personel");
+
+                // Klasör yoksa oluştur
+                if (!Directory.Exists(uploadsFolder))
+                    Directory.CreateDirectory(uploadsFolder);
+
+                // Eski fotoğrafı sil (varsa)
+                if (!string.IsNullOrEmpty(personel.ProfilResmi))
+                {
+                    var oldPhotoPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", personel.ProfilResmi.TrimStart('/'));
+                    if (System.IO.File.Exists(oldPhotoPath))
+                        System.IO.File.Delete(oldPhotoPath);
+                }
+
+                // Yeni dosya adı oluştur (unique)
+                var fileName = $"personel_{id}_{Guid.NewGuid()}{extension}";
+                var filePath = Path.Combine(uploadsFolder, fileName);
+
+                // Dosyayı kaydet
+                using (var stream = new FileStream(filePath, FileMode.Create))
+                {
+                    await file.CopyToAsync(stream);
+                }
+
+                // Veritabanında güncelle - SERVİS KULLAN
+                var updateDto = new PersonelUpdateDTO
+                {
+                    Id = id,
+                    SirketId = personel.SirketId,
+                    SicilNo = personel.SicilNo,
+                    AdSoyad = personel.AdSoyad,
+                    ProfilResmi = $"/uploads/personel/{fileName}",
+                    // Diğer gerekli alanları da ekleyin (DTO'ya göre)
+                    DepartmanId = personel.DepartmanId,
+                    Gorev = personel.Gorev,
+                    Durum = personel.Durum,
+                    // ... diğer alanlar
+                };
+
+                await _personelService.UpdateAsync(updateDto);
+
+                return Ok(new
+                {
+                    message = "Fotoğraf başarıyla yüklendi",
+                    foto = $"/uploads/personel/{fileName}"
+                });
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                return Unauthorized(new { message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Fotoğraf yüklenirken hata oluştu", error = ex.Message });
+            }
+        }
+
+        [HttpDelete("{id}/foto")]
+        [Authorize(Roles = "Admin,IK")]
+        public async Task<IActionResult> DeleteFoto(int id)
+        {
+            try
+            {
+                var personel = await _personelService.GetByIdAsync(id);
+                if (personel == null)
+                    return NotFound(new { message = "Personel bulunamadı" });
+
+                var sirketId = GetCurrentSirketId();
+                if (personel.SirketId != sirketId)
+                    return Forbid("Bu personel, yetkili olduğunuz şirkete ait değildir.");
+
+                if (string.IsNullOrEmpty(personel.ProfilResmi))
+                    return BadRequest(new { message = "Silinecek fotoğraf bulunamadı" });
+
+                // Fiziksel dosyayı sil
+                var photoPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", personel.ProfilResmi.TrimStart('/'));
+                if (System.IO.File.Exists(photoPath))
+                    System.IO.File.Delete(photoPath);
+
+                // ✅ BASITLEŞTIRILMIŞ: Sadece fotoğraf URL'ini temizle
+                await _personelService.UpdateProfilFotoAsync(id, null);
+
+                return Ok(new { message = "Fotoğraf başarıyla silindi" });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Fotoğraf silinirken hata oluştu", error = ex.Message });
+            }
+        }
+
+        [HttpGet("{id}/foto")]
+        [AllowAnonymous] // Fotoğraf görüntüleme için yetki gerekmeyebilir
+        public async Task<IActionResult> GetFoto(int id)
+        {
+            try
+            {
+                // Personel kontrolü - SERVİS KULLAN
+                var personel = await _personelService.GetByIdAsync(id);
+                if (personel == null)
+                    return NotFound(new { message = "Personel bulunamadı" });
+
+                if (string.IsNullOrEmpty(personel.ProfilResmi))
+                    return NotFound(new { message = "Personelin fotoğrafı yok" });
+
+                var photoPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", personel.ProfilResmi.TrimStart('/'));
+                if (!System.IO.File.Exists(photoPath))
+                    return NotFound(new { message = "Fotoğraf dosyası bulunamadı" });
+
+                var extension = Path.GetExtension(photoPath).ToLower();
+                var contentType = extension switch
+                {
+                    ".jpg" => "image/jpeg",
+                    ".jpeg" => "image/jpeg",
+                    ".png" => "image/png",
+                    ".gif" => "image/gif",
+                    _ => "application/octet-stream"
+                };
+
+                var fileBytes = await System.IO.File.ReadAllBytesAsync(photoPath);
+                return File(fileBytes, contentType);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Fotoğraf yüklenirken hata oluştu", error = ex.Message });
+            }
+        }
+
     }
 }

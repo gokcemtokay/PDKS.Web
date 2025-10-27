@@ -13,12 +13,12 @@ export interface Masraf {
 
 const masrafService = {
   async getAll(): Promise<Masraf[]> {
-    const response = await api.get('/Masraf');
+    const response = await api.get('/masraftalebi');
     return response.data;
   },
   
   async create(data: Partial<Masraf>): Promise<number> {
-    const response = await api.post('/Masraf', data);
+      const response = await api.post('/masraftalebi', data);
     return response.data;
   },
 };

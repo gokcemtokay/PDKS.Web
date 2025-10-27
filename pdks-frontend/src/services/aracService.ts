@@ -7,18 +7,18 @@ export interface AracTalebi {
   aracId?: number;
   gidisSehri: string;
   kalkisTarihi: string;
-  donu sTarihi: string;
+  donusTarihi: string;
   onayDurumu: string;
 }
 
 const aracService = {
   async getAll(): Promise<AracTalebi[]> {
-    const response = await api.get('/AracTalebi');
+    const response = await api.get('/aractalebi');
     return response.data;
   },
   
   async create(data: Partial<AracTalebi>): Promise<number> {
-    const response = await api.post('/AracTalebi', data);
+    const response = await api.post('/aractalebi', data);
     return response.data;
   },
 };

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+ï»¿import { useEffect, useState } from 'react';
 import { Box, Typography, Button, Chip } from '@mui/material';
 import { DataGrid, GridColDef } from '@mui/x-data-grid';
 import { Add as AddIcon } from '@mui/icons-material';
@@ -17,7 +17,7 @@ function ToplantiList() {
             const data = await toplantiService.getAllRezervasyonlar();
             setRezervasyonlar(data);
         } catch (error) {
-            console.error('Rezervasyonlar yüklenemedi:', error);
+            console.error('Rezervasyonlar yÃ¼klenemedi:', error);
         } finally {
             setLoading(false);
         }
@@ -27,8 +27,8 @@ function ToplantiList() {
         { field: 'odaAdi', headerName: 'Oda', width: 150 },
         { field: 'personelAdi', headerName: 'Rezerve Eden', width: 180 },
         { field: 'konu', headerName: 'Konu', width: 250 },
-        { field: 'baslangic', headerName: 'Baþlangýç', width: 180, valueFormatter: (value) => new Date(value).toLocaleString('tr-TR') },
-        { field: 'bitis', headerName: 'Bitiþ', width: 180, valueFormatter: (value) => new Date(value).toLocaleString('tr-TR') },
+        { field: 'baslangic', headerName: 'BaÅŸlangÄ±Ã§', width: 180, valueFormatter: (value) => new Date(value).toLocaleString('tr-TR') },
+        { field: 'bitis', headerName: 'BitiÅŸ', width: 180, valueFormatter: (value) => new Date(value).toLocaleString('tr-TR') },
         {
             field: 'durum',
             headerName: 'Durum',
@@ -40,7 +40,7 @@ function ToplantiList() {
     return (
         <Box>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3 }}>
-                <Typography variant="h4" fontWeight="bold">Toplantý Odasý Rezervasyonlarý</Typography>
+                <Typography variant="h4" fontWeight="bold">ToplantÄ± OdasÄ± RezervasyonlarÄ±</Typography>
                 <Button variant="contained" startIcon={<AddIcon />}>Yeni Rezervasyon</Button>
             </Box>
 

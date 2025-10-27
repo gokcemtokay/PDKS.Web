@@ -9,12 +9,12 @@ export interface Rol {
 
 const rolService = {
     async getAll(): Promise<Rol[]> {
-        const response = await api.get('/Rol');
+        const response = await api.get('/rol');
         return response.data;
     },
 
     async create(data: Partial<Rol>): Promise<number> {
-        const response = await api.post('/Rol', data);
+        const response = await api.post('/rol', data);
         return response.data;
     },
 

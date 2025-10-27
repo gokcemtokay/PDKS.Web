@@ -8,17 +8,22 @@ export interface LoginRequest {
 
 export interface LoginResponse {
   token: string;
-  user: {
+  kullanici: {
     id: number;
     email: string;
-    ad: string;
-    soyad: string;
-    role: string;
+    rol: string;
     personelId?: number;
   };
+  aktifSirket: {
+    id: number;
+    unvan: string;
+    logoUrl?: string;
+  };
   yetkiliSirketler: Array<{
-    sirketId: number;
-    sirketAdi: string;
+    id: number;
+    unvan: string;
+    logoUrl?: string;
+    varsayilan?: boolean;
   }>;
 }
 
@@ -27,6 +32,8 @@ export interface TokenPayload {
   email: string;
   role: string;
   personelId?: string;
+  sirketId?: string;
+  sirketAdi?: string;
   exp: number;
 }
 
@@ -40,6 +47,7 @@ const authService = {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     localStorage.removeItem('aktifSirketId');
+    localStorage.removeItem('aktifSirket');
     localStorage.removeItem('yetkiliSirketler');
   },
 

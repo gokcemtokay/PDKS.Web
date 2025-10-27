@@ -22,6 +22,7 @@ namespace PDKS.Business.DTOs
         [Required(ErrorMessage = "TC Kimlik No zorunludur")]
         [StringLength(11, MinimumLength = 11)]
         public string TcKimlikNo { get; set; }
+        public string ProfilResmi { get; set; }
 
         [Required(ErrorMessage = "Email zorunludur")]
         [EmailAddress]

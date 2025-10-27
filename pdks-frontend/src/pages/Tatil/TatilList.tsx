@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+ï»¿import { useEffect, useState } from 'react';
 import { Box, Typography, Button, IconButton } from '@mui/material';
 import { DataGrid, GridColDef } from '@mui/x-data-grid';
 import { Add as AddIcon, Delete as DeleteIcon } from '@mui/icons-material';
@@ -17,20 +17,20 @@ function TatilList() {
             const data = await tatilService.getAll();
             setTatiller(data);
         } catch (error) {
-            console.error('Tatiller yüklenemedi:', error);
+            console.error('Tatiller yÃ¼klenemedi:', error);
         } finally {
             setLoading(false);
         }
     };
 
     const columns: GridColDef[] = [
-        { field: 'tatilAdi', headerName: 'Tatil Adý', width: 250 },
+        { field: 'tatilAdi', headerName: 'Tatil AdÄ±', width: 250 },
         { field: 'tarih', headerName: 'Tarih', width: 150, valueFormatter: (value) => new Date(value).toLocaleDateString('tr-TR') },
         { field: 'tatilTipi', headerName: 'Tip', width: 150 },
-        { field: 'aciklama', headerName: 'Açýklama', width: 300 },
+        { field: 'aciklama', headerName: 'AÃ§Ä±klama', width: 300 },
         {
             field: 'actions',
-            headerName: 'Ýþlemler',
+            headerName: 'Ä°ÅŸlemler',
             width: 100,
             renderCell: () => (
                 <IconButton size="small" color="error"><DeleteIcon fontSize="small" /></IconButton>
@@ -41,7 +41,7 @@ function TatilList() {
     return (
         <Box>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3 }}>
-                <Typography variant="h4" fontWeight="bold">Tatil Yönetimi</Typography>
+                <Typography variant="h4" fontWeight="bold">Tatil YÃ¶netimi</Typography>
                 <Button variant="contained" startIcon={<AddIcon />}>Yeni Tatil Ekle</Button>
             </Box>
 

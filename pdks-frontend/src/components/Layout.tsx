@@ -1,9 +1,9 @@
-import { useState, ReactNode, useEffect } from 'react';
+import { useState, ReactNode } from 'react';
 import { useNavigate, useLocation, Navigate } from 'react-router-dom';
 import {
     Box, Drawer, AppBar, Toolbar, List, Typography, IconButton, ListItem,
     ListItemButton, ListItemIcon, ListItemText, Avatar, Menu, MenuItem, Divider, Chip,
-    Badge, Select, FormControl,
+    Badge, Select, FormControl, Collapse,
 } from '@mui/material';
 import {
     Menu as MenuIcon, Dashboard as DashboardIcon, People as PeopleIcon,
@@ -14,7 +14,11 @@ import {
     Logout as LogoutIcon, Business as BusinessIcon, Notifications as NotificationsIcon,
     Settings as SettingsIcon, CalendarToday as CalendarTodayIcon,
     Devices as DevicesIcon, Security as SecurityIcon, MeetingRoom as MeetingRoomIcon,
-    Feedback as FeedbackIcon, Task as TaskIcon,
+    Feedback as FeedbackIcon, Task as TaskIcon, ExpandLess, ExpandMore,
+    Login as LoginIcon, Article as ArticleIcon, School as SchoolIcon,
+    CardMembership as CardMembershipIcon, HealthAndSafety as HealthIcon,
+    Schedule as ScheduleIcon, Group as GroupIcon, CheckCircle as CheckCircleIcon,
+    SupervisorAccount as SupervisorAccountIcon,
 } from '@mui/icons-material';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -23,37 +27,65 @@ const drawerWidth = 260;
 interface MenuItemType {
     text: string;
     icon: ReactNode;
-    path: string;
+    path?: string;
     roles?: string[];
+    children?: MenuItemType[];
 }
 
 const menuItems: MenuItemType[] = [
     { text: 'Ana Sayfa', icon: <DashboardIcon />, path: '/' },
-    { text: 'Personeller', icon: <PeopleIcon />, path: '/personel', roles: ['Admin', 'IK'] },
+    { text: 'Personel Yönetimi', icon: <PeopleIcon />, path: '/personel' },
+    {
+        text: 'Giriş-Çıkış',
+        icon: <LoginIcon />,
+        roles: ['Admin', 'IK', 'Yönetici', 'admin', 'ADMIN'],
+        children: [
+            { text: 'Günlük Giriş-Çıkış', icon: <AccessTimeIcon />, path: '/giris-cikis' },
+            { text: 'Puantaj Raporu', icon: <AssessmentIcon />, path: '/puantaj' },
+            { text: 'Geç Kalanlar', icon: <ScheduleIcon />, path: '/puantaj/gec-kalanlar' },
+            { text: 'Erken Çıkanlar', icon: <ScheduleIcon />, path: '/puantaj/erken-cikanlar' },
+        ],
+    },
     { text: 'İzinler', icon: <BeachAccessIcon />, path: '/izin' },
     { text: 'Avanslar', icon: <AttachMoneyIcon />, path: '/avans' },
     { text: 'Masraflar', icon: <ReceiptIcon />, path: '/masraf' },
     { text: 'Zimmetler', icon: <AssignmentIcon />, path: '/zimmet' },
     { text: 'Araç Talepleri', icon: <DirectionsCarIcon />, path: '/arac' },
     { text: 'Seyahat', icon: <FlightIcon />, path: '/seyahat' },
-    { text: 'Puantaj', icon: <AccessTimeIcon />, path: '/puantaj', roles: ['Admin', 'IK'] },
-    { text: 'Onaylar', icon: <AssignmentIcon />, path: '/onay' },
+    { text: 'Onay İşlemleri', icon: <CheckCircleIcon />, path: '/onay' },
     { text: 'Görevler', icon: <TaskIcon />, path: '/gorev' },
-    { text: 'Raporlar', icon: <AssessmentIcon />, path: '/rapor', roles: ['Admin', 'IK', 'Yönetici'] },
-    { text: 'Cihazlar', icon: <DevicesIcon />, path: '/cihaz', roles: ['Admin'] },
-    { text: 'Tatiller', icon: <CalendarTodayIcon />, path: '/tatil', roles: ['Admin', 'IK'] },
-    { text: 'Vardiyalar', icon: <AccessTimeIcon />, path: '/vardiya', roles: ['Admin', 'IK'] },
+    {
+        text: 'Raporlar',
+        icon: <AssessmentIcon />,
+        roles: ['Admin', 'IK', 'Yönetici', 'admin', 'ADMIN'],
+        children: [
+            { text: 'Rapor Merkezi', icon: <DashboardIcon />, path: '/rapor' },
+            { text: 'Personel Raporları', icon: <PeopleIcon />, path: '/rapor/personel' },
+            { text: 'İzin Raporları', icon: <BeachAccessIcon />, path: '/rapor/izin' },
+            { text: 'Puantaj Raporları', icon: <AccessTimeIcon />, path: '/rapor/puantaj' },
+            { text: 'Masraf Raporları', icon: <ReceiptIcon />, path: '/rapor/masraf' },
+        ],
+    },
     { text: 'Toplantı Odası', icon: <MeetingRoomIcon />, path: '/toplanti' },
     { text: 'Öneri & Şikayet', icon: <FeedbackIcon />, path: '/oneri' },
-    { text: 'Rol & Yetki', icon: <SecurityIcon />, path: '/rol', roles: ['Admin'] },
-    { text: 'Ayarlar', icon: <SettingsIcon />, path: '/parametre', roles: ['Admin'] },
+    
+    // ✅ YENİ EKLENEN MENÜLER
+    { text: 'Şirket Yönetimi', icon: <BusinessIcon />, path: '/sirket', roles: ['Admin', 'admin', 'ADMIN'] },
+    { text: 'Kullanıcı Yönetimi', icon: <SupervisorAccountIcon />, path: '/kullanici', roles: ['Admin', 'admin', 'ADMIN'] },
+    
+    { text: 'Cihaz Yönetimi', icon: <DevicesIcon />, path: '/cihaz', roles: ['Admin', 'admin', 'ADMIN'] },
+    { text: 'Tatil Günleri', icon: <CalendarTodayIcon />, path: '/tatil', roles: ['Admin', 'IK', 'admin', 'ADMIN'] },
+    { text: 'Vardiya Yönetimi', icon: <AccessTimeIcon />, path: '/vardiya', roles: ['Admin', 'IK', 'admin', 'ADMIN'] },
+    { text: 'Rol & Yetki', icon: <SecurityIcon />, path: '/rol', roles: ['Admin', 'admin', 'ADMIN'] },
+    { text: 'Sistem Ayarları', icon: <SettingsIcon />, path: '/parametre', roles: ['Admin', 'admin', 'ADMIN'] },
 ];
 
 function Layout({ children }: { children: ReactNode }) {
     const [mobileOpen, setMobileOpen] = useState(false);
     const [profileAnchorEl, setProfileAnchorEl] = useState<null | HTMLElement>(null);
     const [notifAnchorEl, setNotifAnchorEl] = useState<null | HTMLElement>(null);
-    const [unreadCount, setUnreadCount] = useState(3); // Mock data
+    const [openSubMenus, setOpenSubMenus] = useState<{ [key: string]: boolean }>({});
+    const [unreadCount] = useState(3);
     const { user, logout, isLoggedIn, aktifSirket, yetkiliSirketler, switchSirket } = useAuth();
     const navigate = useNavigate();
     const location = useLocation();
@@ -67,55 +99,112 @@ function Layout({ children }: { children: ReactNode }) {
     const handleProfileMenuClose = () => setProfileAnchorEl(null);
     const handleNotifMenuOpen = (event: React.MouseEvent<HTMLElement>) => setNotifAnchorEl(event.currentTarget);
     const handleNotifMenuClose = () => setNotifAnchorEl(null);
+
     const handleLogout = () => {
         logout();
         navigate('/login');
     };
 
-    const filteredMenuItems = menuItems.filter(item =>
-        !item.roles || item.roles.includes(user.role)
-    );
+    const handleSubMenuToggle = (text: string) => {
+        setOpenSubMenus(prev => ({ ...prev, [text]: !prev[text] }));
+    };
+
+    const handleSirketChange = (event: any) => {
+        const sirketId = Number(event.target.value);
+        if (switchSirket && sirketId) {
+            switchSirket(sirketId);
+            window.location.reload(); // Sayfayı yenile ki tüm datalar yeni şirkete göre yüklensin
+        }
+    };
+
+    // Admin kontrolü - email, username veya role göre
+    const isAdmin = () => {
+        const email = user.email?.toLowerCase();
+        const username = user.ad?.toLowerCase();
+        const role = user.role?.toLowerCase();
+
+        return (
+            email?.includes('admin') ||
+            username?.includes('admin') ||
+            role === 'admin' ||
+            role === 'administrator' ||
+            email === 'admin@pdks.com'
+        );
+    };
+
+    const hasRole = (roles?: string[]) => {
+        if (!roles || roles.length === 0) return true;
+
+        // Admin ise tüm menüleri göster
+        if (isAdmin()) return true;
+
+        // Rol kontrolü (büyük/küçük harf duyarsız)
+        const userRole = user.role?.toLowerCase();
+        return roles.some(role => role.toLowerCase() === userRole);
+    };
+
+    const renderMenuItem = (item: MenuItemType) => {
+        if (!hasRole(item.roles)) return null;
+
+        if (item.children) {
+            return (
+                <Box key={item.text}>
+                    <ListItemButton onClick={() => handleSubMenuToggle(item.text)}>
+                        <ListItemIcon>{item.icon}</ListItemIcon>
+                        <ListItemText primary={item.text} />
+                        {openSubMenus[item.text] ? <ExpandLess /> : <ExpandMore />}
+                    </ListItemButton>
+                    <Collapse in={openSubMenus[item.text]} timeout="auto" unmountOnExit>
+                        <List component="div" disablePadding>
+                            {item.children.map(child => (
+                                <ListItemButton
+                                    key={child.text}
+                                    sx={{ pl: 4 }}
+                                    onClick={() => child.path && navigate(child.path)}
+                                    selected={location.pathname === child.path}
+                                >
+                                    <ListItemIcon sx={{ minWidth: 36 }}>{child.icon}</ListItemIcon>
+                                    <ListItemText primary={child.text} />
+                                </ListItemButton>
+                            ))}
+                        </List>
+                    </Collapse>
+                </Box>
+            );
+        }
+
+        return (
+            <ListItem key={item.text} disablePadding>
+                <ListItemButton
+                    onClick={() => item.path && navigate(item.path)}
+                    selected={location.pathname === item.path}
+                >
+                    <ListItemIcon>{item.icon}</ListItemIcon>
+                    <ListItemText primary={item.text} />
+                </ListItemButton>
+            </ListItem>
+        );
+    };
 
     const drawer = (
-        <Box>
-            <Toolbar sx={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', color: 'white' }}>
-                <BusinessIcon sx={{ mr: 1 }} />
-                <Typography variant="h6" noWrap>
-                    PDKS
+        <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+            <Toolbar>
+                <Typography variant="h6" noWrap component="div" sx={{ fontWeight: 'bold', color: 'primary.main' }}>
+                    PDKS Sistemi
                 </Typography>
             </Toolbar>
             <Divider />
-            {aktifSirket && (
-                <Box sx={{ p: 2, bgcolor: 'grey.100' }}>
-                    <Typography variant="caption" color="text.secondary">Aktif Şirket</Typography>
-                    <FormControl fullWidth size="small" sx={{ mt: 1 }}>
-                        <Select
-                            value={aktifSirket.sirketId}
-                            onChange={(e) => switchSirket(e.target.value as number)}
-                        >
-                            {yetkiliSirketler.map((sirket) => (
-                                <MenuItem key={sirket.sirketId} value={sirket.sirketId}>
-                                    {sirket.sirketAdi}
-                                </MenuItem>
-                            ))}
-                        </Select>
-                    </FormControl>
-                </Box>
-            )}
+            <Box sx={{ overflow: 'auto', flexGrow: 1 }}>
+                <List>
+                    {menuItems.map(item => renderMenuItem(item))}
+                </List>
+            </Box>
             <Divider />
-            <List>
-                {filteredMenuItems.map((item) => (
-                    <ListItem key={item.path} disablePadding>
-                        <ListItemButton
-                            selected={location.pathname === item.path}
-                            onClick={() => navigate(item.path)}
-                        >
-                            <ListItemIcon>{item.icon}</ListItemIcon>
-                            <ListItemText primary={item.text} />
-                        </ListItemButton>
-                    </ListItem>
-                ))}
-            </List>
+            <Box sx={{ p: 2 }}>
+                <Typography variant="caption" color="text.secondary">
+                    © 2025 PDKS Sistemi
+                </Typography>
+            </Box>
         </Box>
     );
 
@@ -129,6 +218,47 @@ function Layout({ children }: { children: ReactNode }) {
                     <Typography variant="h6" noWrap sx={{ flexGrow: 1 }}>
                         Personel Yönetim Sistemi
                     </Typography>
+
+                    {/* ✅ ŞİRKET SEÇİCİ - HER ZAMAN GÖRÜNÜR */}
+                    {aktifSirket && (
+                        <Box sx={{ display: 'flex', alignItems: 'center', mr: 2 }}>
+                            {yetkiliSirketler && yetkiliSirketler.length > 1 ? (
+                                // Çoklu şirket varsa - Select göster
+                                <FormControl size="small" sx={{ minWidth: 200 }}>
+                                    <Select
+                                        value={aktifSirket.sirketId}
+                                        onChange={handleSirketChange}
+                                        sx={{
+                                            color: 'white',
+                                            '.MuiOutlinedInput-notchedOutline': { borderColor: 'rgba(255,255,255,0.3)' },
+                                            '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: 'rgba(255,255,255,0.5)' },
+                                            '.MuiSvgIcon-root': { color: 'white' },
+                                        }}
+                                        startAdornment={<BusinessIcon sx={{ mr: 1, color: 'white' }} />}
+                                    >
+                                        {yetkiliSirketler.map((sirket: any) => (
+                                            <MenuItem key={sirket.sirketId} value={sirket.sirketId}>
+                                                {sirket.sirketAdi}
+                                            </MenuItem>
+                                        ))}
+                                    </Select>
+                                </FormControl>
+                            ) : (
+                                // Tek şirket varsa - Sadece göster
+                                <Chip
+                                    icon={<BusinessIcon />}
+                                    label={aktifSirket.sirketAdi}
+                                    variant="outlined"
+                                    sx={{
+                                        color: 'white',
+                                        borderColor: 'rgba(255,255,255,0.3)',
+                                        '& .MuiChip-icon': { color: 'white' },
+                                    }}
+                                />
+                            )}
+                        </Box>
+                    )}
+
                     <IconButton color="inherit" onClick={handleNotifMenuOpen}>
                         <Badge badgeContent={unreadCount} color="error">
                             <NotificationsIcon />
@@ -154,9 +284,9 @@ function Layout({ children }: { children: ReactNode }) {
                             <Typography variant="body2" color="primary">Tümünü Gör</Typography>
                         </MenuItem>
                     </Menu>
-                    <Chip label={user.role} color="primary" size="small" sx={{ mr: 2, ml: 2 }} />
+                    <Chip label={user.role || 'Kullanıcı'} color="secondary" size="small" sx={{ mr: 2, ml: 2 }} />
                     <IconButton onClick={handleProfileMenuOpen} color="inherit">
-                        <Avatar sx={{ width: 32, height: 32 }}>{user.ad[0]}</Avatar>
+                        <Avatar sx={{ width: 32, height: 32 }}>{user.ad?.[0] || 'U'}</Avatar>
                     </IconButton>
                     <Menu
                         anchorEl={profileAnchorEl}
@@ -165,6 +295,15 @@ function Layout({ children }: { children: ReactNode }) {
                     >
                         <MenuItem disabled>
                             <Typography variant="body2">{user.email}</Typography>
+                        </MenuItem>
+                        <Divider />
+                        <MenuItem onClick={() => { navigate('/profil'); handleProfileMenuClose(); }}>
+                            <ListItemIcon><PeopleIcon fontSize="small" /></ListItemIcon>
+                            Profilim
+                        </MenuItem>
+                        <MenuItem onClick={() => { navigate('/ayarlar'); handleProfileMenuClose(); }}>
+                            <ListItemIcon><SettingsIcon fontSize="small" /></ListItemIcon>
+                            Ayarlar
                         </MenuItem>
                         <Divider />
                         <MenuItem onClick={handleLogout}>

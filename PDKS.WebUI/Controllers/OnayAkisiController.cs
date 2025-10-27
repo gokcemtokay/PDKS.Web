@@ -1,4 +1,4 @@
-﻿// PDKS.WebUI/Controllers/OnayAkisiController.cs - DÜZELTİLMİŞ
+﻿// PDKS.WebUI/Controllers/OnayAkisiController.cs - ROUTE SIRASI DÜZELTİLDİ
 
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -6,14 +6,15 @@ using PDKS.Business.Services;
 using PDKS.Business.DTOs;
 using System.Security.Claims;
 using System.Threading.Tasks;
+using System.Linq;
 
 namespace PDKS.WebUI.Controllers
 {
     [Authorize]
 #if DEBUG
-    [Route("api/[controller]")] // ⬅️ Development: /api/auth/login
+    [Route("api/[controller]")]
 #else
-[Route("[controller]")] // ⬅️ Production: /auth/login (IIS /api ekler)
+    [Route("[controller]")]
 #endif
     [ApiController]
     public class OnayAkisiController : ControllerBase
@@ -25,6 +26,64 @@ namespace PDKS.WebUI.Controllers
             _onayAkisiService = onayAkisiService;
         }
 
+        // Helper method: Kullanıcı ID'sini token'dan al
+        private IActionResult GetKullaniciIdFromToken(out int kullaniciId)
+        {
+            kullaniciId = 0;
+
+            var kullaniciIdClaim = User.FindFirst("sub")
+                                ?? User.FindFirst(ClaimTypes.NameIdentifier)
+                                ?? User.FindFirst("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier");
+
+            if (kullaniciIdClaim == null || string.IsNullOrEmpty(kullaniciIdClaim.Value))
+            {
+                var allClaims = User.Claims.Select(c => new { c.Type, c.Value }).ToList();
+                return Unauthorized(new
+                {
+                    message = "Kullanıcı kimliği bulunamadı",
+                    availableClaims = allClaims
+                });
+            }
+
+            if (!int.TryParse(kullaniciIdClaim.Value, out kullaniciId) || kullaniciId <= 0)
+            {
+                return BadRequest(new
+                {
+                    message = "Geçersiz kullanıcı kimliği",
+                    claimType = kullaniciIdClaim.Type,
+                    claimValue = kullaniciIdClaim.Value
+                });
+            }
+
+            return null; // Success
+        }
+
+        // ✅ SPESİFİK ROUTE'LAR ÖNCE GELMELİ
+
+        // GET: api/OnayAkisi/bekleyen
+        [HttpGet("bekleyen")]
+        public async Task<IActionResult> GetBekleyenOnaylar()
+        {
+            var errorResult = GetKullaniciIdFromToken(out int kullaniciId);
+            if (errorResult != null)
+                return errorResult;
+
+            var bekleyenler = await _onayAkisiService.GetBekleyenOnaylarAsync(kullaniciId);
+            return Ok(bekleyenler);
+        }
+
+        // GET: api/OnayAkisi/taleplerim
+        [HttpGet("taleplerim")]
+        public async Task<IActionResult> GetTaleplerim()
+        {
+            var errorResult = GetKullaniciIdFromToken(out int kullaniciId);
+            if (errorResult != null)
+                return errorResult;
+
+            var talepler = await _onayAkisiService.GetKullaniciTaleplerAsync(kullaniciId);
+            return Ok(talepler);
+        }
+
         // GET: api/OnayAkisi/sirket/{sirketId}
         [HttpGet("sirket/{sirketId}")]
         public async Task<IActionResult> GetBySirket(int sirketId)
@@ -32,6 +91,8 @@ namespace PDKS.WebUI.Controllers
             var akislar = await _onayAkisiService.GetAllOnayAkislariAsync(sirketId);
             return Ok(akislar);
         }
+
+        // ✅ GENERİK ROUTE'LAR EN SONA
 
         // GET: api/OnayAkisi/{id}
         [HttpGet("{id}")]
@@ -70,43 +131,13 @@ namespace PDKS.WebUI.Controllers
             return NoContent();
         }
 
-        // GET: api/OnayAkisi/bekleyen
-        [HttpGet("bekleyen")]
-        public async Task<IActionResult> GetBekleyenOnaylar()
-        {
-            // ❌ ESKİ - Hatalı
-            // var kullaniciId = int.Parse(User.FindFirst("sub")?.Value ?? "0");
-
-            // ✅ YENİ - Doğru claim okuma
-            var kullaniciIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)
-                                ?? User.FindFirst("sub")
-                                ?? User.FindFirst("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier");
-
-            if (kullaniciIdClaim == null || string.IsNullOrEmpty(kullaniciIdClaim.Value))
-            {
-                return Unauthorized(new { message = "Kullanıcı kimliği bulunamadı" });
-            }
-
-            if (!int.TryParse(kullaniciIdClaim.Value, out int kullaniciId) || kullaniciId <= 0)
-            {
-                return BadRequest(new { message = "Geçersiz kullanıcı kimliği" });
-            }
-
-            var bekleyenler = await _onayAkisiService.GetBekleyenOnaylarAsync(kullaniciId);
-            return Ok(bekleyenler);
-        }
-
         // POST: api/OnayAkisi/onayla
         [HttpPost("onayla")]
         public async Task<IActionResult> Onayla([FromBody] OnayIslemDTO dto)
         {
-            var kullaniciIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)
-                                ?? User.FindFirst("sub");
-
-            if (kullaniciIdClaim == null || !int.TryParse(kullaniciIdClaim.Value, out int kullaniciId))
-            {
-                return Unauthorized(new { message = "Kullanıcı kimliği bulunamadı" });
-            }
+            var errorResult = GetKullaniciIdFromToken(out int kullaniciId);
+            if (errorResult != null)
+                return errorResult;
 
             await _onayAkisiService.OnaylaAsync(dto.OnayKaydiId, kullaniciId, dto.Aciklama);
             return Ok(new { message = "Onaylandı" });
@@ -116,32 +147,12 @@ namespace PDKS.WebUI.Controllers
         [HttpPost("reddet")]
         public async Task<IActionResult> Reddet([FromBody] OnayIslemDTO dto)
         {
-            var kullaniciIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)
-                                ?? User.FindFirst("sub");
-
-            if (kullaniciIdClaim == null || !int.TryParse(kullaniciIdClaim.Value, out int kullaniciId))
-            {
-                return Unauthorized(new { message = "Kullanıcı kimliği bulunamadı" });
-            }
+            var errorResult = GetKullaniciIdFromToken(out int kullaniciId);
+            if (errorResult != null)
+                return errorResult;
 
             await _onayAkisiService.ReddetAsync(dto.OnayKaydiId, kullaniciId, dto.Aciklama);
             return Ok(new { message = "Reddedildi" });
-        }
-
-        // GET: api/OnayAkisi/taleplerim
-        [HttpGet("taleplerim")]
-        public async Task<IActionResult> GetTaleplerim()
-        {
-            var kullaniciIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)
-                                ?? User.FindFirst("sub");
-
-            if (kullaniciIdClaim == null || !int.TryParse(kullaniciIdClaim.Value, out int kullaniciId))
-            {
-                return Unauthorized(new { message = "Kullanıcı kimliği bulunamadı" });
-            }
-
-            var talepler = await _onayAkisiService.GetKullaniciTaleplerAsync(kullaniciId);
-            return Ok(talepler);
         }
     }
 }

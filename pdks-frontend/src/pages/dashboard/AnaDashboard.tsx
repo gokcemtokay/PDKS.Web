@@ -1,103 +1,237 @@
 import { useEffect, useState } from 'react';
-import { Box, Grid, Card, CardContent, Typography, Paper } from '@mui/material';
 import {
-  People as PeopleIcon, BeachAccess as BeachAccessIcon,
-  TrendingUp as TrendingUpIcon, CheckCircle as CheckCircleIcon,
+  Box,
+  Grid,
+  Card,
+  CardContent,
+  Typography,
+  Avatar,
+  Chip,
+  LinearProgress,
+  Paper,
+} from '@mui/material';
+import {
+  People as PeopleIcon,
+  BeachAccess as BeachAccessIcon,
+  AttachMoney as AttachMoneyIcon,
+  CheckCircle as CheckCircleIcon,
+  Business as BusinessIcon,
+  TrendingUp as TrendingUpIcon,
 } from '@mui/icons-material';
-import dashboardService, { BugunkunDurum } from '../../services/dashboardService';
+import { useAuth } from '../../contexts/AuthContext';
 
 function AnaDashboard() {
-  const [durum, setDurum] = useState<BugunkunDurum | null>(null);
+  const { user, aktifSirket } = useAuth();
+  const [stats, setStats] = useState({
+    toplamPersonel: 0,
+    aktifPersonel: 0,
+    bekleyenIzin: 0,
+    bekleyenAvans: 0,
+    bekleyenOnay: 0,
+  });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    loadData();
-  }, []);
+    loadDashboardData();
+  }, [aktifSirket]); // Şirket değiştiğinde veriyi yeniden yükle
 
-  const loadData = async () => {
+  const loadDashboardData = async () => {
     try {
-      const data = await dashboardService.getBugunkunDurum();
-      setDurum(data);
+      setLoading(true);
+      // API çağrıları - Otomatik olarak X-Sirket-Id header'ı gönderilir
+      // const personelData = await personelService.getAll();
+      // const izinData = await izinService.getBekleyenler();
+      // vs...
+      
+      // Mock data
+      setTimeout(() => {
+        setStats({
+          toplamPersonel: 156,
+          aktifPersonel: 142,
+          bekleyenIzin: 8,
+          bekleyenAvans: 3,
+          bekleyenOnay: 12,
+        });
+        setLoading(false);
+      }, 500);
     } catch (error) {
-      console.error('Dashboard yüklenemedi:', error);
-    } finally {
+      console.error('Dashboard verileri yüklenemedi:', error);
       setLoading(false);
     }
   };
 
-  if (loading) return <Typography>Yükleniyor...</Typography>;
+  const StatCard = ({ title, value, icon, color, subtitle }: any) => (
+    <Card sx={{ height: '100%', position: 'relative', overflow: 'visible' }}>
+      <CardContent>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+          <Box>
+            <Typography color="text.secondary" variant="subtitle2" gutterBottom>
+              {title}
+            </Typography>
+            <Typography variant="h4" fontWeight="bold">
+              {value}
+            </Typography>
+            {subtitle && (
+              <Typography variant="caption" color="text.secondary">
+                {subtitle}
+              </Typography>
+            )}
+          </Box>
+          <Avatar
+            sx={{
+              bgcolor: `${color}.100`,
+              color: `${color}.main`,
+              width: 56,
+              height: 56,
+            }}
+          >
+            {icon}
+          </Avatar>
+        </Box>
+      </CardContent>
+    </Card>
+  );
+
+  if (loading) {
+    return (
+      <Box>
+        <LinearProgress />
+        <Typography sx={{ mt: 2, textAlign: 'center' }}>Yükleniyor...</Typography>
+      </Box>
+    );
+  }
 
   return (
     <Box>
-      <Typography variant="h4" gutterBottom fontWeight="bold">
-        Ana Sayfa
-      </Typography>
-      <Grid container spacing={3}>
-        <Grid item xs={12} sm={6} md={3}>
-          <Card sx={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', color: 'white' }}>
-            <CardContent>
-              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <div>
-                  <Typography variant="h4" fontWeight="bold">{durum?.toplamPersonel || 0}</Typography>
-                  <Typography variant="body2">Toplam Personel</Typography>
-                </div>
-                <PeopleIcon sx={{ fontSize: 48, opacity: 0.3 }} />
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-
-        <Grid item xs={12} sm={6} md={3}>
-          <Card sx={{ background: 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)', color: 'white' }}>
-            <CardContent>
-              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <div>
-                  <Typography variant="h4" fontWeight="bold">{durum?.bugunkuGiris || 0}</Typography>
-                  <Typography variant="body2">Bugünkü Giriş</Typography>
-                </div>
-                <CheckCircleIcon sx={{ fontSize: 48, opacity: 0.3 }} />
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-
-        <Grid item xs={12} sm={6} md={3}>
-          <Card sx={{ background: 'linear-gradient(135deg, #fa709a 0%, #fee140 100%)', color: 'white' }}>
-            <CardContent>
-              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <div>
-                  <Typography variant="h4" fontWeight="bold">{durum?.izinliPersonel || 0}</Typography>
-                  <Typography variant="body2">İzinli Personel</Typography>
-                </div>
-                <BeachAccessIcon sx={{ fontSize: 48, opacity: 0.3 }} />
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-
-        <Grid item xs={12} sm={6} md={3}>
-          <Card sx={{ background: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)', color: 'white' }}>
-            <CardContent>
-              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <div>
-                  <Typography variant="h4" fontWeight="bold">
-                    {durum?.girisCikisOrani ? `%${durum.girisCikisOrani.toFixed(0)}` : '%0'}
-                  </Typography>
-                  <Typography variant="body2">Giriş Oranı</Typography>
-                </div>
-                <TrendingUpIcon sx={{ fontSize: 48, opacity: 0.3 }} />
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-
-        <Grid item xs={12}>
-          <Paper sx={{ p: 3 }}>
-            <Typography variant="h6" gutterBottom>Hoş Geldiniz!</Typography>
-            <Typography color="text.secondary">
-              PDKS Personel Yönetim Sistemi'ne hoş geldiniz. Sistemdeki tüm işlemlerinizi sol menüden gerçekleştirebilirsiniz.
+      {/* Hoş Geldin + Şirket Bilgisi */}
+      <Paper
+        sx={{
+          p: 3,
+          mb: 3,
+          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+          color: 'white',
+        }}
+      >
+        <Grid container spacing={2} alignItems="center">
+          <Grid item xs={12} md={8}>
+            <Typography variant="h4" fontWeight="bold" gutterBottom>
+              Hoş Geldiniz, {user?.ad || user?.email}! 👋
             </Typography>
-          </Paper>
+            <Typography variant="body1" sx={{ opacity: 0.9 }}>
+              {new Date().toLocaleDateString('tr-TR', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+              })}
+            </Typography>
+          </Grid>
+          <Grid item xs={12} md={4}>
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: { xs: 'flex-start', md: 'flex-end' },
+                gap: 1,
+              }}
+            >
+              <BusinessIcon sx={{ fontSize: 32 }} />
+              <Box>
+                <Typography variant="caption" sx={{ opacity: 0.8 }}>
+                  Aktif Şirket
+                </Typography>
+                <Typography variant="h6" fontWeight="bold">
+                  {aktifSirket?.sirketAdi || 'Şirket Seçilmedi'}
+                </Typography>
+              </Box>
+            </Box>
+          </Grid>
+        </Grid>
+      </Paper>
+
+      {/* İstatistikler */}
+      <Grid container spacing={3} sx={{ mb: 3 }}>
+        <Grid item xs={12} sm={6} md={4}>
+          <StatCard
+            title="Toplam Personel"
+            value={stats.toplamPersonel}
+            subtitle={`${stats.aktifPersonel} aktif`}
+            icon={<PeopleIcon />}
+            color="primary"
+          />
+        </Grid>
+        <Grid item xs={12} sm={6} md={4}>
+          <StatCard
+            title="Bekleyen İzin"
+            value={stats.bekleyenIzin}
+            subtitle="Onay bekliyor"
+            icon={<BeachAccessIcon />}
+            color="warning"
+          />
+        </Grid>
+        <Grid item xs={12} sm={6} md={4}>
+          <StatCard
+            title="Bekleyen Avans"
+            value={stats.bekleyenAvans}
+            subtitle="İncelenmeli"
+            icon={<AttachMoneyIcon />}
+            color="success"
+          />
+        </Grid>
+        <Grid item xs={12} sm={6} md={4}>
+          <StatCard
+            title="Bekleyen Onay"
+            value={stats.bekleyenOnay}
+            subtitle="Tüm süreçler"
+            icon={<CheckCircleIcon />}
+            color="error"
+          />
+        </Grid>
+        <Grid item xs={12} sm={6} md={4}>
+          <StatCard
+            title="Personel Devamsızlık"
+            value="%2.5"
+            subtitle="Bu ay"
+            icon={<TrendingUpIcon />}
+            color="info"
+          />
+        </Grid>
+        <Grid item xs={12} sm={6} md={4}>
+          <StatCard
+            title="Aktif Vardiyalar"
+            value="3"
+            subtitle="Güncel vardiya sayısı"
+            icon={<CheckCircleIcon />}
+            color="secondary"
+          />
+        </Grid>
+      </Grid>
+
+      {/* Ek İçerikler */}
+      <Grid container spacing={3}>
+        <Grid item xs={12} md={6}>
+          <Card>
+            <CardContent>
+              <Typography variant="h6" gutterBottom>
+                Son İşlemler
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                Yakında eklenecek...
+              </Typography>
+            </CardContent>
+          </Card>
+        </Grid>
+        <Grid item xs={12} md={6}>
+          <Card>
+            <CardContent>
+              <Typography variant="h6" gutterBottom>
+                Duyurular
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                Yakında eklenecek...
+              </Typography>
+            </CardContent>
+          </Card>
         </Grid>
       </Grid>
     </Box>

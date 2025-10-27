@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+ï»¿import { useEffect, useState } from 'react';
 import { Box, Typography, Button, Chip } from '@mui/material';
 import { DataGrid, GridColDef } from '@mui/x-data-grid';
 import { Add as AddIcon } from '@mui/icons-material';
@@ -17,32 +17,32 @@ function GorevList() {
             const data = await gorevService.getAll();
             setGorevler(data);
         } catch (error) {
-            console.error('Görevler yüklenemedi:', error);
+            console.error('GÃ¶revler yÃ¼klenemedi:', error);
         } finally {
             setLoading(false);
         }
     };
 
     const columns: GridColDef[] = [
-        { field: 'baslik', headerName: 'Görev', width: 250 },
+        { field: 'baslik', headerName: 'GÃ¶rev', width: 250 },
         { field: 'atananPersonelAdi', headerName: 'Atanan', width: 180 },
         {
             field: 'oncelik',
-            headerName: 'Öncelik',
+            headerName: 'Ã–ncelik',
             width: 120,
             renderCell: (params) => {
-                const color = params.value === 'Yüksek' ? 'error' : params.value === 'Orta' ? 'warning' : 'success';
+                const color = params.value === 'YÃ¼ksek' ? 'error' : params.value === 'Orta' ? 'warning' : 'success';
                 return <Chip label={params.value} color={color} size="small" />;
             },
         },
-        { field: 'baslangicTarihi', headerName: 'Baþlangýç', width: 130, valueFormatter: (value) => new Date(value).toLocaleDateString('tr-TR') },
-        { field: 'bitisTarihi', headerName: 'Bitiþ', width: 130, valueFormatter: (value) => new Date(value).toLocaleDateString('tr-TR') },
+        { field: 'baslangicTarihi', headerName: 'BaÅŸlangÄ±Ã§', width: 130, valueFormatter: (value) => new Date(value).toLocaleDateString('tr-TR') },
+        { field: 'bitisTarihi', headerName: 'BitiÅŸ', width: 130, valueFormatter: (value) => new Date(value).toLocaleDateString('tr-TR') },
         {
             field: 'durum',
             headerName: 'Durum',
             width: 130,
             renderCell: (params) => {
-                const color = params.value === 'Tamamlandý' ? 'success' : params.value === 'Devam Ediyor' ? 'info' : 'default';
+                const color = params.value === 'TamamlandÄ±' ? 'success' : params.value === 'Devam Ediyor' ? 'info' : 'default';
                 return <Chip label={params.value} color={color} size="small" />;
             },
         },
@@ -51,8 +51,8 @@ function GorevList() {
     return (
         <Box>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3 }}>
-                <Typography variant="h4" fontWeight="bold">Görev Yönetimi</Typography>
-                <Button variant="contained" startIcon={<AddIcon />}>Yeni Görev</Button>
+                <Typography variant="h4" fontWeight="bold">GÃ¶rev YÃ¶netimi</Typography>
+                <Button variant="contained" startIcon={<AddIcon />}>Yeni GÃ¶rev</Button>
             </Box>
 
             <Box sx={{ height: 600, width: '100%' }}>

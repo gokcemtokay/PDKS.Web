@@ -11,21 +11,21 @@ export interface GirisCikis {
 
 const puantajService = {
   async getAll(): Promise<GirisCikis[]> {
-    const response = await api.get('/GirisCikis');
+    const response = await api.get('/giriscikis');
     return response.data;
   },
 
   async create(data: Partial<GirisCikis>): Promise<number> {
-    const response = await api.post('/GirisCikis', data);
+      const response = await api.post('/giriscikis', data);
     return response.data;
   },
 
   async update(id: number, data: Partial<GirisCikis>): Promise<void> {
-    await api.put(`/GirisCikis/${id}`, data);
+      await api.put(`/giriscikis/${id}`, data);
   },
 
   async delete(id: number): Promise<void> {
-    await api.delete(`/GirisCikis/${id}`);
+      await api.delete(`/giriscikis/${id}`);
   },
 };
 

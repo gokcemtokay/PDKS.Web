@@ -12,16 +12,16 @@ export interface Bildirim {
 
 const bildirimService = {
     async getAll(): Promise<Bildirim[]> {
-        const response = await api.get('/Bildirim');
+        const response = await api.get('/bildirim');
         return response.data;
     },
 
     async markAsRead(id: number): Promise<void> {
-        await api.post(`/Bildirim/${id}/okundu`);
+        await api.post(`/bildirim/${id}/okundu`);
     },
 
     async getUnreadCount(): Promise<number> {
-        const response = await api.get('/Bildirim/okunmamis-sayisi');
+        const response = await api.get('/bildirim/okunmamis-sayisi');
         return response.data;
     },
 };

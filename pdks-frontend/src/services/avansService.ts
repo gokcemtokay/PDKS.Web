@@ -12,12 +12,12 @@ export interface Avans {
 
 const avansService = {
   async getAll(): Promise<Avans[]> {
-    const response = await api.get('/Avans');
+    const response = await api.get('/avans');
     return response.data;
   },
   
   async create(data: Partial<Avans>): Promise<number> {
-    const response = await api.post('/Avans', data);
+    const response = await api.post('/avans', data);
     return response.data;
   },
 };

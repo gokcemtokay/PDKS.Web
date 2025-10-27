@@ -366,6 +366,17 @@ namespace PDKS.Business.Services
             }).OrderBy(p => p.AdSoyad);
         }
 
+        public async Task UpdateProfilFotoAsync(int personelId, string fotoUrl)
+        {
+            var personel = await _unitOfWork.Personeller.GetByIdAsync(personelId);
+
+            if (personel == null)
+                throw new Exception($"ID {personelId} olan personel bulunamadı");
+
+            personel.ProfilResmi = fotoUrl;
+            await _unitOfWork.SaveChangesAsync();
+        }
+
         //public async Task<int> GetSirketPersonelSayisiAsync(int sirketId)
         //{
         //    var personeller = await _unitOfWork.Personeller.FindAsync(p => p.SirketId == sirketId && p.Durum);

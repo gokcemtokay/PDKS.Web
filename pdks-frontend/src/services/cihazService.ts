@@ -12,21 +12,21 @@ export interface Cihaz {
 
 const cihazService = {
     async getAll(): Promise<Cihaz[]> {
-        const response = await api.get('/Cihaz');
+        const response = await api.get('/cihaz');
         return response.data;
     },
 
     async create(data: Partial<Cihaz>): Promise<number> {
-        const response = await api.post('/Cihaz', data);
+        const response = await api.post('/cihaz', data);
         return response.data;
     },
 
     async update(id: number, data: Partial<Cihaz>): Promise<void> {
-        await api.put(`/Cihaz/${id}`, data);
+        await api.put(`/cihaz/${id}`, data);
     },
 
     async delete(id: number): Promise<void> {
-        await api.delete(`/Cihaz/${id}`);
+        await api.delete(`/cihaz/${id}`);
     },
 };
 

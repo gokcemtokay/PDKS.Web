@@ -7,45 +7,31 @@ const api = axios.create({
   },
 });
 
-// Request interceptor - Her istekte token ve şirket ID ekler
+// Request interceptor
 api.interceptors.request.use(
   (config) => {
-    // Token ekle
     const token = localStorage.getItem('token');
     if (token && config.headers) {
       config.headers.Authorization = `Bearer ${token}`;
     }
-    
-    // Aktif şirket ID'sini header'a ekle
-    const aktifSirketId = localStorage.getItem('aktifSirketId');
-    if (aktifSirketId && config.headers) {
-      config.headers['X-Sirket-Id'] = aktifSirketId;
+    const sirketId = localStorage.getItem('aktifSirketId');
+    if (sirketId && config.headers) {
+      config.headers['X-Sirket-Id'] = sirketId;
     }
-    
     return config;
   },
   (error) => Promise.reject(error)
 );
 
-// Response interceptor - Hata yönetimi
+// Response interceptor  
 api.interceptors.response.use(
   (response) => response,
   (error: AxiosError) => {
-    // 401 Unauthorized - Token geçersiz, login'e yönlendir
     if (error.response?.status === 401) {
       localStorage.removeItem('token');
       localStorage.removeItem('user');
-      localStorage.removeItem('aktifSirket');
-      localStorage.removeItem('aktifSirketId');
-      localStorage.removeItem('yetkiliSirketler');
       window.location.href = '/login';
     }
-    
-    // 403 Forbidden - Yetki yok
-    if (error.response?.status === 403) {
-      console.error('Bu işlem için yetkiniz yok!');
-    }
-    
     return Promise.reject(error);
   }
 );

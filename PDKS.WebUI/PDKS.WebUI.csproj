@@ -37,4 +37,8 @@
     <ProjectReference Include="..\PDKS.Business\PDKS.Business.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="wwwroot\uploads\personel\" />
+  </ItemGroup>
+
 </Project>

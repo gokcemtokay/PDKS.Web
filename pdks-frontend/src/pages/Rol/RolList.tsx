@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+ï»¿import { useEffect, useState } from 'react';
 import { Box, Typography, Button, IconButton } from '@mui/material';
 import { DataGrid, GridColDef } from '@mui/x-data-grid';
 import { Add as AddIcon, Edit as EditIcon } from '@mui/icons-material';
@@ -17,24 +17,24 @@ function RolList() {
             const data = await rolService.getAll();
             setRoller(data);
         } catch (error) {
-            console.error('Roller yüklenemedi:', error);
+            console.error('Roller yÃ¼klenemedi:', error);
         } finally {
             setLoading(false);
         }
     };
 
     const columns: GridColDef[] = [
-        { field: 'rolAdi', headerName: 'Rol Adý', width: 200 },
-        { field: 'aciklama', headerName: 'Açýklama', width: 300 },
+        { field: 'rolAdi', headerName: 'Rol AdÄ±', width: 200 },
+        { field: 'aciklama', headerName: 'AÃ§Ä±klama', width: 300 },
         {
             field: 'yetkiler',
-            headerName: 'Yetki Sayýsý',
+            headerName: 'Yetki SayÄ±sÄ±',
             width: 150,
             valueGetter: (value) => value?.length || 0,
         },
         {
             field: 'actions',
-            headerName: 'Ýþlemler',
+            headerName: 'Ä°ÅŸlemler',
             width: 100,
             renderCell: () => (
                 <IconButton size="small"><EditIcon fontSize="small" /></IconButton>
@@ -45,7 +45,7 @@ function RolList() {
     return (
         <Box>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3 }}>
-                <Typography variant="h4" fontWeight="bold">Rol & Yetki Yönetimi</Typography>
+                <Typography variant="h4" fontWeight="bold">Rol & Yetki YÃ¶netimi</Typography>
                 <Button variant="contained" startIcon={<AddIcon />}>Yeni Rol Ekle</Button>
             </Box>
 

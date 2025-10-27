@@ -14,17 +14,17 @@ export interface Gorev {
 
 const gorevService = {
     async getAll(): Promise<Gorev[]> {
-        const response = await api.get('/Gorev');
+        const response = await api.get('/gorev');
         return response.data;
     },
 
     async create(data: Partial<Gorev>): Promise<number> {
-        const response = await api.post('/Gorev', data);
+        const response = await api.post('/gorev', data);
         return response.data;
     },
 
     async updateDurum(id: number, durum: string): Promise<void> {
-        await api.put(`/Gorev/${id}/durum`, { durum });
+        await api.put(`/gorev/${id}/durum`, { durum });
     },
 };
 

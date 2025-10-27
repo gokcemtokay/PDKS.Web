@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+ï»¿import { useEffect, useState } from 'react';
 import { Box, Typography, Button, Chip } from '@mui/material';
 import { DataGrid, GridColDef } from '@mui/x-data-grid';
 import { Add as AddIcon } from '@mui/icons-material';
@@ -17,15 +17,15 @@ function OneriList() {
             const data = await oneriService.getAll();
             setOneriler(data);
         } catch (error) {
-            console.error('Öneriler yüklenemedi:', error);
+            console.error('Ã–neriler yÃ¼klenemedi:', error);
         } finally {
             setLoading(false);
         }
     };
 
     const columns: GridColDef[] = [
-        { field: 'personelAdi', headerName: 'Gönderen', width: 180, valueGetter: (value, row) => row.anonim ? 'Anonim' : value },
-        { field: 'baslik', headerName: 'Baþlýk', width: 250 },
+        { field: 'personelAdi', headerName: 'GÃ¶nderen', width: 180, valueGetter: (value, row) => row.anonim ? 'Anonim' : value },
+        { field: 'baslik', headerName: 'BaÅŸlÄ±k', width: 250 },
         { field: 'kategori', headerName: 'Kategori', width: 150 },
         { field: 'oneriTarihi', headerName: 'Tarih', width: 150, valueFormatter: (value) => new Date(value).toLocaleDateString('tr-TR') },
         {
@@ -42,8 +42,8 @@ function OneriList() {
     return (
         <Box>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3 }}>
-                <Typography variant="h4" fontWeight="bold">Öneri & Þikayet</Typography>
-                <Button variant="contained" startIcon={<AddIcon />}>Yeni Öneri/Þikayet</Button>
+                <Typography variant="h4" fontWeight="bold">Ã–neri & Åžikayet</Typography>
+                <Button variant="contained" startIcon={<AddIcon />}>Yeni Ã–neri/Åžikayet</Button>
             </Box>
 
             <Box sx={{ height: 600, width: '100%' }}>

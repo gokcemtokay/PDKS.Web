@@ -10,17 +10,17 @@ export interface Tatil {
 
 const tatilService = {
     async getAll(): Promise<Tatil[]> {
-        const response = await api.get('/Tatil');
+        const response = await api.get('/tatil');
         return response.data;
     },
 
     async create(data: Partial<Tatil>): Promise<number> {
-        const response = await api.post('/Tatil', data);
+        const response = await api.post('/tatil', data);
         return response.data;
     },
 
     async delete(id: number): Promise<void> {
-        await api.delete(`/Tatil/${id}`);
+        await api.delete(`/tatil/${id}`);
     },
 };
 
