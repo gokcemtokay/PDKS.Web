@@ -31,6 +31,9 @@ namespace PDKS.Business.Services
                 SirketAdi = sirketler.FirstOrDefault(s => s.Id == p.SirketId)?.Unvan ?? "",
                 AdSoyad = p.AdSoyad,
                 SicilNo = p.SicilNo,
+                TcKimlikNo = p.TcKimlikNo,
+                ProfilResmi = p.ProfilResmi,           // 👈 BU SATIRI EKLEYİN
+                ProfilFoto = p.ProfilResmi,
                 Departman = p.Departman?.Ad ?? string.Empty,
                 DepartmanAdi = p.Departman?.Ad ?? string.Empty,
                 Gorev = p.Gorev ?? string.Empty,
@@ -56,6 +59,9 @@ namespace PDKS.Business.Services
                 SirketAdi = sirketler.FirstOrDefault(s => s.Id == p.SirketId)?.Unvan ?? "",
                 AdSoyad = p.AdSoyad,
                 SicilNo = p.SicilNo,
+                TcKimlikNo = p.TcKimlikNo,
+                ProfilResmi = p.ProfilResmi,           // 👈 BU SATIRI EKLEYİN
+                ProfilFoto = p.ProfilResmi,
                 Departman = p.Departman?.Ad ?? string.Empty,
                 Gorev = p.Gorev,
                 Email = p.Email,
@@ -87,6 +93,8 @@ namespace PDKS.Business.Services
                 Soyad = p.AdSoyad.Contains(' ') ? p.AdSoyad.Substring(p.AdSoyad.IndexOf(' ') + 1) : "",
                 SicilNo = p.SicilNo,
                 TcKimlikNo = p.TcKimlikNo,
+                ProfilResmi = p.ProfilResmi,           // 👈 BU SATIRI EKLEYİN
+                ProfilFoto = p.ProfilResmi,
                 Departman = p.Departman?.Ad ?? string.Empty,
                 DepartmanAdi = p.Departman?.Ad ?? string.Empty,
                 Gorev = p.Gorev ?? string.Empty,
@@ -135,6 +143,7 @@ namespace PDKS.Business.Services
                 Soyad = personel.AdSoyad.Contains(' ') ? personel.AdSoyad.Substring(personel.AdSoyad.IndexOf(' ') + 1) : "",
                 SicilNo = personel.SicilNo,
                 TcKimlikNo = personel.TcKimlikNo,
+                ProfilResmi = personel.ProfilResmi,
                 Email = personel.Email,
                 Telefon = personel.Telefon,
                 Adres = personel.Adres,
@@ -330,6 +339,9 @@ namespace PDKS.Business.Services
                 SirketAdi = sirketler.FirstOrDefault(s => s.Id == p.SirketId)?.Unvan ?? "",
                 AdSoyad = p.AdSoyad,
                 SicilNo = p.SicilNo,
+                TcKimlikNo = p.TcKimlikNo,
+                ProfilResmi = p.ProfilResmi,           // 👈 BU SATIRI EKLEYİN
+                ProfilFoto = p.ProfilResmi,
                 Departman = p.Departman?.Ad ?? string.Empty,
                 Gorev = p.Gorev,
                 Email = p.Email,
@@ -356,6 +368,9 @@ namespace PDKS.Business.Services
                 SirketAdi = sirketler.FirstOrDefault(s => s.Id == p.SirketId)?.Unvan ?? "",
                 AdSoyad = p.AdSoyad,
                 SicilNo = p.SicilNo,
+                TcKimlikNo = p.TcKimlikNo,
+                ProfilResmi = p.ProfilResmi,           // 👈 BU SATIRI EKLEYİN
+                ProfilFoto = p.ProfilResmi,
                 Departman = p.Departman?.Ad ?? string.Empty,
                 Gorev = p.Gorev,
                 Email = p.Email,

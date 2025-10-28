@@ -220,20 +220,25 @@ namespace PDKS.WebUI.Controllers
 
         [HttpPost("{id}/foto")]
         [Authorize(Roles = "Admin,IK")]
+        [Consumes("multipart/form-data")]
         public async Task<IActionResult> UploadFoto(int id, IFormFile file)
         {
             try
             {
-                // Dosya kontrolü
+                // ✅ LOG: Başlangıç
+                Console.WriteLine($"=== UploadFoto START === ID: {id}");
+
                 if (file == null || file.Length == 0)
                     return BadRequest(new { message = "Dosya seçilmedi" });
 
-                // Personel kontrolü - SERVİS KULLAN
+                Console.WriteLine($"File: {file.FileName}, Size: {file.Length} bytes");
+
+                // Personel kontrolü
                 var personel = await _personelService.GetByIdAsync(id);
                 if (personel == null)
                     return NotFound(new { message = "Personel bulunamadı" });
 
-                // Güvenlik kontrolü - Şirket ID
+                // Şirket kontrolü
                 var sirketId = GetCurrentSirketId();
                 if (personel.SirketId != sirketId)
                     return Forbid("Bu personel, yetkili olduğunuz şirkete ait değildir.");
@@ -248,60 +253,62 @@ namespace PDKS.WebUI.Controllers
                 if (file.Length > 5 * 1024 * 1024)
                     return BadRequest(new { message = "Dosya boyutu 5MB'dan büyük olamaz" });
 
-                // Uploads klasörü yolu
+                // Uploads klasörü
                 var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads", "personel");
-
-                // Klasör yoksa oluştur
                 if (!Directory.Exists(uploadsFolder))
+                {
+                    Console.WriteLine($"Creating directory: {uploadsFolder}");
                     Directory.CreateDirectory(uploadsFolder);
+                }
 
                 // Eski fotoğrafı sil (varsa)
                 if (!string.IsNullOrEmpty(personel.ProfilResmi))
                 {
                     var oldPhotoPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", personel.ProfilResmi.TrimStart('/'));
                     if (System.IO.File.Exists(oldPhotoPath))
+                    {
+                        Console.WriteLine($"Deleting old photo: {oldPhotoPath}");
                         System.IO.File.Delete(oldPhotoPath);
+                    }
                 }
 
-                // Yeni dosya adı oluştur (unique)
+                // Yeni dosya adı (unique)
                 var fileName = $"personel_{id}_{Guid.NewGuid()}{extension}";
                 var filePath = Path.Combine(uploadsFolder, fileName);
 
                 // Dosyayı kaydet
+                Console.WriteLine($"Saving file to: {filePath}");
                 using (var stream = new FileStream(filePath, FileMode.Create))
                 {
                     await file.CopyToAsync(stream);
                 }
+                Console.WriteLine("File saved successfully!");
 
-                // Veritabanında güncelle - SERVİS KULLAN
-                var updateDto = new PersonelUpdateDTO
-                {
-                    Id = id,
-                    SirketId = personel.SirketId,
-                    SicilNo = personel.SicilNo,
-                    AdSoyad = personel.AdSoyad,
-                    ProfilResmi = $"/uploads/personel/{fileName}",
-                    // Diğer gerekli alanları da ekleyin (DTO'ya göre)
-                    DepartmanId = personel.DepartmanId,
-                    Gorev = personel.Gorev,
-                    Durum = personel.Durum,
-                    // ... diğer alanlar
-                };
+                // ✅ ÖNEMLİ: Database'de SADECE ProfilResmi alanını güncelle
+                var photoUrl = $"/uploads/personel/{fileName}";
+                Console.WriteLine($"Updating database: ProfilResmi = {photoUrl}");
 
-                await _personelService.UpdateAsync(updateDto);
+                await _personelService.UpdateProfilFotoAsync(id, photoUrl);
+
+                Console.WriteLine("Database updated successfully!");
+                Console.WriteLine($"=== UploadFoto SUCCESS === URL: {photoUrl}");
 
                 return Ok(new
                 {
                     message = "Fotoğraf başarıyla yüklendi",
-                    foto = $"/uploads/personel/{fileName}"
+                    foto = photoUrl,
+                    profilResmi = photoUrl
                 });
-            }
-            catch (UnauthorizedAccessException ex)
-            {
-                return Unauthorized(new { message = ex.Message });
             }
             catch (Exception ex)
             {
+                Console.WriteLine($"=== UploadFoto ERROR ===");
+                Console.WriteLine($"Message: {ex.Message}");
+                Console.WriteLine($"StackTrace: {ex.StackTrace}");
+                if (ex.InnerException != null)
+                {
+                    Console.WriteLine($"InnerException: {ex.InnerException.Message}");
+                }
                 return StatusCode(500, new { message = "Fotoğraf yüklenirken hata oluştu", error = ex.Message });
             }
         }

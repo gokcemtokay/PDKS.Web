@@ -10,6 +10,8 @@
         public string Soyad { get; set; }   // ✅ Ekleyin
         public string SicilNo { get; set; }
         public string TcKimlikNo { get; set; } // ✅ Ekleyin (frontend'de kullanılıyor)
+        public string ProfilResmi { get; set; }  // 👈 BU SATIRI EKLEYİN
+        public string ProfilFoto { get; set; }
         public string Departman { get; set; }
         public string DepartmanAdi { get; set; } // ✅ Ekleyin (alias)
         public string Unvan { get; set; }

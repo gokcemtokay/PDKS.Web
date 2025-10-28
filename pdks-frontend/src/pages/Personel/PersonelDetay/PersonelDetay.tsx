@@ -86,7 +86,7 @@ function PersonelDetay() {
           <Grid item xs={12} md={3} sx={{ textAlign: 'center' }}>
             <Box sx={{ position: 'relative', display: 'inline-block' }}>
               <Avatar
-                src={personel.profilFoto || ''}
+                              src={personel.profilResmi || ''}
                 sx={{ width: 150, height: 150, mb: 2 }}
               >
                 {personel.adSoyad?.[0]}

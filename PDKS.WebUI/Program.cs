@@ -11,6 +11,7 @@ using PDKS.WebUI.Hubs;
 using Microsoft.AspNetCore.Mvc.Versioning;
 using Microsoft.AspNetCore.Mvc;
 using AspNetCoreRateLimit;
+using Microsoft.Extensions.Options;
 
 
 Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
@@ -72,6 +73,12 @@ builder.Services.AddSwaggerGen(c =>
             },
             new List<string>()
         }
+    });
+
+    c.MapType<IFormFile>(() => new OpenApiSchema
+    {
+        Type = "string",
+        Format = "binary"
     });
 });
 
@@ -244,12 +251,14 @@ Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
 var app = builder.Build();
 
+
+app.UseStaticFiles();
 // --- 4. HTTP Request Pipeline (Middleware) Yapılandırması ---
 
 // Development ortamında Swagger arayüzünü aktif hale getiriyoruz.
 //if (app.Environment.IsDevelopment())
 //{
-    app.UseSwagger();
+app.UseSwagger();
     app.UseSwaggerUI();
 //}
 

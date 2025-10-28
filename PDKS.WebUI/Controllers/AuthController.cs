@@ -212,5 +212,62 @@ namespace PDKS.WebUI.Controllers
         {
             public string Password { get; set; } = string.Empty;
         }
+
+        public class SwitchSirketRequest
+        {
+            public int SirketId { get; set; }
+        }
+
+        [HttpPost("switch-sirket")]
+        [Authorize]
+        public async Task<IActionResult> SwitchSirket([FromBody] SwitchSirketRequest request)
+        {
+            try
+            {
+                var userIdClaim = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier || c.Type == JwtRegisteredClaimNames.Sub);
+                if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out int userId))
+                {
+                    return Unauthorized(new { message = "Geçersiz kullanıcı token'ı" });
+                }
+
+                var kullanici = await _unitOfWork.Kullanicilar.GetByIdAsync(userId);
+                if (kullanici == null)
+                {
+                    return NotFound(new { message = "Kullanıcı bulunamadı" });
+                }
+
+                var yetkiliMi = await _unitOfWork.KullaniciSirketler
+                    .FindAsync(ks => ks.KullaniciId == userId && ks.SirketId == request.SirketId && ks.Aktif);
+
+                if (!yetkiliMi.Any())
+                {
+                    return Forbid("Bu şirkete erişim yetkiniz yok.");
+                }
+
+                var sirket = await _unitOfWork.Sirketler.GetByIdAsync(request.SirketId);
+                if (sirket == null)
+                {
+                    return NotFound(new { message = "Şirket bulunamadı" });
+                }
+
+                var newToken = GenerateJwtToken(kullanici, sirket.Id, sirket.Unvan);
+
+                return Ok(new
+                {
+                    token = newToken,
+                    aktifSirket = new
+                    {
+                        id = sirket.Id,
+                        unvan = sirket.Unvan,
+                        logoUrl = sirket.LogoUrl
+                    },
+                    message = "Şirket başarıyla değiştirildi"
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = $"Şirket değiştirme hatası: {ex.Message}" });
+            }
+        }
     }
 }

@@ -104,23 +104,39 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.removeItem('aktifSirket');
   };
 
-  const switchSirket = async (sirketId: number) => {
-    const sirket = yetkiliSirketler.find((s) => s.sirketId === sirketId);
-    if (sirket) {
-      setAktifSirket(sirket);
-      localStorage.setItem('aktifSirket', JSON.stringify(sirket));
-      localStorage.setItem('aktifSirketId', sirketId.toString());
-      
-      // Backend'e şirket değişikliğini bildir (varsa token yenileme endpoint'i)
-      try {
-        // Token yenilemek için backend endpoint'i çağırılabilir
-        // const response = await api.post('/auth/switch-sirket', { sirketId });
-        // localStorage.setItem('token', response.data.token);
-      } catch (error) {
-        console.error('Şirket değiştirme hatası:', error);
-      }
-    }
-  };
+    const switchSirket = async (sirketId: number) => {
+        const sirket = yetkiliSirketler.find((s) => s.sirketId === sirketId);
+        if (!sirket) return;
+
+        try {
+            // Backend'den yeni token al
+            const response = await api.post('/auth/switch-sirket', { sirketId });
+
+            // Yeni token'ı kaydet
+            localStorage.setItem('token', response.data.token);
+
+            // Aktif şirketi güncelle
+            const yeniAktifSirket: Sirket = {
+                sirketId: response.data.aktifSirket.id,
+                sirketAdi: response.data.aktifSirket.unvan,
+                logoUrl: response.data.aktifSirket.logoUrl,
+            };
+
+            setAktifSirket(yeniAktifSirket);
+            localStorage.setItem('aktifSirket', JSON.stringify(yeniAktifSirket));
+            localStorage.setItem('aktifSirketId', sirketId.toString());
+
+            // ✅ ÖNEMLİ: Mevcut URL'de kal ve sayfayı yenile
+            window.location.href = window.location.pathname + window.location.search;
+
+        } catch (error) {
+            console.error('Şirket değiştirme hatası:', error);
+            setAktifSirket(sirket);
+            localStorage.setItem('aktifSirket', JSON.stringify(sirket));
+            localStorage.setItem('aktifSirketId', sirketId.toString());
+            window.location.href = window.location.pathname + window.location.search;
+        }
+    };
 
   const isLoggedIn = !!user;
 
