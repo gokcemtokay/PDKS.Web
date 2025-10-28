@@ -1,4 +1,4 @@
-import api from './api';
+﻿import api from './api';
 
 export interface Cihaz {
     id: number;
@@ -16,13 +16,26 @@ const cihazService = {
         return response.data;
     },
 
-    async create(data: Partial<Cihaz>): Promise<number> {
-        const response = await api.post('/cihaz', data);
-        return response.data;
+    async create(data: any): Promise<void> {
+        await api.post('/cihaz', {
+            cihazAdi: data.cihazAdi,
+            cihazTipi: data.cihazTipi,
+            ipAdres: data.ipAdresi, // ✅ ipAdres
+            port: data.port,
+            lokasyon: data.lokasyon,
+            durum: data.durum
+        });
     },
 
-    async update(id: number, data: Partial<Cihaz>): Promise<void> {
-        await api.put(`/cihaz/${id}`, data);
+    async update(id: number, data: any): Promise<void> {
+        await api.put(`/cihaz/${id}`, {
+            cihazAdi: data.cihazAdi,
+            cihazTipi: data.cihazTipi,
+            ipAdres: data.ipAdresi, // ✅ ipAdres (backend'in beklediği)
+            port: data.port,
+            lokasyon: data.lokasyon,
+            durum: data.durum
+        });
     },
 
     async delete(id: number): Promise<void> {
