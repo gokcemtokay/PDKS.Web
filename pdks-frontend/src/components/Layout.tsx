@@ -344,9 +344,9 @@ function Layout({ children }: { children: ReactNode }) {
                             <Typography variant="body2" color="primary">Tümünü Gör</Typography>
                         </MenuItem>
                     </Menu>
-                    <Chip label={user.role || 'Kullanıcı'} color="secondary" size="small" sx={{ mr: 2, ml: 2 }} />
+                    <Chip label={user?.role || 'Kullanıcı'} color="secondary" size="small" sx={{ mr: 2, ml: 2 }} />
                     <IconButton onClick={handleProfileMenuOpen} color="inherit">
-                        <Avatar sx={{ width: 32, height: 32 }}>{user.ad?.[0] || 'U'}</Avatar>
+                        <Avatar sx={{ width: 32, height: 32 }}>{user?.ad?.[0] || 'U'}</Avatar>
                     </IconButton>
                     <Menu
                         anchorEl={profileAnchorEl}
@@ -354,7 +354,7 @@ function Layout({ children }: { children: ReactNode }) {
                         onClose={handleProfileMenuClose}
                     >
                         <MenuItem disabled>
-                            <Typography variant="body2">{user.email}</Typography>
+                            <Typography variant="body2">{user?.email}</Typography>
                         </MenuItem>
                         <Divider />
                         <MenuItem onClick={() => { navigate('/profil'); handleProfileMenuClose(); }}>

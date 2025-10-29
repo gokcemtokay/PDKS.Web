@@ -4,18 +4,20 @@ namespace PDKS.Business.DTOs
 {
     public class KullaniciListDTO
     {
-        
-        public int SirketId { get; set; }
-public int Id { get; set; }
-        public string PersonelAdi { get; set; }
-        public string Email { get; set; }
-        public string Rol { get; set; }
+        public int Id { get; set; }
+        public string KullaniciAdi { get; set; } = string.Empty;
+        public string Ad { get; set; } = string.Empty;           // ✅ VAR
+        public string Soyad { get; set; } = string.Empty;        // ✅ VAR
+        public string AdSoyad => $"{Ad} {Soyad}";
+        public string Email { get; set; } = string.Empty;        // ✅ VAR
+        public int RolId { get; set; }
+        public string RolAdi { get; set; } = string.Empty;
         public bool Aktif { get; set; }
-
-        // --- Eski View'ların Neden Olduğu Hataları Gidermek İçin Eklendi ---
-        public string KullaniciAdi { get; set; } // PersonelAdi ile aynı değeri alacak
-        public string PersonelSicilNo { get; set; }
-        public string RolAdi { get; set; } // Rol ile aynı değeri alacak
         public DateTime? SonGirisTarihi { get; set; }
+        public DateTime KayitTarihi { get; set; }
+
+        // ✅ YETKİLİ ŞİRKETLER
+        public List<KullaniciSirketDTO> YetkiliSirketler { get; set; } = new List<KullaniciSirketDTO>();  // ✅ VAR
     }
+
 }

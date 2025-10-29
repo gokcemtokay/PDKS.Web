@@ -14,7 +14,7 @@ namespace PDKS.Data.Repositories
         IRepository<GirisCikis> GirisCikislar { get; }
         IRepository<Izin> Izinler { get; }
         IRepository<Rol> Roller { get; }
-        IRepository<Kullanici> Kullanicilar { get; }
+        IKullaniciRepository Kullanicilar { get; }
         IRepository<Log> Loglar { get; }
         IRepository<Bildirim> Bildirimler { get; }
         IGenericRepository<Tatil> Tatiller { get; }

@@ -224,18 +224,36 @@ namespace PDKS.WebUI.Controllers
         {
             try
             {
+                // Token'dan kullanıcı ID'sini al
                 var userIdClaim = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier || c.Type == JwtRegisteredClaimNames.Sub);
                 if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out int userId))
                 {
                     return Unauthorized(new { message = "Geçersiz kullanıcı token'ı" });
                 }
 
-                var kullanici = await _unitOfWork.Kullanicilar.GetByIdAsync(userId);
+                // ✅ DÜZELTME 1: Rol ile birlikte kullanıcıyı getir
+                var kullanici = await _unitOfWork.Kullanicilar.GetWithRolAsync(userId);
+
                 if (kullanici == null)
                 {
                     return NotFound(new { message = "Kullanıcı bulunamadı" });
                 }
 
+                // ✅ NULL CHECK: Rol yüklenmemiş olabilir
+                if (kullanici.Rol == null)
+                {
+                    return StatusCode(500, new { message = "Kullanıcı rolü yüklenemedi" });
+                }
+
+                // Şirketi getir
+                var sirket = await _unitOfWork.Sirketler.GetByIdAsync(request.SirketId);
+
+                if (sirket == null)
+                {
+                    return NotFound(new { message = "Şirket bulunamadı" });
+                }
+
+                // Kullanıcının bu şirkete erişim yetkisi var mı kontrol et
                 var yetkiliMi = await _unitOfWork.KullaniciSirketler
                     .FindAsync(ks => ks.KullaniciId == userId && ks.SirketId == request.SirketId && ks.Aktif);
 
@@ -244,12 +262,7 @@ namespace PDKS.WebUI.Controllers
                     return Forbid("Bu şirkete erişim yetkiniz yok.");
                 }
 
-                var sirket = await _unitOfWork.Sirketler.GetByIdAsync(request.SirketId);
-                if (sirket == null)
-                {
-                    return NotFound(new { message = "Şirket bulunamadı" });
-                }
-
+                // Yeni token oluştur
                 var newToken = GenerateJwtToken(kullanici, sirket.Id, sirket.Unvan);
 
                 return Ok(new
@@ -260,13 +273,12 @@ namespace PDKS.WebUI.Controllers
                         id = sirket.Id,
                         unvan = sirket.Unvan,
                         logoUrl = sirket.LogoUrl
-                    },
-                    message = "Şirket başarıyla değiştirildi"
+                    }
                 });
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { message = $"Şirket değiştirme hatası: {ex.Message}" });
+                return StatusCode(500, new { message = $"Hata: {ex.Message}", stackTrace = ex.StackTrace });
             }
         }
     }

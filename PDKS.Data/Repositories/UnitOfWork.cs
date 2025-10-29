@@ -15,7 +15,7 @@ namespace PDKS.Data.Repositories
         private IRepository<GirisCikis>? _girisCikislar;
         private IRepository<Izin>? _izinler;
         private IRepository<Rol>? _roller;
-        private IRepository<Kullanici>? _kullanicilar;
+        private IKullaniciRepository? _kullanicilar;
         private IRepository<Log>? _loglar;
         private IRepository<Bildirim>? _bildirimler;
         private IGenericRepository<Tatil>? _tatiller;
@@ -97,7 +97,7 @@ namespace PDKS.Data.Repositories
             get { return _roller ??= new RolRepository(_context); }
         }
 
-        public IRepository<Kullanici> Kullanicilar
+        public IKullaniciRepository Kullanicilar
         {
             get { return _kullanicilar ??= new KullaniciRepository(_context); }
         }

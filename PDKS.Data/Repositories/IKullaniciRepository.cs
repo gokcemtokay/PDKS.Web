@@ -12,5 +12,8 @@ namespace PDKS.Data.Repositories
         Task<bool> EmailVarMiAsync(string email, int? excludeId = null);
         Task<IEnumerable<Kullanici>> GetAktifKullanicilarAsync();
         Task<IEnumerable<Kullanici>> GetByRolAsync(int rolId);
+        Task<IEnumerable<Kullanici>> GetAllWithSirketlerAsync();
+        Task<Kullanici?> GetByIdWithSirketlerAsync(int id);
+
     }
 }

@@ -25,8 +25,8 @@ interface AuthContextType {
     yetkiliSirketler: Sirket[];
     aktifSirket: Sirket | null;
     switchSirket: (sirketId: number) => Promise<void>;
-    menuler: any[]; // ✅ EKLE
-    islemler: string[]; // ✅ EKLE
+    menuler: any[];
+    islemler: string[];
     hasPermission: (islemKodu: string) => boolean;
 }
 
@@ -40,35 +40,38 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     useEffect(() => {
         const token = localStorage.getItem('token');
         if (token && authService.isTokenValid(token)) {
-            const decoded = authService.decodeToken(token);
             const storedUser = localStorage.getItem('user');
             const storedSirketler = localStorage.getItem('yetkiliSirketler');
             const storedAktifSirket = localStorage.getItem('aktifSirket');
+            const storedAktifSirketId = localStorage.getItem('aktifSirketId');
 
-            if (decoded && storedUser) {
+            console.log('🔍 useEffect - localStorage aktifSirketId:', storedAktifSirketId);
+            console.log('🔍 useEffect - localStorage aktifSirket:', storedAktifSirket);
+
+            if (storedUser) {
                 setUser(JSON.parse(storedUser));
             }
 
             if (storedSirketler) {
-                const sirketler = JSON.parse(storedSirketler);
-                setYetkiliSirketler(sirketler);
+                setYetkiliSirketler(JSON.parse(storedSirketler));
             }
 
+            // KRİTİK: localStorage'dan oku, token'dan değil!
             if (storedAktifSirket) {
-                setAktifSirket(JSON.parse(storedAktifSirket));
+                const aktifSirketObj = JSON.parse(storedAktifSirket);
+                console.log('✅ useEffect - aktifSirket set ediliyor:', aktifSirketObj);
+                setAktifSirket(aktifSirketObj);
             }
         }
     }, []);
 
     const login = (response: LoginResponse) => {
-        // Token'ı kaydet
         localStorage.setItem('token', response.token);
 
-        // Kullanıcı bilgilerini kaydet
         const userData: User = {
             id: response.kullanici.id,
             email: response.kullanici.email,
-            ad: response.kullanici.email.split('@')[0], // Backend'den ad/soyad gelmezse email'den al
+            ad: response.kullanici.email.split('@')[0],
             soyad: '',
             role: response.kullanici.rol,
             personelId: response.kullanici.personelId,
@@ -76,7 +79,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUser(userData);
         localStorage.setItem('user', JSON.stringify(userData));
 
-        // Yetkili şirketleri kaydet
         const sirketler: Sirket[] = response.yetkiliSirketler.map(s => ({
             sirketId: s.id,
             sirketAdi: s.unvan,
@@ -85,7 +87,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setYetkiliSirketler(sirketler);
         localStorage.setItem('yetkiliSirketler', JSON.stringify(sirketler));
 
-        // Aktif şirketi kaydet
         const aktif: Sirket = {
             sirketId: response.aktifSirket.id,
             sirketAdi: response.aktifSirket.unvan,
@@ -105,36 +106,53 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
 
     const switchSirket = async (sirketId: number) => {
+        alert('🔄 BAŞLADI! Seçilen ID: ' + sirketId);
+        console.log('🔄 SWITCH SIRKET BAŞLADI - ID:', sirketId);
+        console.log('📍 Mevcut URL:', window.location.href);
+
         const sirket = yetkiliSirketler.find((s) => s.sirketId === sirketId);
-        if (!sirket) return;
+        if (!sirket) {
+            console.error('❌ Şirket bulunamadı');
+            return;
+        }
+
+        const currentPath = window.location.pathname;
+        const currentSearch = window.location.search;
+        const currentUrl = currentPath + currentSearch;
+        console.log('💾 Kaydedilen URL:', currentUrl);
 
         try {
-            // Backend'den yeni token al
+            console.log('🌐 Backend çağrısı yapılıyor...');
             const response = await api.post('/auth/switch-sirket', { sirketId });
+            console.log('✅ Backend yanıtı alındı');
 
-            // Yeni token'ı kaydet
+            if (!response.data.token) {
+                console.error('❌ Token bulunamadı!');
+                return;
+            }
+
+            console.log('💾 Token kaydediliyor...');
             localStorage.setItem('token', response.data.token);
 
-            // Aktif şirketi güncelle
             const yeniAktifSirket: Sirket = {
                 sirketId: response.data.aktifSirket.id,
                 sirketAdi: response.data.aktifSirket.unvan,
                 logoUrl: response.data.aktifSirket.logoUrl,
             };
 
-            setAktifSirket(yeniAktifSirket);
+            console.log('💾 Aktif şirket kaydediliyor:', yeniAktifSirket);
             localStorage.setItem('aktifSirket', JSON.stringify(yeniAktifSirket));
             localStorage.setItem('aktifSirketId', sirketId.toString());
+            setAktifSirket(yeniAktifSirket);
 
-            // ✅ ÖNEMLİ: Mevcut URL'de kal ve sayfayı yenile
-            window.location.href = window.location.pathname + window.location.search;
+            console.log('🔄 Sayfa yenileniyor, hedef URL:', currentUrl);
+            window.location.href = currentUrl;
 
-        } catch (error) {
-            console.error('Şirket değiştirme hatası:', error);
-            setAktifSirket(sirket);
+        } catch (error: any) {
+            console.error('❌ HATA:', error);
             localStorage.setItem('aktifSirket', JSON.stringify(sirket));
             localStorage.setItem('aktifSirketId', sirketId.toString());
-            window.location.href = window.location.pathname + window.location.search;
+            window.location.href = currentUrl;
         }
     };
 
@@ -149,9 +167,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             yetkiliSirketler,
             aktifSirket,
             switchSirket,
-            menuler: [], // ✅ EKLE
-            islemler: [], // ✅ EKLE
-            hasPermission: () => false // ✅ EKLE
+            menuler: [],
+            islemler: [],
+            hasPermission: () => false
         }}>
             {children}
         </AuthContext.Provider>

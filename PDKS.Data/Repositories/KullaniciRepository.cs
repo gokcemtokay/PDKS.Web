@@ -4,7 +4,7 @@ using PDKS.Data.Entities;
 
 namespace PDKS.Data.Repositories
 {
-    public class KullaniciRepository : Repository<Kullanici>, IRepository<Kullanici>
+    public class KullaniciRepository : Repository<Kullanici>, IKullaniciRepository
     {
         public KullaniciRepository(PDKSDbContext context) : base(context)
         {
@@ -79,6 +79,28 @@ namespace PDKS.Data.Repositories
                 .Where(k => k.RolId == rolId)
                 .OrderBy(k => k.KullaniciAdi)
                 .ToListAsync();
+        }
+
+        // ✅ YENİ: Tüm kullanıcıları şirket bilgileri ile getir
+        public async Task<IEnumerable<Kullanici>> GetAllWithSirketlerAsync()
+        {
+            return await _context.Kullanicilar
+                .Include(k => k.Rol)
+                .Include(k => k.KullaniciSirketler)
+                    .ThenInclude(ks => ks.Sirket)
+                .OrderBy(k => k.KullaniciAdi)
+                .ToListAsync();
+        }
+
+        // ✅ YENİ: Tek kullanıcıyı şirket bilgileri ile getir
+        public async Task<Kullanici?> GetByIdWithSirketlerAsync(int id)
+        {
+            return await _context.Kullanicilar
+                .Include(k => k.Rol)
+                .Include(k => k.Personel)
+                .Include(k => k.KullaniciSirketler)
+                    .ThenInclude(ks => ks.Sirket)
+                .FirstOrDefaultAsync(k => k.Id == id);
         }
     }
 }

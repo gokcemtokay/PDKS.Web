@@ -14,32 +14,32 @@ namespace PDKS.Business.DTOs
 
         [Required(ErrorMessage = "Sicil No zorunludur")]
         [StringLength(20)]
-        public string SicilNo { get; set; }
+        public string? SicilNo { get; set; }
 
         [Required(ErrorMessage = "TC Kimlik No zorunludur")]
         [StringLength(11, MinimumLength = 11, ErrorMessage = "TC Kimlik No 11 karakter olmalıdır")]
-        public string TcKimlikNo { get; set; }
+        public string? TcKimlikNo { get; set; }
 
         [Required(ErrorMessage = "Email zorunludur")]
         [EmailAddress(ErrorMessage = "Geçerli bir email adresi giriniz")]
         [StringLength(100)]
-        public string Email { get; set; }
+        public string? Email { get; set; }
 
         [StringLength(15)]
         [Phone(ErrorMessage = "Geçerli bir telefon numarası giriniz")]
-        public string Telefon { get; set; }
+        public string? Telefon { get; set; }
 
         [StringLength(500)]
-        public string Adres { get; set; }
+        public string? Adres { get; set; }
 
         [Required(ErrorMessage = "Doğum tarihi zorunludur")]
         public DateTime DogumTarihi { get; set; }
 
         [StringLength(10)]
-        public string Cinsiyet { get; set; }
+        public string? Cinsiyet { get; set; }
 
         [StringLength(50)]
-        public string KanGrubu { get; set; }
+        public string? KanGrubu { get; set; }
 
         [Required(ErrorMessage = "Giriş tarihi zorunludur")]
         public DateTime GirisTarihi { get; set; }
@@ -50,10 +50,10 @@ namespace PDKS.Business.DTOs
         public decimal? Maas { get; set; }
 
         [StringLength(100)]
-        public string Unvan { get; set; }
+        public string? Unvan { get; set; }
 
         [StringLength(100)]
-        public string Gorev { get; set; }
+        public string? Gorev { get; set; }
         public bool Durum { get; set; } = true;  
 
         public int? DepartmanId { get; set; }

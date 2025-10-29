@@ -8,8 +8,6 @@ namespace PDKS.Data.Entities
     {
         [Key]
         public int Id { get; set; }
-        [Required]
-        public int SirketId { get; set; }
 
         [Required]
         [StringLength(50)]

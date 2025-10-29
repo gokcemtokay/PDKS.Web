@@ -10,15 +10,15 @@ export default defineConfig({
       port: 56899,
       protocol: 'ws',
     },
-      proxy: {
-          '/api': {
-              target: 'http://localhost:5104',
-              changeOrigin: true,
-          },
-          '/uploads': {  // ✅ BU SATIR EKSİK OLABİLİR!
-              target: 'http://localhost:5104',
-              changeOrigin: true,
-          }
+    proxy: {
+      '/api': {
+        target: 'http://localhost:5104',
+        changeOrigin: true,
+      },
+      '/uploads': {  // ✅ BU SATIR EKSİK OLABİLİR!
+        target: 'http://localhost:5104',
+        changeOrigin: true,
       }
+    }
   },
 });

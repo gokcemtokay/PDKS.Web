@@ -7,16 +7,13 @@ namespace PDKS.Business.Services
     public interface IKullaniciService
     {
         Task<IEnumerable<KullaniciListDTO>> GetAllAsync();
-
-        // Dönüş tipini KullaniciUpdateDTO olarak güncelliyoruz, çünkü API'de
-        // bir kullanıcıyı güncellemek için bu DTO'yu kullanıyoruz.
-        Task<KullaniciUpdateDTO> GetByIdAsync(int id);
-
+        Task<KullaniciDetailDTO?> GetByIdAsync(int id);
         Task<int> CreateAsync(KullaniciCreateDTO dto);
         Task UpdateAsync(KullaniciUpdateDTO dto);
-        // DeleteAsync metodu controller'da kullanılmadığı için şimdilik kaldırabiliriz.
-        // İhtiyaç olursa tekrar eklenir.
-    
-        Task<IEnumerable<KullaniciListDTO>> GetBySirketAsync(int sirketId);
-}
+        Task DeleteAsync(int id);
+        Task<bool> KullaniciAdiVarMiAsync(string kullaniciAdi, int? excludeId = null);
+        Task<bool> EmailVarMiAsync(string email, int? excludeId = null);
+
+        //Task<IEnumerable<KullaniciListDTO>> GetBySirketAsync(int sirketId);
+    }
 }

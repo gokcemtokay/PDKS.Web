@@ -194,13 +194,17 @@ namespace PDKS.Business.Services
 
         public async Task<IEnumerable<BildirimListDTO>> GetBySirketAsync(int sirketId)
         {
-            // Kullanıcıları şirkete göre filtrele
-            var kullanicilar = await _unitOfWork.Kullanicilar.FindAsync(k => k.SirketId == sirketId);
-            var kullaniciIds = kullanicilar.Select(k => k.Id).ToList();
-            
-            // Bildirimler sadece o şirketin kullanıcılarına ait olanlar
-            var bildirimler = await _unitOfWork.Bildirimler.FindAsync(b => kullaniciIds.Contains(b.KullaniciId));
-            
+            var kullaniciSirketler = await _unitOfWork.KullaniciSirketler
+                .FindAsync(ks => ks.SirketId == sirketId && ks.Aktif);
+
+            var kullaniciIds = kullaniciSirketler.Select(ks => ks.KullaniciId).ToList();
+
+            if (!kullaniciIds.Any())
+                return Enumerable.Empty<BildirimListDTO>();
+
+            var bildirimler = await _unitOfWork.Bildirimler
+                .FindAsync(b => kullaniciIds.Contains(b.KullaniciId));
+
             return bildirimler.Select(b => new BildirimListDTO
             {
                 Id = b.Id,
