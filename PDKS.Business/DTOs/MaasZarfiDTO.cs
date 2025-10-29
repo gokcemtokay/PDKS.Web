@@ -3,7 +3,9 @@
     // Maaş Zarfı DTO
     public class MaasZarfiDTO
     {
-        public string PersonelAdi { get; set; }
+        
+        public int SirketId { get; set; }
+public string PersonelAdi { get; set; }
         public string SicilNo { get; set; }
         public string Departman { get; set; }
         public string Gorev { get; set; }

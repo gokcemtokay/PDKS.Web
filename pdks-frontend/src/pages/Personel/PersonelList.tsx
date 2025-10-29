@@ -4,16 +4,20 @@ import { Box, Typography, Button, IconButton, Alert, Avatar } from '@mui/materia
 import { DataGrid, GridColDef } from '@mui/x-data-grid';
 import { Add as AddIcon, Edit as EditIcon, Visibility as VisibilityIcon } from '@mui/icons-material';
 import personelService, { Personel } from '../../services/personelService';
+import { useAuth } from '../../contexts/AuthContext';
 
 function PersonelList() {
     const [personeller, setPersoneller] = useState<Personel[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const navigate = useNavigate();
+    const { aktifSirket } = useAuth();
 
     useEffect(() => {
-        loadData();
-    }, []);
+        if (aktifSirket) {
+            loadData();
+        }
+    }, [aktifSirket]);
 
     const loadData = async () => {
         try {
@@ -40,7 +44,6 @@ function PersonelList() {
     };
 
     const columns: GridColDef[] = [
-        // ✅ AVATAR KOLONU EKLENDİ
         {
             field: 'profilFoto',
             headerName: '',
@@ -95,7 +98,14 @@ function PersonelList() {
     return (
         <Box>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3 }}>
-                <Typography variant="h4" fontWeight="bold">Personeller</Typography>
+                <Box>
+                    <Typography variant="h4" fontWeight="bold">Personeller</Typography>
+                    {aktifSirket && (
+                        <Typography variant="body2" color="text.secondary">
+                            {aktifSirket.sirketAdi}
+                        </Typography>
+                    )}
+                </Box>
                 <Button
                     variant="contained"
                     startIcon={<AddIcon />}
@@ -112,10 +122,6 @@ function PersonelList() {
                     onClose={() => setError(null)}
                 >
                     {error}
-                    <br />
-                    <Typography variant="caption">
-                        Backend hatası için: BACKEND_500_ERROR_FIX.md dosyasına bakın
-                    </Typography>
                 </Alert>
             )}
 
@@ -136,7 +142,6 @@ function PersonelList() {
                             ? 'Veriler yüklenemedi'
                             : 'Henüz personel kaydı yok',
                     }}
-                    // ✅ Daha güzel görünüm için
                     sx={{
                         '& .MuiDataGrid-cell': {
                             display: 'flex',

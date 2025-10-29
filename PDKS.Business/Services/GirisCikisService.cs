@@ -113,5 +113,25 @@ namespace PDKS.Business.Services
             _unitOfWork.GirisCikislar.Update(girisCikis);
             await _unitOfWork.SaveChangesAsync();
         }
+
+        public async Task<IEnumerable<GirisCikisListDTO>> GetBySirketAsync(int sirketId)
+        {
+            var personeller = await _unitOfWork.Personeller.FindAsync(p => p.SirketId == sirketId);
+            var personelIds = personeller.Select(p => p.Id).ToList();
+            
+            var girisler = await _unitOfWork.GirisCikislar.FindAsync(g => personelIds.Contains(g.PersonelId));
+            
+            return girisler.Select(g => new GirisCikisListDTO
+            {
+                Id = g.Id,
+                PersonelId = g.PersonelId,
+                PersonelAdi = g.Personel?.AdSoyad,
+                SicilNo = g.Personel?.SicilNo,
+                GirisZamani = g.GirisZamani,
+                CikisZamani = g.CikisZamani,
+                Durum = g.Durum,
+                Not = g.Not
+            }).OrderByDescending(g => g.GirisZamani);
+        }
     }
 }

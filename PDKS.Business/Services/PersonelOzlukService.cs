@@ -1720,5 +1720,20 @@ namespace PDKS.Business.Services
         }
 
         #endregion
+
+        public async Task<IEnumerable<PersonelListDTO>> GetBySirketAsync(int sirketId)
+        {
+            var personeller = await _unitOfWork.Personeller.FindAsync(p => p.SirketId == sirketId);
+            
+            return personeller.Select(p => new PersonelListDTO
+            {
+                Id = p.Id,
+                SirketId = p.SirketId,
+                AdSoyad = p.AdSoyad,
+                SicilNo = p.SicilNo,
+                Departman = p.Departman?.Ad,
+                Durum = p.Durum
+            });
+        }
     }
 }

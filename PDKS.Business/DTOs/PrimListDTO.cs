@@ -3,7 +3,9 @@
     // Prim DTOs
     public class PrimListDTO
     {
-        public int Id { get; set; } // ✅ Eklendi
+        
+        public int SirketId { get; set; }
+public int Id { get; set; } // ✅ Eklendi
         public int PersonelId { get; set; }
         public string PersonelAdi { get; set; }
         public string SicilNo { get; set; }

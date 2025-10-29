@@ -8,7 +8,9 @@ namespace PDKS.Business.DTOs
 {
     public class TrendDTO
     {
-        public string Baslik { get; set; }
+        
+        public int SirketId { get; set; }
+public string Baslik { get; set; }
         public List<TrendNoktaDTO> Veriler { get; set; }
     }
 }

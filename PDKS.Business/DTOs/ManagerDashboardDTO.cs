@@ -8,7 +8,9 @@ namespace PDKS.Business.DTOs
 {
     public class ManagerDashboardDTO
     {
-        public EkipOzetiDTO EkipOzeti { get; set; }
+        
+        public int SirketId { get; set; }
+public EkipOzetiDTO EkipOzeti { get; set; }
         public List<EkipUyesiDTO> EkipUyeleri { get; set; }
         public List<BekleyenTalepDTO> BekleyenTalepler { get; set; }
         public EkipIzinTakvimiDTO IzinTakvimi { get; set; }

@@ -3,7 +3,9 @@
     // Tatil Günü Çalışanlar Rapor DTO
     public class TatilGunuCalisanlarRaporDTO
     {
-        public string TatilAdi { get; set; }
+        
+        public int SirketId { get; set; }
+public string TatilAdi { get; set; }
         public DateTime Tarih { get; set; }
         public string PersonelAdi { get; set; }
         public string SicilNo { get; set; }

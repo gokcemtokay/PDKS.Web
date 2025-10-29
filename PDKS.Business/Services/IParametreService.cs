@@ -12,5 +12,7 @@ namespace PDKS.Business.Services
         Task<int> CreateAsync(ParametreCreateDTO dto);
         Task UpdateAsync(ParametreUpdateDTO dto);
         Task DeleteAsync(int id);
-    }
+    
+        Task<IEnumerable<ParametreListDTO>> GetBySirketAsync(int sirketId);
+}
 }

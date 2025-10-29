@@ -8,7 +8,9 @@ namespace PDKS.Business.DTOs
 {
     public class TrendNoktaDTO
     {
-        public string Tarih { get; set; }
+        
+        public int SirketId { get; set; }
+public string Tarih { get; set; }
         public double Deger { get; set; }
     }
 }

@@ -128,5 +128,17 @@ namespace PDKS.Business.Services
 
             await _unitOfWork.SaveChangesAsync();
         }
+
+        public async Task<IEnumerable<TatilListDTO>> GetBySirketAsync(int sirketId)
+        {
+            var entities = await _unitOfWork.Tatiller.FindAsync(x => x.SirketId == sirketId);
+            return entities.Select(t => new TatilListDTO
+            {
+                Id = t.Id,
+                Ad = t.Ad,
+                Tarih = t.Tarih,
+                Aciklama = t.Aciklama
+            }).OrderBy(t => t.Tarih);
+        }
     }
 }

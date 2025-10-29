@@ -3,17 +3,22 @@ import { Box, Typography, Button, Chip } from '@mui/material';
 import { DataGrid, GridColDef } from '@mui/x-data-grid';
 import { Add as AddIcon } from '@mui/icons-material';
 import masrafService, { Masraf } from '../../services/masrafService';
+import { useAuth } from '../../contexts/AuthContext';
 
 function MasrafList() {
   const [masraflar, setMasraflar] = useState<Masraf[]>([]);
   const [loading, setLoading] = useState(true);
+  const { aktifSirket } = useAuth();
 
   useEffect(() => {
-    loadData();
-  }, []);
+    if (aktifSirket) {
+      loadData();
+    }
+  }, [aktifSirket]);
 
   const loadData = async () => {
     try {
+      setLoading(true);
       const data = await masrafService.getAll();
       setMasraflar(data);
     } catch (error) {
@@ -39,7 +44,14 @@ function MasrafList() {
   return (
     <Box>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3 }}>
-        <Typography variant="h4" fontWeight="bold">Masraflar</Typography>
+        <Box>
+          <Typography variant="h4" fontWeight="bold">Masraflar</Typography>
+          {aktifSirket && (
+            <Typography variant="body2" color="text.secondary">
+              {aktifSirket.sirketAdi}
+            </Typography>
+          )}
+        </Box>
         <Button variant="contained" startIcon={<AddIcon />}>Masraf Talebi Oluştur</Button>
       </Box>
 

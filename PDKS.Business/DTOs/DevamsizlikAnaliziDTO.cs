@@ -8,7 +8,9 @@ namespace PDKS.Business.DTOs
 {
     public class DevamsizlikAnaliziDTO
     {
-        public int ToplamDevamsizGun { get; set; }
+        
+        public int SirketId { get; set; }
+public int ToplamDevamsizGun { get; set; }
         public double DevamsizlikOrani { get; set; }
         public List<DepartmanDevamsizlikDTO> DepartmanBazinda { get; set; }
     }

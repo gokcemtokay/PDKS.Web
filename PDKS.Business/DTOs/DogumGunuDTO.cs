@@ -8,7 +8,9 @@ namespace PDKS.Business.DTOs
 {
     public class DogumGunuDTO
     {
-        public int PersonelId { get; set; }
+        
+        public int SirketId { get; set; }
+public int PersonelId { get; set; }
         public string AdSoyad { get; set; }
         public string ProfilFoto { get; set; }
         public DateTime DogumTarihi { get; set; }

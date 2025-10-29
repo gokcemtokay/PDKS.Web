@@ -13,5 +13,7 @@ namespace PDKS.Business.Services
         Task DeleteAsync(int id);
         Task<IEnumerable<IzinListDTO>> GetBekleyenIzinlerAsync();
         Task OnaylaReddetAsync(int izinId, string onayDurumu, int onaylayanKullaniciId, string redNedeni); // YENİ EKLENEN SATIR
-    }
+    
+        Task<IEnumerable<IzinListDTO>> GetBySirketAsync(int sirketId);
+}
 }

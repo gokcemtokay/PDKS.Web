@@ -9,4 +9,5 @@ namespace PDKS.Business.Services
         string HashPassword(string password);
         bool VerifyPassword(string hashedPassword, string providedPassword);
     }
+        //Task<IEnumerable<AuthListDTO>> GetBySirketAsync(int sirketId);
 }

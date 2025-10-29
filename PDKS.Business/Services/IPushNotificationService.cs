@@ -16,7 +16,9 @@ namespace PDKS.Business.Services
         Task<bool> SendNotificationAsync(int kullaniciId, string title, string body, Dictionary<string, string>? data = null);
         Task<bool> SendNotificationToMultipleAsync(List<int> kullaniciIds, string title, string body, Dictionary<string, string>? data = null);
         Task<bool> SendNotificationToTokenAsync(string fcmToken, string title, string body, Dictionary<string, string>? data = null);
-    }
+    
 
 
+        //Task<IEnumerable<PushNotificationListDTO>> GetBySirketAsync(int sirketId);
+}
 }

@@ -550,5 +550,12 @@ namespace PDKS.Business.Services
                 );
             }
         }
+    
+        public async Task<IEnumerable<OnayAkisi>> GetBySirketAsync(int sirketId)
+        {
+            return await _unitOfWork.OnayAkislari
+                .FindAsync(x => x.SirketId == sirketId);
+        }
+
     }
 }

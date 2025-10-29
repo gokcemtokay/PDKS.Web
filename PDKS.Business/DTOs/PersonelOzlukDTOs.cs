@@ -3,7 +3,9 @@ namespace PDKS.Business.DTOs
     // ==================== AİLE BİLGİLERİ ====================
     public class PersonelAileDTO
     {
-        public int Id { get; set; }
+        
+        public int SirketId { get; set; }
+public int Id { get; set; }
         public int PersonelId { get; set; }
         public string YakinlikDerecesi { get; set; }
         public string AdSoyad { get; set; }

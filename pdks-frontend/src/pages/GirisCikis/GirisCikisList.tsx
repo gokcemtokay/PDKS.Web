@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Box, Typography, Paper, Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Chip } from '@mui/material';
 import { Add as AddIcon, Refresh as RefreshIcon } from '@mui/icons-material';
+import { useAuth } from '../../contexts/AuthContext';
 
 interface GirisCikis {
     id: number;
@@ -15,10 +16,13 @@ interface GirisCikis {
 function GirisCikisList() {
     const [girisCikislar, setGirisCikislar] = useState<GirisCikis[]>([]);
     const [loading, setLoading] = useState(false);
+    const { aktifSirket } = useAuth();
 
     useEffect(() => {
-        loadData();
-    }, []);
+        if (aktifSirket) {
+            loadData();
+        }
+    }, [aktifSirket]);
 
     const loadData = async () => {
         setLoading(true);
@@ -45,9 +49,16 @@ function GirisCikisList() {
     return (
         <Box>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-                <Typography variant="h4" fontWeight="bold">
-                    Giriş-Çıkış Bilgileri
-                </Typography>
+                <Box>
+                    <Typography variant="h4" fontWeight="bold">
+                        Giriş-Çıkış Bilgileri
+                    </Typography>
+                    {aktifSirket && (
+                        <Typography variant="body2" color="text.secondary">
+                            {aktifSirket.sirketAdi}
+                        </Typography>
+                    )}
+                </Box>
                 <Button
                     variant="outlined"
                     startIcon={<RefreshIcon />}

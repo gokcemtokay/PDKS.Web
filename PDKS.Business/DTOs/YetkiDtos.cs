@@ -2,7 +2,9 @@ namespace PDKS.Business.DTOs
 {
     public class MenuDto
     {
-        public int Id { get; set; }
+        
+        public int SirketId { get; set; }
+public int Id { get; set; }
         public string MenuAdi { get; set; }
         public string? MenuKodu { get; set; }
         public string? Url { get; set; }

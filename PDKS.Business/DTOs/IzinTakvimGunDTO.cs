@@ -8,7 +8,9 @@ namespace PDKS.Business.DTOs
 {
     public class IzinTakvimGunDTO
     {
-        public DateTime Tarih { get; set; }
+        
+        public int SirketId { get; set; }
+public DateTime Tarih { get; set; }
         public List<IzinliPersonelDTO> IzinliPersoneller { get; set; }
     }
 }

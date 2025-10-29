@@ -6,7 +6,9 @@ namespace PDKS.Business.DTOs
     {
         [Required(ErrorMessage = "Parametre adı zorunludur")]
         [StringLength(100)]
-        public string Ad { get; set; }
+        
+        public int SirketId { get; set; }
+public string Ad { get; set; }
 
         [Required(ErrorMessage = "Değer zorunludur")]
         [StringLength(100)]

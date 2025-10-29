@@ -5,7 +5,9 @@ namespace PDKS.Business.DTOs
     public class KullaniciCreateDTO
     {
         [Required]
-        public int PersonelId { get; set; }
+        
+        public int SirketId { get; set; }
+public int PersonelId { get; set; }
 
         [Required]
         [EmailAddress]

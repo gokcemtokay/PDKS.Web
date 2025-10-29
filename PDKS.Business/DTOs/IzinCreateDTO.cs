@@ -5,7 +5,9 @@ namespace PDKS.Business.DTOs
     public class IzinCreateDTO
     {
         [Required(ErrorMessage = "Personel seçimi zorunludur")]
-        public int PersonelId { get; set; }
+        
+        public int SirketId { get; set; }
+public int PersonelId { get; set; }
 
         [Required(ErrorMessage = "İzin tipi seçimi zorunludur")]
         [StringLength(50, ErrorMessage = "İzin tipi en fazla 50 karakter olabilir")]

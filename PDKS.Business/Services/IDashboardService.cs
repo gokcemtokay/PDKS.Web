@@ -26,5 +26,7 @@ namespace PDKS.Business.Services
         Task<List<SonAktiviteDTO>> GetSonAktivitelerAsync(int kullaniciId, int limit);
         Task<List<DogumGunuDTO>> GetDogumGunleriAsync(int sirketId);
         Task<List<YilDonumuDTO>> GetYilDonumleriAsync(int sirketId);
-    }
+    
+        //Task<IEnumerable<DashboardListDTO>> GetBySirketAsync(int sirketId);
+}
 }

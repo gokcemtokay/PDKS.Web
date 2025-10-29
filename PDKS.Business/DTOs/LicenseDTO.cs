@@ -2,6 +2,8 @@
 {
     public class LicenseDTO
     {
-        public string LicenseKey { get; set; }
+        
+        public int SirketId { get; set; }
+public string LicenseKey { get; set; }
     }
 }

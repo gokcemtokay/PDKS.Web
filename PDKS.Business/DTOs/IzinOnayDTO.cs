@@ -5,7 +5,9 @@ namespace PDKS.Business.DTOs
     public class IzinOnayDTO
     {
         [Required]
-        public int IzinId { get; set; }
+        
+        public int SirketId { get; set; }
+public int IzinId { get; set; }
 
         [Required]
         // Değerin "Onaylandı" veya "Reddedildi" olmasını bekliyoruz.

@@ -4,7 +4,9 @@ namespace PDKS.Business.DTOs
 {
     public class IzinDetailDTO
     {
-        public int Id { get; set; }
+        
+        public int SirketId { get; set; }
+public int Id { get; set; }
         public int PersonelId { get; set; }
         public string PersonelAdi { get; set; }
         public string IzinTipi { get; set; }

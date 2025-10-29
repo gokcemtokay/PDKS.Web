@@ -99,5 +99,23 @@ namespace PDKS.Business.Services
 
             await _unitOfWork.SaveChangesAsync();
         }
+
+        public async Task<IEnumerable<KullaniciListDTO>> GetBySirketAsync(int sirketId)
+        {
+            var kullanicilar = await _unitOfWork.Kullanicilar.FindAsync(k => k.SirketId == sirketId);
+            
+            return kullanicilar.Select(k => new KullaniciListDTO
+            {
+                Id = k.Id,
+                SirketId = k.SirketId,
+                PersonelAdi = k.Personel?.AdSoyad,
+                KullaniciAdi = k.KullaniciAdi,
+                Email = k.Email,
+                Rol = k.Rol?.RolAdi,
+                RolAdi = k.Rol?.RolAdi,
+                PersonelSicilNo = k.Personel?.SicilNo,
+                Aktif = k.Aktif
+            });
+        }
     }
 }

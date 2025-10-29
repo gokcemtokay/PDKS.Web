@@ -8,7 +8,9 @@ namespace PDKS.Business.DTOs
 {
     public class OnayBaslatDTO
     {
-        public string ModulTipi { get; set; } // "Izin", "Avans", "Masraf"
+        
+        public int SirketId { get; set; }
+public string ModulTipi { get; set; } // "Izin", "Avans", "Masraf"
         public int ReferansId { get; set; } // İzin ID, Avans ID vs.
         public int TalepEdenKullaniciId { get; set; }
     }

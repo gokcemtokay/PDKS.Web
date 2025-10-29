@@ -16,5 +16,7 @@ namespace PDKS.Business.Services
         Task UpdateAsync(KullaniciUpdateDTO dto);
         // DeleteAsync metodu controller'da kullanılmadığı için şimdilik kaldırabiliriz.
         // İhtiyaç olursa tekrar eklenir.
-    }
+    
+        Task<IEnumerable<KullaniciListDTO>> GetBySirketAsync(int sirketId);
+}
 }

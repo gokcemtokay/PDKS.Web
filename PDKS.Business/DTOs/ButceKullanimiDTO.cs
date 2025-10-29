@@ -8,7 +8,9 @@ namespace PDKS.Business.DTOs
 {
     public class ButceKullanimiDTO
     {
-        public decimal ToplamButce { get; set; }
+        
+        public int SirketId { get; set; }
+public decimal ToplamButce { get; set; }
         public decimal KullanilanButce { get; set; }
         public decimal KalanButce { get; set; }
         public double KullanimYuzdesi { get; set; }

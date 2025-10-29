@@ -8,7 +8,9 @@ namespace PDKS.Business.DTOs
 {
     public class FinansalOzetDTO
     {
-        public decimal BuAyMaasOdemesi { get; set; }
+        
+        public int SirketId { get; set; }
+public decimal BuAyMaasOdemesi { get; set; }
         public decimal BuAyAvans { get; set; }
         public decimal BuAyMasraf { get; set; }
         public decimal ToplamGider { get; set; }

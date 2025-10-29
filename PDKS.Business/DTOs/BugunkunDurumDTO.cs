@@ -8,7 +8,9 @@ namespace PDKS.Business.DTOs
 {
     public class BugunkunDurumDTO
     {
-        public int ToplamPersonel { get; set; }
+        
+        public int SirketId { get; set; }
+public int ToplamPersonel { get; set; }
         public int BugunkuGiris { get; set; }
         public int AktifPersonel { get; set; }
         public int IzinliPersonel { get; set; }

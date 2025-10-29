@@ -26,5 +26,7 @@ namespace PDKS.Business.Services
         Task<IEnumerable<BekleyenOnayDTO>> GetBekleyenOnaylarAsync(int kullaniciId);
         Task<OnayDurumuDTO> GetOnayDurumuAsync(string modulTipi, int referansId);
         Task<IEnumerable<OnayDurumuDTO>> GetKullaniciTaleplerAsync(int kullaniciId);
-    }
+    
+        Task<IEnumerable<OnayAkisi>> GetBySirketAsync(int sirketId);
+}
 }

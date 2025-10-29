@@ -108,5 +108,21 @@ namespace PDKS.Business.Services
             _unitOfWork.Parametreler.Remove(parametre);
             await _unitOfWork.SaveChangesAsync();
         }
+    
+        public async Task<IEnumerable<ParametreListDTO>> GetBySirketAsync(int sirketId)
+        {
+            var entities = await _unitOfWork.Parametreler.FindAsync(x => x.SirketId == sirketId);
+            return entities.Select(p => new ParametreListDTO
+            {
+                Id = p.Id,
+                Ad = p.Ad,
+                Deger = p.Deger,
+                Birim = p.Birim,
+                Aciklama = p.Aciklama,
+                Kategori = p.Kategori
+            });
+        }
+
+
     }
 }

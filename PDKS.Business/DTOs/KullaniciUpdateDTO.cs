@@ -5,7 +5,9 @@ namespace PDKS.Business.DTOs
     public class KullaniciUpdateDTO
     {
         [Required]
-        public int Id { get; set; }
+        
+        public int SirketId { get; set; }
+public int Id { get; set; }
 
         [Required]
         public int PersonelId { get; set; }

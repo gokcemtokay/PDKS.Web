@@ -2,7 +2,9 @@
 {
     public class ParametreListDTO
     {
-        public int Id { get; set; }
+        
+        public int SirketId { get; set; }
+public int Id { get; set; }
         public string Ad { get; set; }
         public string Deger { get; set; }
         public string? Birim { get; set; }

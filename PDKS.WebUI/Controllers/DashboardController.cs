@@ -26,6 +26,18 @@ namespace PDKS.WebUI.Controllers
             _dashboardService = dashboardService;
         }
 
+        // Yardımcı metot: JWT token'dan aktif şirket ID'sini alır.
+        private int GetCurrentSirketId()
+        {
+            var sirketIdClaim = User.Claims.FirstOrDefault(c => c.Type == "sirketId");
+            if (sirketIdClaim != null && int.TryParse(sirketIdClaim.Value, out int sirketId))
+            {
+                return sirketId;
+            }
+            throw new UnauthorizedAccessException("Yetkilendirme token'ında şirket ID'si bulunamadı.");
+        }
+
+
         // GET: api/Dashboard/ana
         [HttpGet("ana")]
         public async Task<IActionResult> GetAnaDashboard()

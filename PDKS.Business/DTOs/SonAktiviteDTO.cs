@@ -8,7 +8,9 @@ namespace PDKS.Business.DTOs
 {
     public class SonAktiviteDTO
     {
-        public string Tip { get; set; } // "GirisCikis", "Izin", "Avans", "Zimmet"
+        
+        public int SirketId { get; set; }
+public string Tip { get; set; } // "GirisCikis", "Izin", "Avans", "Zimmet"
         public string Baslik { get; set; }
         public string Aciklama { get; set; }
         public string Kullanici { get; set; }

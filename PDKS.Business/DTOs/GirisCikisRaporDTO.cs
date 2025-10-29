@@ -9,7 +9,9 @@ namespace PDKS.Business.DTOs
     public class GirisCikisRaporDTO
     {
         // Temel Bilgiler
-        public int Id { get; set; }
+        
+        public int SirketId { get; set; }
+public int Id { get; set; }
         public DateTime Tarih { get; set; }
 
         // Personel Bilgileri

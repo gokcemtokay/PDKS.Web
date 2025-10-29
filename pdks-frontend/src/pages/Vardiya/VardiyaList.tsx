@@ -1,19 +1,24 @@
-﻿import { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Box, Typography, Button, IconButton } from '@mui/material';
 import { DataGrid, GridColDef } from '@mui/x-data-grid';
 import { Add as AddIcon, Edit as EditIcon } from '@mui/icons-material';
 import vardiyaService, { Vardiya } from '../../services/vardiyaService';
+import { useAuth } from '../../contexts/AuthContext';
 
 function VardiyaList() {
     const [vardiyalar, setVardiyalar] = useState<Vardiya[]>([]);
     const [loading, setLoading] = useState(true);
+    const { aktifSirket } = useAuth();
 
     useEffect(() => {
-        loadData();
-    }, []);
+        if (aktifSirket) {
+            loadData();
+        }
+    }, [aktifSirket]);
 
     const loadData = async () => {
         try {
+            setLoading(true);
             const data = await vardiyaService.getAll();
             setVardiyalar(data);
         } catch (error) {
@@ -41,7 +46,14 @@ function VardiyaList() {
     return (
         <Box>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3 }}>
-                <Typography variant="h4" fontWeight="bold">Vardiya Yönetimi</Typography>
+                <Box>
+                    <Typography variant="h4" fontWeight="bold">Vardiya Yönetimi</Typography>
+                    {aktifSirket && (
+                        <Typography variant="body2" color="text.secondary">
+                            {aktifSirket.sirketAdi}
+                        </Typography>
+                    )}
+                </Box>
                 <Button variant="contained" startIcon={<AddIcon />}>Yeni Vardiya Ekle</Button>
             </Box>
 

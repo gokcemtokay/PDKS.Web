@@ -6,7 +6,9 @@ namespace PDKS.Business.DTOs
     {
         [Required(ErrorMessage = "Vardiya adı zorunludur")]
         [StringLength(100, ErrorMessage = "Vardiya adı en fazla 100 karakter olabilir")]
-        public string Ad { get; set; }
+        
+        public int SirketId { get; set; }
+public string Ad { get; set; }
 
         [Required(ErrorMessage = "Başlangıç saati zorunludur")]
         [RegularExpression(@"^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$", ErrorMessage = "Geçerli bir saat formatı giriniz (HH:mm)")]

@@ -3,7 +3,9 @@
     // Dashboard DTO
     public class DashboardDTO
     {
-        public int AktifPersonelSayisi { get; set; }
+        
+        public int SirketId { get; set; }
+public int AktifPersonelSayisi { get; set; }
         public int BugunGelmeyenler { get; set; }
         public int GecGelenler { get; set; }
         public int ErkenCikanlar { get; set; }

@@ -12,5 +12,7 @@ namespace PDKS.Business.Services
         Task OnaylaAsync(int id, int onaylayanKullaniciId);
         Task ReddetAsync(int id, int onaylayanKullaniciId, string redNedeni);
         Task<IEnumerable<MesaiListDTO>> GetBekleyenMesailerAsync();
-    }
+    
+        Task<IEnumerable<MesaiListDTO>> GetBySirketAsync(int sirketId);
+}
 }

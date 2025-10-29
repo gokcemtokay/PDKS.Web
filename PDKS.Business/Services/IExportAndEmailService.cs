@@ -15,5 +15,7 @@ namespace PDKS.Business.Services
         Task<byte[]> ExportToExcel<T>(List<T> data, string sheetName);
         Task<bool> SendReportByEmail(string toEmail, string subject, byte[] attachment, string fileName);
         Task<bool> ScheduleAutomaticReport(string reportType, string email, TimeSpan sendTime);
-    }
+    
+        //Task<IEnumerable<ExportAndEmailListDTO>> GetBySirketAsync(int sirketId);
+}
 }

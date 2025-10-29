@@ -5,7 +5,9 @@ namespace PDKS.Business.DTOs
     public class AvansCreateDTO
     {
         [Required(ErrorMessage = "Personel seçimi zorunludur")]
-        public int PersonelId { get; set; }
+        
+        public int SirketId { get; set; }
+public int PersonelId { get; set; }
 
         [Required(ErrorMessage = "Tutar zorunludur")]
         public decimal Tutar { get; set; }

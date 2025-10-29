@@ -160,5 +160,31 @@ namespace PDKS.Business.Services
             _unitOfWork.Izinler.Update(izin);
             await _unitOfWork.SaveChangesAsync();
         }
+
+        public async Task<IEnumerable<IzinListDTO>> GetBySirketAsync(int sirketId)
+        {
+            // Personelleri şirkete göre filtrele
+            var personeller = await _unitOfWork.Personeller.FindAsync(p => p.SirketId == sirketId);
+            var personelIds = personeller.Select(p => p.Id).ToList();
+
+            if (!personelIds.Any())
+                return Enumerable.Empty<IzinListDTO>();
+
+            // İzinleri o şirketin personellerine göre getir
+            var izinler = await _unitOfWork.Izinler.FindAsync(i => personelIds.Contains(i.PersonelId));
+
+            return izinler.Select(i => new IzinListDTO
+            {
+                Id = i.Id,
+                PersonelId = i.PersonelId,
+                PersonelAdi = i.Personel?.AdSoyad,
+                IzinTipi = i.IzinTipi,
+                BaslangicTarihi = i.BaslangicTarihi,
+                BitisTarihi = i.BitisTarihi,
+                GunSayisi = i.IzinGunSayisi,
+                OnayDurumu = i.OnayDurumu,
+                Aciklama = i.Aciklama
+            }).OrderByDescending(i => i.BaslangicTarihi);
+        }
     }
 }

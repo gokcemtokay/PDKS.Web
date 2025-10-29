@@ -8,7 +8,9 @@ namespace PDKS.Business.DTOs
 {
     public class ExecutiveDashboardDTO
     {
-        public ExecutiveSummaryDTO Summary { get; set; }
+        
+        public int SirketId { get; set; }
+public ExecutiveSummaryDTO Summary { get; set; }
         public List<DepartmanKarsilastirmaDTO> DepartmanKarsilastirma { get; set; }
         public FinansalOzetDTO FinansalOzet { get; set; }
         public List<TrendDTO> Trendler { get; set; }

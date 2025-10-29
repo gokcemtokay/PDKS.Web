@@ -117,5 +117,7 @@ namespace PDKS.Business.Services
 
         // Kombine
         Task<PersonelOzlukDetayDTO> GetPersonelOzlukDetayAsync(int personelId);
-    }
+    
+        Task<IEnumerable<PersonelListDTO>> GetBySirketAsync(int sirketId);
+}
 }

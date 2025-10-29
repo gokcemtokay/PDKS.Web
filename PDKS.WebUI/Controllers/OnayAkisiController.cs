@@ -1,6 +1,7 @@
 ﻿// PDKS.WebUI/Controllers/OnayAkisiController.cs - ROUTE SIRASI DÜZELTİLDİ
 
 using Microsoft.AspNetCore.Authorization;
+using System;
 using Microsoft.AspNetCore.Mvc;
 using PDKS.Business.Services;
 using PDKS.Business.DTOs;
@@ -25,6 +26,18 @@ namespace PDKS.WebUI.Controllers
         {
             _onayAkisiService = onayAkisiService;
         }
+
+        // Yardımcı metot: JWT token'dan aktif şirket ID'sini alır.
+        private int GetCurrentSirketId()
+        {
+            var sirketIdClaim = User.Claims.FirstOrDefault(c => c.Type == "sirketId");
+            if (sirketIdClaim != null && int.TryParse(sirketIdClaim.Value, out int sirketId))
+            {
+                return sirketId;
+            }
+            throw new UnauthorizedAccessException("Yetkilendirme token'ında şirket ID'si bulunamadı.");
+        }
+
 
         // Helper method: Kullanıcı ID'sini token'dan al
         private IActionResult GetKullaniciIdFromToken(out int kullaniciId)

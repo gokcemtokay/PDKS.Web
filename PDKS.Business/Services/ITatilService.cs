@@ -11,5 +11,7 @@ namespace PDKS.Business.Services
         Task DeleteAsync(int id);
         Task<bool> IsTatilAsync(DateTime tarih);
         Task ResmiTatilleriEkleAsync(int yil);
-    }
+   
+        Task<IEnumerable<TatilListDTO>> GetBySirketAsync(int sirketId);
+}
 }

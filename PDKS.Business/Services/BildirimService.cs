@@ -1,6 +1,5 @@
-﻿// PDKS.Business/Services/BildirimService.cs - DÜZELTİLMİŞ
-
 using Microsoft.AspNetCore.SignalR;
+using PDKS.Business.DTOs;
 using PDKS.Data.Entities;
 using PDKS.Data.Repositories;
 using System;
@@ -13,20 +12,18 @@ namespace PDKS.Business.Services
     public class BildirimService : IBildirimService
     {
         private readonly IUnitOfWork _unitOfWork;
-        private readonly IHubContext<Hub> _hubContext; // ⬅️ Generic Hub kullan
+        private readonly IHubContext<Hub> _hubContext;
         private readonly IPushNotificationService _pushNotificationService;
 
         public BildirimService(
             IUnitOfWork unitOfWork,
-            IHubContext<Hub> hubContext, // ⬅️ Değişti
+            IHubContext<Hub> hubContext,
             IPushNotificationService pushNotificationService)
         {
             _unitOfWork = unitOfWork;
             _hubContext = hubContext;
             _pushNotificationService = pushNotificationService;
         }
-
-        // ... rest of the methods stay the same
 
         public async Task<bool> BildirimGonderAsync(int kullaniciId, string baslik, string mesaj, string tip, string? referansTip = null, int? referansId = null)
         {
@@ -105,11 +102,26 @@ namespace PDKS.Business.Services
                     await _hubContext.Clients.Group($"user_{kullaniciId}")
                         .SendAsync("ReceiveNotification", new
                         {
-                            baslik = baslik,
-                            mesaj = mesaj,
-                            tip = tip,
+                            baslik,
+                            mesaj,
+                            tip,
                             olusturmaTarihi = DateTime.UtcNow
                         });
+                }
+                catch { }
+            }
+
+            // Push Notifications gönder
+            foreach (var kullaniciId in kullaniciIds)
+            {
+                try
+                {
+                    await _pushNotificationService.SendNotificationAsync(
+                        kullaniciId,
+                        baslik,
+                        mesaj,
+                        new Dictionary<string, string> { { "type", tip } }
+                    );
                 }
                 catch { }
             }
@@ -117,24 +129,29 @@ namespace PDKS.Business.Services
             return true;
         }
 
-        // ... diğer methodlar aynı
-        public async Task<IEnumerable<Bildirim>> GetKullaniciBildirimleriAsync(int kullaniciId)
+        public async Task<IEnumerable<object>> GetKullaniciBildirimleriAsync(int kullaniciId, bool? sadece_okunmayanlar = null)
         {
-            return await _unitOfWork.Bildirimler.FindAsync(b => b.KullaniciId == kullaniciId);
+            var bildirimler = await _unitOfWork.Bildirimler.FindAsync(b => b.KullaniciId == kullaniciId);
+
+            if (sadece_okunmayanlar.HasValue && sadece_okunmayanlar.Value)
+            {
+                bildirimler = bildirimler.Where(b => !b.Okundu);
+            }
+
+            return bildirimler.OrderByDescending(b => b.OlusturmaTarihi).Select(b => new
+            {
+                b.Id,
+                b.Baslik,
+                b.Mesaj,
+                b.Tip,
+                b.Okundu,
+                b.OlusturmaTarihi,
+                b.ReferansTip,
+                b.ReferansId
+            });
         }
 
-        public async Task<IEnumerable<Bildirim>> GetOkunmamisBildirimlerAsync(int kullaniciId)
-        {
-            return await _unitOfWork.Bildirimler.FindAsync(b => b.KullaniciId == kullaniciId && !b.Okundu);
-        }
-
-        public async Task<int> GetOkunmamisSayisiAsync(int kullaniciId)
-        {
-            var okunmamislar = await _unitOfWork.Bildirimler.FindAsync(b => b.KullaniciId == kullaniciId && !b.Okundu);
-            return okunmamislar.Count();
-        }
-
-        public async Task<bool> OkunduIsaretleAsync(int bildirimId)
+        public async Task<bool> BildirimOkunduIsaretle(int bildirimId)
         {
             var bildirim = await _unitOfWork.Bildirimler.GetByIdAsync(bildirimId);
             if (bildirim == null) return false;
@@ -148,7 +165,7 @@ namespace PDKS.Business.Services
             return true;
         }
 
-        public async Task<bool> TumunuOkunduIsaretleAsync(int kullaniciId)
+        public async Task<bool> TumBildirimleriOkunduIsaretle(int kullaniciId)
         {
             var bildirimler = await _unitOfWork.Bildirimler.FindAsync(b => b.KullaniciId == kullaniciId && !b.Okundu);
 
@@ -160,6 +177,7 @@ namespace PDKS.Business.Services
             }
 
             await _unitOfWork.SaveChangesAsync();
+
             return true;
         }
 
@@ -172,6 +190,31 @@ namespace PDKS.Business.Services
             await _unitOfWork.SaveChangesAsync();
 
             return true;
+        }
+
+        public async Task<IEnumerable<BildirimListDTO>> GetBySirketAsync(int sirketId)
+        {
+            // Kullanıcıları şirkete göre filtrele
+            var kullanicilar = await _unitOfWork.Kullanicilar.FindAsync(k => k.SirketId == sirketId);
+            var kullaniciIds = kullanicilar.Select(k => k.Id).ToList();
+            
+            // Bildirimler sadece o şirketin kullanıcılarına ait olanlar
+            var bildirimler = await _unitOfWork.Bildirimler.FindAsync(b => kullaniciIds.Contains(b.KullaniciId));
+            
+            return bildirimler.Select(b => new BildirimListDTO
+            {
+                Id = b.Id,
+                KullaniciId = b.KullaniciId,
+                Baslik = b.Baslik,
+                Mesaj = b.Mesaj,
+                Tip = b.Tip,
+                Okundu = b.Okundu,
+                OlusturmaTarihi = b.OlusturmaTarihi,
+                OkunmaTarihi = b.OkunmaTarihi,
+                Link = b.Link,
+                ReferansTip = b.ReferansTip,
+                ReferansId = b.ReferansId
+            }).OrderByDescending(b => b.OlusturmaTarihi);
         }
     }
 }

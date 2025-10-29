@@ -2,12 +2,14 @@
 
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 
 namespace PDKS.Data.Entities
 {
     public class OnayAkisi
     {
         public int Id { get; set; }
+        [Required]
         public int SirketId { get; set; }
         public string AkisAdi { get; set; }
         public string ModulTipi { get; set; }

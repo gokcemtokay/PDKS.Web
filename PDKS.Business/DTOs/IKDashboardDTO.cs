@@ -8,7 +8,9 @@ namespace PDKS.Business.DTOs
 {
     public class IKDashboardDTO
     {
-        public GenelIstatistiklerDTO GenelIstatistikler { get; set; }
+        
+        public int SirketId { get; set; }
+public GenelIstatistiklerDTO GenelIstatistikler { get; set; }
         public DevamsizlikAnaliziDTO DevamsizlikAnalizi { get; set; }
         public MaliyetAnaliziDTO MaliyetAnalizi { get; set; }
         public PersonelDagilimDTO PersonelDagilimi { get; set; }

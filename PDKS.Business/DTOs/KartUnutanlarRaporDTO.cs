@@ -3,7 +3,9 @@
     // Kart Unutanlar Rapor DTO
     public class KartUnutanlarRaporDTO
     {
-        public int Id { get; set; }
+        
+        public int SirketId { get; set; }
+public int Id { get; set; }
         public DateTime Tarih { get; set; }
         public int PersonelId { get; set; }
         public string PersonelAdi { get; set; }

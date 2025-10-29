@@ -13,6 +13,8 @@ namespace PDKS.Data.Entities
         public int Id { get; set; }
 
         [Required]
+        public int SirketId { get; set; }
+        [Required]
         [MaxLength(100)]
         [Column("cihaz_adi")]
         public string CihazAdi { get; set; }

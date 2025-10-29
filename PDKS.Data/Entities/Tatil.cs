@@ -9,6 +9,8 @@ namespace PDKS.Data.Entities
         [Key]
         [Column("id")]
         public int Id { get; set; }
+        [Required]
+        public int SirketId { get; set; }
 
         [Required]
         [MaxLength(200)]

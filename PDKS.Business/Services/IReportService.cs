@@ -35,5 +35,7 @@ namespace PDKS.Business.Services
         Task<MaasZarfiDTO> MaasZarfi(int personelId, int yil, int ay);
         Task<List<PrimListDTO>> PrimListesi(int yil, int ay);
         Task<AylikDevamCizelgesiDTO> AylikDevamCizelgesi(int personelId, int yil, int ay);
-    }
+    
+        //Task<IEnumerable<ReportListDTO>> GetBySirketAsync(int sirketId);
+}
 }

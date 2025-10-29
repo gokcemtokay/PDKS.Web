@@ -9,7 +9,9 @@ namespace PDKS.Business.DTOs
     public class OnayAdimiDTO
     {
         public int? Id { get; set; }
-        public int Sira { get; set; }
+        
+        public int SirketId { get; set; }
+public int Sira { get; set; }
         public string AdimAdi { get; set; }
 
         // Onaylayıcı belirleme

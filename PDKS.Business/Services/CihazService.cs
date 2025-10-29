@@ -1,4 +1,4 @@
-﻿using PDKS.Business.DTOs;
+using PDKS.Business.DTOs;
 using PDKS.Data.Entities;
 using PDKS.Data.Repositories;
 using System;
@@ -17,7 +17,6 @@ namespace PDKS.Business.Services
             _unitOfWork = unitOfWork;
         }
 
-        // Create ve Update metotları CihazAdi, IPAdres, Lokasyon, Durum alanlarını kullanır ve doğrudur.
         public async Task<int> CreateAsync(CihazCreateDTO dto)
         {
             var cihaz = new Cihaz
@@ -48,7 +47,6 @@ namespace PDKS.Business.Services
             await _unitOfWork.SaveChangesAsync();
         }
 
-        // GetAllAsync, CihazListDTO'daki tüm alanları doldurur.
         public async Task<IEnumerable<CihazListDTO>> GetAllAsync()
         {
             var cihazlar = await _unitOfWork.Cihazlar.GetAllAsync();
@@ -71,7 +69,6 @@ namespace PDKS.Business.Services
             });
         }
 
-        // GetByIdAsync, CihazUpdateDTO'yu doldurur.
         public async Task<CihazUpdateDTO> GetByIdAsync(int id)
         {
             var c = await _unitOfWork.Cihazlar.GetByIdAsync(id);
@@ -87,7 +84,6 @@ namespace PDKS.Business.Services
             };
         }
 
-        // GetCihazLoglariAsync, düzeltilmiş CihazLog entity'sini kullanır.
         public async Task<IEnumerable<object>> GetCihazLoglariAsync(int cihazId)
         {
             var loglar = await _unitOfWork.CihazLoglari.FindAsync(l => l.CihazId == cihazId);
@@ -98,6 +94,28 @@ namespace PDKS.Business.Services
                 LogMesaji = l.Mesaj,
                 LogTipi = l.Tip
             }).OrderByDescending(l => l.LogTarihi);
+        }
+
+        public async Task<IEnumerable<CihazListDTO>> GetBySirketAsync(int sirketId)
+        {
+            var cihazlar = await _unitOfWork.Cihazlar.FindAsync(x => x.SirketId == sirketId);
+
+            var today = DateTime.Today;
+            var bugunkuGirisler = await _unitOfWork.GirisCikislar.FindAsync(g => g.CihazId.HasValue && g.GirisZamani.HasValue && g.GirisZamani.Value.Date == today);
+            var okumaSayilari = bugunkuGirisler
+                .GroupBy(g => g.CihazId.Value)
+                .ToDictionary(grp => grp.Key, grp => grp.Count());
+
+            return cihazlar.Select(c => new CihazListDTO
+            {
+                Id = c.Id,
+                CihazAdi = c.CihazAdi,
+                IPAdres = c.IPAdres,
+                Lokasyon = c.Lokasyon,
+                Durum = c.Durum,
+                SonBaglantiZamani = c.SonBaglantiZamani,
+                BugunkuOkumaSayisi = okumaSayilari.GetValueOrDefault(c.Id, 0)
+            });
         }
     }
 }

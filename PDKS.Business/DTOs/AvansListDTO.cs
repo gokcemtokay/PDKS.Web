@@ -3,7 +3,9 @@
     // Avans DTOs
     public class AvansListDTO
     {
-        public int Id { get; set; }
+        
+        public int SirketId { get; set; }
+public int Id { get; set; }
         public int PersonelId { get; set; }
         public string PersonelAdi { get; set; }
         public string SicilNo { get; set; }

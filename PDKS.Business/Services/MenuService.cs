@@ -134,5 +134,11 @@ namespace PDKS.Business.Services
                 Aktif = menu.Aktif
             };
         }
+
+        public async Task<IEnumerable<MenuDto>> GetBySirketAsync(int sirketId)
+        {
+            var menuler = await _unitOfWork.Menuler.FindAsync(x => x.SirketId == sirketId);
+            return menuler.Select(MapToDto);
+        }
     }
 }

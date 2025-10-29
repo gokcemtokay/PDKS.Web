@@ -4,7 +4,9 @@ namespace PDKS.Business.DTOs
 {
     public class TatilUpdateDTO
     {
-        public int Id { get; set; }
+        
+        public int SirketId { get; set; }
+public int Id { get; set; }
 
         [Required(ErrorMessage = "Tatil adı zorunludur")]
         [StringLength(100)]

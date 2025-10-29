@@ -5,7 +5,9 @@ namespace PDKS.Business.DTOs
     public class MesaiCreateDTO
     {
         [Required(ErrorMessage = "Personel seçimi zorunludur")]
-        public int PersonelId { get; set; }
+        
+        public int SirketId { get; set; }
+public int PersonelId { get; set; }
 
         [Required(ErrorMessage = "Tarih zorunludur")]
         public DateTime Tarih { get; set; }

@@ -9,4 +9,5 @@ namespace PDKS.Business.Services
         Task<bool> RestoreBackup(string backupFilePath);
         Task<IEnumerable<object>> GetBackupHistory(); // object, dosya adı ve tarih gibi bilgileri içerecek.
     }
+        //Task<IEnumerable<BackupListDTO>> GetBySirketAsync(int sirketId);
 }

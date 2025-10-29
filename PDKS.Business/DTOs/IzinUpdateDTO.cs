@@ -5,7 +5,9 @@ namespace PDKS.Business.DTOs
     public class IzinUpdateDTO
     {
         [Required]
-        public int Id { get; set; }
+        
+        public int SirketId { get; set; }
+public int Id { get; set; }
 
         [Required(ErrorMessage = "Personel seçimi zorunludur")]
         public int PersonelId { get; set; }

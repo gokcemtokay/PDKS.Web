@@ -4,18 +4,23 @@ import { Box, Typography, Button, Chip } from '@mui/material';
 import { DataGrid, GridColDef } from '@mui/x-data-grid';
 import { Add as AddIcon } from '@mui/icons-material';
 import izinService, { Izin } from '../../services/izinService';
+import { useAuth } from '../../contexts/AuthContext';
 
 function IzinList() {
   const [izinler, setIzinler] = useState<Izin[]>([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+  const { aktifSirket } = useAuth();
 
   useEffect(() => {
-    loadData();
-  }, []);
+    if (aktifSirket) {
+      loadData();
+    }
+  }, [aktifSirket]);
 
   const loadData = async () => {
     try {
+      setLoading(true);
       const data = await izinService.getAll();
       setIzinler(data);
     } catch (error) {
@@ -45,7 +50,14 @@ function IzinList() {
   return (
     <Box>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3 }}>
-        <Typography variant="h4" fontWeight="bold">İzinler</Typography>
+        <Box>
+          <Typography variant="h4" fontWeight="bold">İzinler</Typography>
+          {aktifSirket && (
+            <Typography variant="body2" color="text.secondary">
+              {aktifSirket.sirketAdi}
+            </Typography>
+          )}
+        </Box>
         <Button variant="contained" startIcon={<AddIcon />} onClick={() => navigate('/izin/talep')}>
           İzin Talebi Oluştur
         </Button>

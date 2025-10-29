@@ -8,7 +8,9 @@ namespace PDKS.Business.DTOs
 {
     public class DepartmanDagilimDTO
     {
-        public string DepartmanAdi { get; set; }
+        
+        public int SirketId { get; set; }
+public string DepartmanAdi { get; set; }
         public int PersonelSayisi { get; set; }
         public double Yuzde { get; set; }
     }

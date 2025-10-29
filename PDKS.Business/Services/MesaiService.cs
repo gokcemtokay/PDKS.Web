@@ -1,4 +1,6 @@
-﻿using PDKS.Business.DTOs;
+﻿using DocumentFormat.OpenXml.Office2010.Excel;
+using DocumentFormat.OpenXml.Office2010.PowerPoint;
+using PDKS.Business.DTOs;
 using PDKS.Data.Entities;
 using PDKS.Data.Repositories;
 
@@ -228,5 +230,34 @@ namespace PDKS.Business.Services
 
             return 0;
         }
+
+        public async Task<IEnumerable<MesaiListDTO>> GetBySirketAsync(int sirketId)
+        {
+            var mesailer = await _unitOfWork.Mesailer.FindAsync(x => x.SirketId == sirketId);
+            var personeller = await _unitOfWork.Personeller.GetAllAsync();
+            var kullanicilar = await _unitOfWork.Kullanicilar.GetAllAsync();
+
+            return mesailer.Select(m => new MesaiListDTO
+            {
+                Id = m.Id,
+                PersonelId = m.PersonelId,
+                PersonelAdi = personeller.FirstOrDefault(p => p.Id == m.PersonelId)?.AdSoyad ?? "",
+                PersonelSicilNo = personeller.FirstOrDefault(p => p.Id == m.PersonelId)?.SicilNo ?? "",
+                Tarih = m.Tarih,
+                BaslangicSaati = m.BaslangicSaati,
+                BitisSaati = m.BitisSaati,
+                ToplamSaat = m.ToplamSaat,
+                FazlaMesaiSaati = m.FazlaMesaiSaati,
+                MesaiTipi = m.MesaiTipi,
+                OnayDurumu = m.OnayDurumu,
+                OnaylayanKullaniciAdi = m.OnaylayanKullaniciId.HasValue
+                    ? kullanicilar.FirstOrDefault(k => k.Id == m.OnaylayanKullaniciId)?.KullaniciAdi
+                    : null,
+                OnayTarihi = m.OnayTarihi,
+                Aciklama = m.Aciklama
+            }).OrderByDescending(m => m.Tarih);
+        }
+
+
     }
 }

@@ -8,7 +8,9 @@ namespace PDKS.Business.DTOs
 {
     public class GenelIstatistiklerDTO
     {
-        public int ToplamPersonel { get; set; }
+        
+        public int SirketId { get; set; }
+public int ToplamPersonel { get; set; }
         public int AktifPersonel { get; set; }
         public int BuAyIseBaslayan { get; set; }
         public int BuAyCikanPersonel { get; set; }

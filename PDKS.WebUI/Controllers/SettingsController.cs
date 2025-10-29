@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Authorization;
+using System.Linq;
 using Microsoft.AspNetCore.Mvc;
 using PDKS.Business.DTOs;
 using PDKS.Business.Services;
@@ -30,6 +31,18 @@ namespace PDKS.WebUI.Controllers
             _backupService = backupService;
             _parametreService = parametreService;
         }
+
+        // Yardımcı metot: JWT token'dan aktif şirket ID'sini alır.
+        private int GetCurrentSirketId()
+        {
+            var sirketIdClaim = User.Claims.FirstOrDefault(c => c.Type == "sirketId");
+            if (sirketIdClaim != null && int.TryParse(sirketIdClaim.Value, out int sirketId))
+            {
+                return sirketId;
+            }
+            throw new UnauthorizedAccessException("Yetkilendirme token'ında şirket ID'si bulunamadı.");
+        }
+
 
         #region Yedekleme Ayarları
 

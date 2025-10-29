@@ -3,7 +3,9 @@ namespace PDKS.Business.DTOs
 {
     public class TransferGecmisiDTO
     {
-        public int Id { get; set; }
+        
+        public int SirketId { get; set; }
+public int Id { get; set; }
         public int PersonelId { get; set; }
         public string PersonelAdSoyad { get; set; }
         public string EskiSirketAdi { get; set; }

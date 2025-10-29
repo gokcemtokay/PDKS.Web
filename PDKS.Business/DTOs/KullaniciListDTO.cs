@@ -4,7 +4,9 @@ namespace PDKS.Business.DTOs
 {
     public class KullaniciListDTO
     {
-        public int Id { get; set; }
+        
+        public int SirketId { get; set; }
+public int Id { get; set; }
         public string PersonelAdi { get; set; }
         public string Email { get; set; }
         public string Rol { get; set; }

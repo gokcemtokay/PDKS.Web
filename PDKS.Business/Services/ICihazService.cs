@@ -11,5 +11,7 @@ namespace PDKS.Business.Services
         Task<int> CreateAsync(CihazCreateDTO dto);
         Task UpdateAsync(CihazUpdateDTO dto);
         Task<IEnumerable<object>> GetCihazLoglariAsync(int cihazId);
-    }
+    
+        Task<IEnumerable<CihazListDTO>> GetBySirketAsync(int sirketId);
+}
 }

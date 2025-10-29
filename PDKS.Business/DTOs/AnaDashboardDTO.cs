@@ -8,7 +8,9 @@ namespace PDKS.Business.DTOs
 {
     public class AnaDashboardDTO
     {
-        public BugunkunDurumDTO BugunkunDurum { get; set; }
+        
+        public int SirketId { get; set; }
+public BugunkunDurumDTO BugunkunDurum { get; set; }
         public List<BekleyenOnayWidgetDTO> BekleyenOnaylar { get; set; }
         public List<SonAktiviteDTO> SonAktiviteler { get; set; }
         public List<DogumGunuDTO> DogumGunleri { get; set; }

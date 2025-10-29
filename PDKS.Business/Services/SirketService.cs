@@ -503,5 +503,25 @@ namespace PDKS.Business.Services
         }
 
         #endregion
+
+        public async Task<IEnumerable<SirketListDTO>> GetBySirketAsync(int sirketId)
+        {
+            var sirket = await _unitOfWork.Sirketler.GetByIdAsync(sirketId);
+            
+            if (sirket == null)
+                return Enumerable.Empty<SirketListDTO>();
+            
+            return new[] {
+                new SirketListDTO
+                {
+                    Id = sirket.Id,
+                    Unvan = sirket.Unvan,
+                    VergiNo = sirket.VergiNo,
+                    Telefon = sirket.Telefon,
+                    Adres = sirket.Adres,
+                    Aktif = sirket.Aktif
+                }
+            };
+        }
     }
 }

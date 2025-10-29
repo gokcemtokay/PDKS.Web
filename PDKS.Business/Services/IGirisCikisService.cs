@@ -13,5 +13,7 @@ namespace PDKS.Business.Services
         Task UpdateAsync(GirisCikisUpdateDTO dto);
         Task DeleteAsync(int id);
         Task<IEnumerable<GirisCikisListDTO>> GetByDateAsync(DateTime date); // YENİ EKLENEN SATIR
-    }
+    
+        Task<IEnumerable<GirisCikisListDTO>> GetBySirketAsync(int sirketId);
+}
 }

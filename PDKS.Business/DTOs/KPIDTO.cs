@@ -8,7 +8,9 @@ namespace PDKS.Business.DTOs
 {
     public class KPIDTO
     {
-        public string Baslik { get; set; }
+        
+        public int SirketId { get; set; }
+public string Baslik { get; set; }
         public double Deger { get; set; }
         public double Hedef { get; set; }
         public string Birim { get; set; }

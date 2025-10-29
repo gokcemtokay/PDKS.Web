@@ -28,5 +28,7 @@ namespace PDKS.Business.Services
         // İstatistikler
         Task<bool> SirketAktifMiAsync(int sirketId);
         Task<int> GetSirketPersonelSayisiAsync(int sirketId);
+
+        Task<IEnumerable<SirketListDTO>> GetBySirketAsync(int sirketId);
     }
 }

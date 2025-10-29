@@ -11,6 +11,7 @@ namespace PDKS.Business.Services
         Task<MenuDto> CreateAsync(MenuDto dto);
         Task<MenuDto> UpdateAsync(int id, MenuDto dto);
         Task<bool> DeleteAsync(int id);
+        Task<IEnumerable<MenuDto>> GetBySirketAsync(int sirketId);
     }
 
     public interface IRolYetkiService
@@ -22,4 +23,5 @@ namespace PDKS.Business.Services
         Task<IEnumerable<IslemYetkiDto>> GetAllIslemYetkileriAsync();
         Task<IslemYetkiDto> CreateIslemYetkiAsync(IslemYetkiDto dto);
     }
+        
 }

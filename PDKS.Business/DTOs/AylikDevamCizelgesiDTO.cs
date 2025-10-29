@@ -3,7 +3,9 @@
     // Aylık Devam Çizelgesi DTO
     public class AylikDevamCizelgesiDTO
     {
-        public string PersonelAdi { get; set; }
+        
+        public int SirketId { get; set; }
+public string PersonelAdi { get; set; }
         public string SicilNo { get; set; }
         public string Departman { get; set; }
         public string Donem { get; set; }

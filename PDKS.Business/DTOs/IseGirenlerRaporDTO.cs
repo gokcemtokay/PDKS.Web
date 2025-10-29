@@ -3,7 +3,9 @@
     // İşe Girenler Rapor DTO
     public class IseGirenlerRaporDTO
     {
-        public string AdSoyad { get; set; }
+        
+        public int SirketId { get; set; }
+public string AdSoyad { get; set; }
         public string SicilNo { get; set; }
         public string Departman { get; set; }
         public string Gorev { get; set; }

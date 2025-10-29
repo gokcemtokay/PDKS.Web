@@ -8,7 +8,9 @@ namespace PDKS.Business.DTOs
 {
     public class ExecutiveSummaryDTO
     {
-        public int ToplamPersonel { get; set; }
+        
+        public int SirketId { get; set; }
+public int ToplamPersonel { get; set; }
         public decimal ToplamMaliyet { get; set; }
         public double PersonelMemnuniyeti { get; set; }
         public double Verimlilik { get; set; }

@@ -4,7 +4,9 @@ namespace PDKS.Business.DTOs
 {
     public class CihazListDTO
     {
-        public int Id { get; set; }
+        
+        public int SirketId { get; set; }
+public int Id { get; set; }
         public string CihazAdi { get; set; }
         public string IPAdres { get; set; }
         public string Lokasyon { get; set; }

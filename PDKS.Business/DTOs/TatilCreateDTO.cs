@@ -6,7 +6,9 @@ namespace PDKS.Business.DTOs
     {
         [Required(ErrorMessage = "Tatil adı zorunludur")]
         [StringLength(100)]
-        public string Ad { get; set; }
+        
+        public int SirketId { get; set; }
+public string Ad { get; set; }
 
         [Required(ErrorMessage = "Tarih zorunludur")]
         public DateTime Tarih { get; set; }

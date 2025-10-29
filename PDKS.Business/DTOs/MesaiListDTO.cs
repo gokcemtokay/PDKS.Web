@@ -2,7 +2,9 @@
 {
     public class MesaiListDTO
     {
-        public int Id { get; set; }
+        
+        public int SirketId { get; set; }
+public int Id { get; set; }
         public int PersonelId { get; set; }
         public string PersonelAdi { get; set; }
         public string PersonelSicilNo { get; set; }

@@ -14,5 +14,7 @@ namespace PDKS.Business.Services
         Task<bool> DeleteFileAsync(string filePath);
         bool IsValidFileType(IFormFile file, List<string> allowedExtensions);
         bool IsValidFileSize(IFormFile file, long maxSizeMB);
-    }
+    
+        //Task<IEnumerable<FileUploadListDTO>> GetBySirketAsync(int sirketId);
+}
 }

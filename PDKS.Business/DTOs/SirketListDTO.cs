@@ -3,7 +3,9 @@ namespace PDKS.Business.DTOs
 {
     public class SirketListDTO
     {
-        public int Id { get; set; }
+        
+        public int SirketId { get; set; }
+public int Id { get; set; }
         public string Unvan { get; set; }
         public string TicariUnvan { get; set; }      
         public string VergiNo { get; set; }

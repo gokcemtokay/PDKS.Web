@@ -2,7 +2,9 @@
 {
     public class DevamGunDTO
     {
-        public DateTime Tarih { get; set; }
+        
+        public int SirketId { get; set; }
+public DateTime Tarih { get; set; }
         public DateTime? GirisZamani { get; set; }
         public DateTime? CikisZamani { get; set; }
         public string Durum { get; set; }
