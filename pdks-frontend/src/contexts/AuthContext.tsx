@@ -106,9 +106,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
 
     const switchSirket = async (sirketId: number) => {
-        alert('🔄 BAŞLADI! Seçilen ID: ' + sirketId);
-        console.log('🔄 SWITCH SIRKET BAŞLADI - ID:', sirketId);
-        console.log('📍 Mevcut URL:', window.location.href);
+        //alert('🔄 BAŞLADI! Seçilen ID: ' + sirketId);
+        //console.log('🔄 SWITCH SIRKET BAŞLADI - ID:', sirketId);
+        //console.log('📍 Mevcut URL:', window.location.href);
 
         const sirket = yetkiliSirketler.find((s) => s.sirketId === sirketId);
         if (!sirket) {

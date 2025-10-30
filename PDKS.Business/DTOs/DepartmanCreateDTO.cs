@@ -16,7 +16,7 @@ namespace PDKS.Business.DTOs
         public string Kod { get; set; }
 
         [StringLength(500, ErrorMessage = "Açıklama en fazla 500 karakter olabilir")]
-        public string Aciklama { get; set; }
+        public string? Aciklama { get; set; }
 
         public int? UstDepartmanId { get; set; }
 

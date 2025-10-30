@@ -25,8 +25,11 @@ import VardiyaList from './pages/Vardiya/VardiyaList';
 import ToplantiList from './pages/Toplanti/ToplantiList';
 import OneriList from './pages/Oneri/OneriList';
 import GorevList from './pages/Gorev/GorevList';
+import DepartmanList from './pages/Departman/DepartmanList';
+import DepartmanForm from './pages/Departman/DepartmanForm';
 import SirketList from './pages/Sirket/SirketList';
 import KullaniciList from './pages/Kullanici/KullaniciList';
+import KullaniciForm from './pages/Kullanici/KullaniciForm';
 import RolYetkiAtama from './pages/Rol/RolYetkiAtama';
 
 const theme = createTheme({
@@ -56,6 +59,9 @@ function App() {
                                         <Route path="/personel/yeni" element={<PersonelForm />} />
                                         <Route path="/personel/duzenle/:id" element={<PersonelForm />} />
                                         <Route path="/personel/detay/:id" element={<PersonelDetay />} />
+                                        <Route path="/departman" element={<DepartmanList />} />
+                                        <Route path="/departman/yeni" element={<DepartmanForm />} />
+                                        <Route path="/departman/duzenle/:id" element={<DepartmanForm />} />
                                         <Route path="/izin" element={<IzinList />} />
                                         <Route path="/izin/talep" element={<IzinTalepForm />} />
                                         <Route path="/avans" element={<AvansList />} />
@@ -67,15 +73,16 @@ function App() {
                                         <Route path="/onay" element={<OnayList />} />
                                         <Route path="/gorev" element={<GorevList />} />
                                         <Route path="/rapor" element={<RaporPage />} />
-                                        
-                                        {/* ✅ YENİ EKLENEN ROUTE'LAR */}
+
+                                        {/* Yönetim Modülü */}
                                         <Route path="/sirket" element={<SirketList />} />
                                         <Route path="/kullanici" element={<KullaniciList />} />
+                                        <Route path="/kullanici/yeni" element={<KullaniciForm />} />
+                                        <Route path="/kullanici/duzenle/:id" element={<KullaniciForm />} />
                                         <Route path="/rol" element={<RolList />} />
                                         <Route path="/rol/:id/yetki-ata" element={<RolYetkiAtama />} />
-                                        
+
                                         <Route path="/cihaz" element={<CihazList />} />
-                                        <Route path="/rol" element={<RolList />} />
                                         <Route path="/tatil" element={<TatilList />} />
                                         <Route path="/vardiya" element={<VardiyaList />} />
                                         <Route path="/toplanti" element={<ToplantiList />} />

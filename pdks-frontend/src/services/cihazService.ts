@@ -2,12 +2,16 @@
 
 export interface Cihaz {
     id: number;
+    sirketId?: number;
     cihazAdi: string;
-    cihazTipi: string;
-    ipAdresi: string;
-    port: number;
+    cihazTipi?: string;
+    ipAdres?: string;
+    port?: number;
     durum: boolean;
+    durumText?: string;
     lokasyon?: string;
+    sonBaglantiZamani?: string;
+    bugunkuOkumaSayisi?: number;
 }
 
 const cihazService = {
@@ -19,9 +23,9 @@ const cihazService = {
     async create(data: any): Promise<void> {
         await api.post('/cihaz', {
             cihazAdi: data.cihazAdi,
-            cihazTipi: data.cihazTipi,
-            ipAdres: data.ipAdresi, // ✅ ipAdres
-            port: data.port,
+            cihazTipi: data.cihazTipi || null,
+            ipAdres: data.ipAdresi,
+            port: data.port ? parseInt(data.port) : null,
             lokasyon: data.lokasyon,
             durum: data.durum
         });
@@ -29,10 +33,11 @@ const cihazService = {
 
     async update(id: number, data: any): Promise<void> {
         await api.put(`/cihaz/${id}`, {
+            id: id,
             cihazAdi: data.cihazAdi,
-            cihazTipi: data.cihazTipi,
-            ipAdres: data.ipAdresi, // ✅ ipAdres (backend'in beklediği)
-            port: data.port,
+            cihazTipi: data.cihazTipi || null,
+            ipAdres: data.ipAdresi,
+            port: data.port ? parseInt(data.port) : null,
             lokasyon: data.lokasyon,
             durum: data.durum
         });

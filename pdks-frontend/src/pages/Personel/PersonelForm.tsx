@@ -14,6 +14,9 @@ import {
     AccountBalance, Upload,
 } from '@mui/icons-material';
 import personelService from '../../services/personelService';
+import departmanService from '../../services/departmanService';
+import { useAuth } from '../../contexts/AuthContext';
+import { showError } from '../../utils/errorUtils';
 
 interface TabPanelProps {
     children?: React.ReactNode;
@@ -33,22 +36,24 @@ function TabPanel(props: TabPanelProps) {
 function PersonelForm() {
     const { id } = useParams();
     const navigate = useNavigate();
+    const { aktifSirket } = useAuth();
     const [tabValue, setTabValue] = useState(0);
     const [loading, setLoading] = useState(false);
     const [photoPreview, setPhotoPreview] = useState('');
     const [photoFile, setPhotoFile] = useState<File | null>(null);
+    const [error, setError] = useState('');
 
     // Form States
     const [formData, setFormData] = useState({
         sicilNo: '',
         adSoyad: '',
-        tcKimlikNo: '', // ✅ Backend TcKimlikNo bekliyor
+        tcKimlikNo: '',
         dogumTarihi: '',
         cinsiyet: '',
-        medeniDurum: '', // UI için, backend'e gönderilmeyecek
+        medeniDurum: '',
         departmanId: '',
         gorev: '',
-        unvan: '', // ✅ Backend Unvan bekliyor
+        unvan: '',
         girisTarihi: '',
         durum: true,
         email: '',
@@ -58,8 +63,7 @@ function PersonelForm() {
         maas: null as number | null,
         avansLimiti: null as number | null,
         notlar: '',
-        profilResmi: '', // ✅ Profil resmi URL'si
-        // UI-only alanlar (backend'e gitmeyecek)
+        profilResmi: '',
         isTelefon: '',
         il: '',
         ilce: '',
@@ -74,12 +78,29 @@ function PersonelForm() {
     const [deneyimler, setDeneyimler] = useState<any[]>([]);
     const [sertifikalar, setSertifikalar] = useState<any[]>([]);
     const [aileBireyleri, setAileBireyleri] = useState<any[]>([]);
+    const [departmanlar, setDepartmanlar] = useState<any[]>([]);
+
+    useEffect(() => {
+        if (aktifSirket) {
+            loadDepartmanlar();
+        }
+    }, [aktifSirket]);
 
     useEffect(() => {
         if (id) loadPersonel();
     }, [id]);
 
-    // Cinsiyet normalize fonksiyonu
+    const loadDepartmanlar = async () => {
+        try {
+            const data = await departmanService.getAll();
+            console.log('Departmanlar yüklendi:', data);
+            setDepartmanlar(data);
+        } catch (error: any) {
+            console.error('Departmanlar yüklenemedi:', error);
+            showError(error, setError);
+        }
+    };
+
     const normalizeCinsiyet = (cinsiyet: string): string => {
         if (!cinsiyet) return '';
         const lowerCase = cinsiyet.toLowerCase();
@@ -91,10 +112,10 @@ function PersonelForm() {
     const loadPersonel = async () => {
         if (!id) return;
         setLoading(true);
+        setError('');
         try {
             const data = await personelService.getById(parseInt(id));
 
-            // ✅ Medeni durumu localStorage'dan oku (geçici çözüm)
             const savedMedeniDurum = localStorage.getItem(`personel_${id}_medeniDurum`) || '';
 
             setFormData({
@@ -103,7 +124,7 @@ function PersonelForm() {
                 tcKimlikNo: data.tcKimlikNo || '',
                 dogumTarihi: data.dogumTarihi ? data.dogumTarihi.split('T')[0] : '',
                 cinsiyet: normalizeCinsiyet(data.cinsiyet || ''),
-                medeniDurum: savedMedeniDurum, // ✅ localStorage'dan
+                medeniDurum: savedMedeniDurum,
                 departmanId: data.departmanId?.toString() || '',
                 gorev: data.gorev || '',
                 unvan: data.unvan || data.gorev || '',
@@ -116,8 +137,7 @@ function PersonelForm() {
                 maas: data.maas || null,
                 avansLimiti: data.avansLimiti || null,
                 notlar: data.notlar || '',
-                profilResmi: data.profilResmi || '', // ✅ Eklendi
-                // UI-only alanlar
+                profilResmi: data.profilResmi || '',
                 isTelefon: data.telefon || '',
                 il: '',
                 ilce: '',
@@ -128,10 +148,8 @@ function PersonelForm() {
                 iban: ''
             });
 
-            // ✅ ProfilResmi'yi set et
             if (data.profilResmi) {
                 console.log('Loading photo URL:', data.profilResmi);
-                // Eğer relative path ise, mevcut origin'i kullan
                 const photoUrl = data.profilResmi.startsWith('http')
                     ? data.profilResmi
                     : `${window.location.origin}${data.profilResmi.startsWith('/') ? '' : '/'}${data.profilResmi}`;
@@ -140,8 +158,9 @@ function PersonelForm() {
             } else {
                 console.log('No profilResmi in response');
             }
-        } catch (error) {
+        } catch (error: any) {
             console.error('Personel yüklenemedi:', error);
+            showError(error, setError);
         } finally {
             setLoading(false);
         }
@@ -160,22 +179,20 @@ function PersonelForm() {
     };
 
     const handleSubmit = async () => {
+        setError('');
         setLoading(true);
         try {
             let uploadedPhotoUrl = formData.profilResmi;
 
-            // ✅ 1. Eğer yeni fotoğraf seçildiyse önce onu yükle
             if (photoFile && id) {
                 try {
                     uploadedPhotoUrl = await personelService.uploadPhoto(parseInt(id), photoFile);
                     console.log('Fotoğraf yüklendi:', uploadedPhotoUrl);
                 } catch (photoError) {
                     console.error('Fotoğraf yükleme hatası:', photoError);
-                    // Fotoğraf yükleme hatası olsa bile devam et
                 }
             }
 
-            // ✅ 2. Personel bilgilerini güncelle
             const submitData = {
                 ...formData,
                 profilResmi: uploadedPhotoUrl,
@@ -184,9 +201,9 @@ function PersonelForm() {
 
             if (id) {
                 await personelService.update(parseInt(id), submitData);
+                alert('Personel başarıyla güncellendi!');
             } else {
                 const newId = await personelService.create(submitData);
-                // Yeni personel oluşturulmuşsa ve fotoğraf varsa, fotoğrafı yükle
                 if (photoFile && newId) {
                     try {
                         await personelService.uploadPhoto(newId, photoFile);
@@ -194,11 +211,13 @@ function PersonelForm() {
                         console.error('Yeni personel fotoğraf yükleme hatası:', photoError);
                     }
                 }
+                alert('Personel başarıyla kaydedildi!');
             }
 
             navigate('/personel');
-        } catch (error) {
+        } catch (error: any) {
             console.error('Kayıt başarısız:', error);
+            showError(error, setError);
         } finally {
             setLoading(false);
         }
@@ -222,9 +241,16 @@ function PersonelForm() {
                     onClick={handleSubmit}
                     disabled={loading}
                 >
-                    Kaydet
+                    {loading ? 'Kaydediliyor...' : 'Kaydet'}
                 </Button>
             </Box>
+
+            {/* Hata Mesajı */}
+            {error && (
+                <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError('')}>
+                    {error}
+                </Alert>
+            )}
 
             {/* Fotoğraf Bölümü */}
             <Paper sx={{ p: 3, mb: 3, textAlign: 'center' }}>
@@ -346,14 +372,15 @@ function PersonelForm() {
                                         <InputLabel>Departman</InputLabel>
                                         <Select
                                             value={formData.departmanId}
-                                            onChange={(e) => handleChange('departmanId', e.target.value)}
+                                            onChange={(e) => setFormData({ ...formData, departmanId: e.target.value })}
                                             label="Departman"
                                         >
                                             <MenuItem value="">Seçiniz</MenuItem>
-                                            <MenuItem value="1">IT</MenuItem>
-                                            <MenuItem value="2">İnsan Kaynakları</MenuItem>
-                                            <MenuItem value="3">Muhasebe</MenuItem>
-                                            <MenuItem value="4">Satış</MenuItem>
+                                            {departmanlar.map((dep) => (
+                                                <MenuItem key={dep.id} value={dep.id}>
+                                                    {dep.departmanAdi}
+                                                </MenuItem>
+                                            ))}
                                         </Select>
                                     </FormControl>
                                     <TextField

@@ -21,8 +21,11 @@ namespace PDKS.Business.Services
         {
             var cihaz = new Cihaz
             {
+                SirketId = dto.SirketId,
                 CihazAdi = dto.CihazAdi,
+                CihazTipi = dto.CihazTipi,  // ← YENİ
                 IPAdres = dto.IPAdres,
+                Port = dto.Port,  // ← YENİ
                 Lokasyon = dto.Lokasyon,
                 Durum = dto.Durum,
                 OlusturmaTarihi = DateTime.UtcNow
@@ -39,11 +42,23 @@ namespace PDKS.Business.Services
                 throw new Exception("Cihaz bulunamadı");
 
             cihaz.CihazAdi = dto.CihazAdi;
+            cihaz.CihazTipi = dto.CihazTipi;  // ← YENİ
             cihaz.IPAdres = dto.IPAdres;
+            cihaz.Port = dto.Port;  // ← YENİ
             cihaz.Lokasyon = dto.Lokasyon;
             cihaz.Durum = dto.Durum;
 
             _unitOfWork.Cihazlar.Update(cihaz);
+            await _unitOfWork.SaveChangesAsync();
+        }
+
+        public async Task DeleteAsync(int id)
+        {
+            var cihaz = await _unitOfWork.Cihazlar.GetByIdAsync(id);
+            if (cihaz == null)
+                throw new Exception("Cihaz bulunamadı");
+
+            _unitOfWork.Cihazlar.Remove(cihaz);
             await _unitOfWork.SaveChangesAsync();
         }
 
@@ -52,7 +67,11 @@ namespace PDKS.Business.Services
             var cihazlar = await _unitOfWork.Cihazlar.GetAllAsync();
 
             var today = DateTime.Today;
-            var bugunkuGirisler = await _unitOfWork.GirisCikislar.FindAsync(g => g.CihazId.HasValue && g.GirisZamani.HasValue && g.GirisZamani.Value.Date == today);
+            var bugunkuGirisler = await _unitOfWork.GirisCikislar.FindAsync(g =>
+                g.CihazId.HasValue &&
+                g.GirisZamani.HasValue &&
+                g.GirisZamani.Value.Date == today);
+
             var okumaSayilari = bugunkuGirisler
                 .GroupBy(g => g.CihazId.Value)
                 .ToDictionary(grp => grp.Key, grp => grp.Count());
@@ -60,8 +79,11 @@ namespace PDKS.Business.Services
             return cihazlar.Select(c => new CihazListDTO
             {
                 Id = c.Id,
+                SirketId = c.SirketId,
                 CihazAdi = c.CihazAdi,
+                CihazTipi = c.CihazTipi,  // ← YENİ
                 IPAdres = c.IPAdres,
+                Port = c.Port,  // ← YENİ
                 Lokasyon = c.Lokasyon,
                 Durum = c.Durum,
                 SonBaglantiZamani = c.SonBaglantiZamani,
@@ -77,8 +99,11 @@ namespace PDKS.Business.Services
             return new CihazUpdateDTO
             {
                 Id = c.Id,
+                SirketId = c.SirketId,
                 CihazAdi = c.CihazAdi,
+                CihazTipi = c.CihazTipi,  // ← YENİ
                 IPAdres = c.IPAdres,
+                Port = c.Port,  // ← YENİ
                 Lokasyon = c.Lokasyon,
                 Durum = c.Durum
             };
@@ -90,18 +115,23 @@ namespace PDKS.Business.Services
             return loglar.Select(l => new
             {
                 l.Id,
-                LogTarihi = l.Tarih,
-                LogMesaji = l.Mesaj,
-                LogTipi = l.Tip
-            }).OrderByDescending(l => l.LogTarihi);
+                l.CihazId,
+                l.Mesaj,
+                l.Tarih,
+                l.Tip
+            }).OrderByDescending(l => l.Tarih);
         }
 
         public async Task<IEnumerable<CihazListDTO>> GetBySirketAsync(int sirketId)
         {
-            var cihazlar = await _unitOfWork.Cihazlar.FindAsync(x => x.SirketId == sirketId);
+            var cihazlar = await _unitOfWork.Cihazlar.FindAsync(c => c.SirketId == sirketId);
 
             var today = DateTime.Today;
-            var bugunkuGirisler = await _unitOfWork.GirisCikislar.FindAsync(g => g.CihazId.HasValue && g.GirisZamani.HasValue && g.GirisZamani.Value.Date == today);
+            var bugunkuGirisler = await _unitOfWork.GirisCikislar.FindAsync(g =>
+                g.CihazId.HasValue &&
+                g.GirisZamani.HasValue &&
+                g.GirisZamani.Value.Date == today);
+
             var okumaSayilari = bugunkuGirisler
                 .GroupBy(g => g.CihazId.Value)
                 .ToDictionary(grp => grp.Key, grp => grp.Count());
@@ -109,8 +139,11 @@ namespace PDKS.Business.Services
             return cihazlar.Select(c => new CihazListDTO
             {
                 Id = c.Id,
+                SirketId = c.SirketId,
                 CihazAdi = c.CihazAdi,
+                CihazTipi = c.CihazTipi,  // ← YENİ
                 IPAdres = c.IPAdres,
+                Port = c.Port,  // ← YENİ
                 Lokasyon = c.Lokasyon,
                 Durum = c.Durum,
                 SonBaglantiZamani = c.SonBaglantiZamani,

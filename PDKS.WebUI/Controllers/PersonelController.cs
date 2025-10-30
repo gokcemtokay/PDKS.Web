@@ -73,6 +73,22 @@ namespace PDKS.WebUI.Controllers
             }
         }
 
+        [HttpGet("all")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> GetAllPersoneller()
+        {
+            try
+            {
+                // Admin kullanıcı için tüm personelleri getir (şirket filtresi olmadan)
+                var personeller = await _personelService.GetAllAsync();
+                return Ok(personeller);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Internal Server Error: {ex.Message}");
+            }
+        }
+
         // GET: api/Personel/5
         [HttpGet("{id}")]
         public async Task<IActionResult> GetPersonelById(int id)

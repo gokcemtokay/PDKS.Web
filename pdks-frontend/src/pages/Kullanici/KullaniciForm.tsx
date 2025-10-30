@@ -1,29 +1,38 @@
-import { useState, useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+ï»¿import { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import {
-    Box, Paper, Typography, TextField, Button, FormControl,
-    InputLabel, Select, MenuItem, Switch, FormControlLabel,
-    Grid, Checkbox, FormGroup, FormLabel, Radio, RadioGroup,
-    Alert,
+    Box, Paper, Typography, TextField, Button, Grid,
+    FormControl, InputLabel, Select, MenuItem, Switch,
+    FormControlLabel, Alert, Divider, Chip
 } from '@mui/material';
-import { Save, Cancel, Business } from '@mui/icons-material';
+import { Save, ArrowBack } from '@mui/icons-material';
 import api from '../../services/api';
-
-interface Sirket {
-    id: number;
-    unvan: string;
-    aktif: boolean;
-}
+import { parseApiError, showError } from '../../utils/errorUtils';
 
 interface Rol {
     id: number;
     rolAdi: string;
 }
 
+interface Personel {
+    id: number;
+    adSoyad: string;
+}
+
+interface Sirket {
+    id: number;
+    sirketAdi?: string;
+    unvan?: string;
+}
+
 function KullaniciForm() {
-    const navigate = useNavigate();
     const { id } = useParams();
-    const isEditMode = !!id;
+    const navigate = useNavigate();
+    const [loading, setLoading] = useState(false);
+    const [roller, setRoller] = useState<Rol[]>([]);
+    const [personeller, setPersoneller] = useState<Personel[]>([]);
+    const [sirketler, setSirketler] = useState<Sirket[]>([]);
+    const [error, setError] = useState('');
 
     const [formData, setFormData] = useState({
         kullaniciAdi: '',
@@ -31,151 +40,188 @@ function KullaniciForm() {
         soyad: '',
         email: '',
         sifre: '',
+        yeniSifre: '',
         rolId: '',
+        personelId: '',
         aktif: true,
-        yetkiliSirketIdler: [] as number[],
-        varsayilanSirketId: 0,
+        yetkiliSirketler: [] as number[],
+        varsayilanSirketId: 0
     });
 
-    const [sirketler, setSirketler] = useState<Sirket[]>([]);
-    const [roller, setRoller] = useState<Rol[]>([]);
-    const [loading, setLoading] = useState(false);
-
     useEffect(() => {
-        loadSirketler();
-        loadRoller();
-        if (isEditMode) {
-            loadKullanici();
-        }
+        loadData();
+        if (id) loadKullanici();
     }, [id]);
 
-    const loadSirketler = async () => {
+    const loadData = async () => {
         try {
-            const response = await api.get('/Sirket');
-            setSirketler(response.data.filter((s: Sirket) => s.aktif));
+            const [rolRes, personelRes, sirketRes] = await Promise.all([
+                api.get('/rolyetki'),
+                api.get('/Personel/all'),
+                api.get('/Sirket')
+            ]);
+            console.log('Åžirket verileri:', sirketRes.data); // Debug iÃ§in
+            setRoller(rolRes.data);
+            setPersoneller(personelRes.data);
+            setSirketler(sirketRes.data);
         } catch (error) {
-            console.error('Þirketler yüklenemedi:', error);
-        }
-    };
-
-    const loadRoller = async () => {
-        try {
-            const response = await api.get('/Rol');
-            setRoller(response.data);
-        } catch (error) {
-            console.error('Roller yüklenemedi:', error);
+            console.error('Veri yÃ¼kleme hatasÄ±:', error);
+            setError('Veriler yÃ¼klenirken hata oluÅŸtu. LÃ¼tfen sayfayÄ± yenileyin.');
         }
     };
 
     const loadKullanici = async () => {
-        try {
-            const response = await api.get(`/Kullanici/${id}`);
-            const kullanici = response.data;
-
-            setFormData({
-                kullaniciAdi: kullanici.kullaniciAdi,
-                ad: kullanici.ad,
-                soyad: kullanici.soyad,
-                email: kullanici.email,
-                sifre: '',
-                rolId: kullanici.rolId,
-                aktif: kullanici.aktif,
-                yetkiliSirketIdler: kullanici.yetkiliSirketler.map((s: any) => s.sirketId),
-                varsayilanSirketId: kullanici.yetkiliSirketler.find((s: any) => s.varsayilan)?.sirketId || 0,
-            });
-        } catch (error) {
-            console.error('Kullanýcý yüklenemedi:', error);
-            alert('Kullanýcý yüklenirken hata oluþtu!');
-        }
-    };
-
-    const handleSirketToggle = (sirketId: number) => {
-        const yeniListe = formData.yetkiliSirketIdler.includes(sirketId)
-            ? formData.yetkiliSirketIdler.filter(id => id !== sirketId)
-            : [...formData.yetkiliSirketIdler, sirketId];
-
-        setFormData({
-            ...formData,
-            yetkiliSirketIdler: yeniListe,
-            // Varsayýlan þirket çýkarýlýrsa, ilk yetkili þirketi varsayýlan yap
-            varsayilanSirketId: yeniListe.includes(formData.varsayilanSirketId)
-                ? formData.varsayilanSirketId
-                : (yeniListe[0] || 0)
-        });
-    };
-
-    const handleVarsayilanSirketChange = (sirketId: number) => {
-        setFormData({
-            ...formData,
-            varsayilanSirketId: sirketId,
-        });
-    };
-
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-
-        // Validasyon
-        if (formData.yetkiliSirketIdler.length === 0) {
-            alert('En az bir þirket seçmelisiniz!');
-            return;
-        }
-
-        if (!formData.varsayilanSirketId || !formData.yetkiliSirketIdler.includes(formData.varsayilanSirketId)) {
-            alert('Varsayýlan þirket seçmelisiniz!');
-            return;
-        }
-
-        if (!isEditMode && !formData.sifre) {
-            alert('Þifre zorunludur!');
-            return;
-        }
-
+        if (!id) return;
         setLoading(true);
         try {
-            const payload = {
-                ...formData,
-                rolId: parseInt(formData.rolId as any),
-            };
+            const response = await api.get(`/Kullanici/${id}`);
+            const data = response.data;
 
-            if (isEditMode) {
-                await api.put(`/Kullanici/${id}`, payload);
-                alert('Kullanýcý güncellendi!');
-            } else {
-                await api.post('/Kullanici', payload);
-                alert('Kullanýcý oluþturuldu!');
-            }
+            // VarsayÄ±lan ÅŸirketi bul
+            const varsayilanSirket = data.yetkiliSirketler?.find((s: any) => s.varsayilan);
+            const varsayilanId = varsayilanSirket?.sirketId || data.yetkiliSirketler?.[0]?.sirketId || 0;
 
-            navigate('/kullanici');
-        } catch (error: any) {
-            console.error('Kayýt hatasý:', error);
-            const errorMsg = error.response?.data?.message || error.message || 'Kayýt baþarýsýz!';
-            alert(errorMsg);
+            setFormData({
+                kullaniciAdi: data.kullaniciAdi || '',
+                ad: data.ad || '',
+                soyad: data.soyad || '',
+                email: data.email || '',
+                sifre: '',
+                yeniSifre: '',
+                rolId: data.rolId?.toString() || '',
+                personelId: data.personelId?.toString() || '',
+                aktif: data.aktif ?? true,
+                yetkiliSirketler: data.yetkiliSirketler?.map((s: any) => s.sirketId) || [],
+                varsayilanSirketId: varsayilanId
+            });
+        } catch (error) {
+            console.error('KullanÄ±cÄ± yÃ¼klenemedi:', error);
+            setError('KullanÄ±cÄ± bilgileri yÃ¼klenemedi!');
         } finally {
             setLoading(false);
         }
     };
 
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setError('');
+
+        // Validasyon
+        if (formData.yetkiliSirketler.length === 0) {
+            setError('En az bir ÅŸirket seÃ§melisiniz!');
+            return;
+        }
+
+        if (!formData.varsayilanSirketId || !formData.yetkiliSirketler.includes(formData.varsayilanSirketId)) {
+            setError('VarsayÄ±lan ÅŸirket, yetkili ÅŸirketler arasÄ±ndan seÃ§ilmelidir!');
+            return;
+        }
+
+        setLoading(true);
+
+        try {
+            const payload: any = {
+                kullaniciAdi: formData.kullaniciAdi,
+                ad: formData.ad,
+                soyad: formData.soyad,
+                email: formData.email,
+                rolId: parseInt(formData.rolId),
+                personelId: formData.personelId ? parseInt(formData.personelId) : null,
+                aktif: formData.aktif,
+                yetkiliSirketIdler: formData.yetkiliSirketler,
+                varsayilanSirketId: formData.varsayilanSirketId
+            };
+
+            if (id) {
+                // GÃ¼ncelleme
+                payload.id = parseInt(id);
+                if (formData.yeniSifre) {
+                    payload.yeniSifre = formData.yeniSifre;
+                }
+                await api.put(`/Kullanici/${id}`, payload);
+                alert('KullanÄ±cÄ± gÃ¼ncellendi!');
+            } else {
+                // Yeni kayÄ±t
+                if (!formData.sifre) {
+                    setError('Åžifre zorunludur!');
+                    setLoading(false);
+                    return;
+                }
+                payload.sifre = formData.sifre;
+                await api.post('/Kullanici', payload);
+                alert('KullanÄ±cÄ± oluÅŸturuldu!');
+            }
+            navigate('/kullanici');
+        } catch (error: any) {
+            console.error('KayÄ±t hatasÄ±:', error);
+            const errorMsg = error.response?.data?.errors
+                ? Object.values(error.response.data.errors).flat().join(', ')
+                : error.response?.data?.message || 'KayÄ±t sÄ±rasÄ±nda hata oluÅŸtu!';
+            showError(error, setError);
+            setError(errorMsg);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleSirketToggle = (sirketId: number) => {
+        setFormData(prev => {
+            const yeniSirketler = prev.yetkiliSirketler.includes(sirketId)
+                ? prev.yetkiliSirketler.filter(id => id !== sirketId)
+                : [...prev.yetkiliSirketler, sirketId];
+
+            // EÄŸer varsayÄ±lan ÅŸirket kaldÄ±rÄ±ldÄ±ysa, ilk ÅŸirketi varsayÄ±lan yap
+            let yeniVarsayilan = prev.varsayilanSirketId;
+            if (sirketId === prev.varsayilanSirketId && !yeniSirketler.includes(sirketId)) {
+                yeniVarsayilan = yeniSirketler.length > 0 ? yeniSirketler[0] : 0;
+            }
+            // EÄŸer hiÃ§ varsayÄ±lan yoksa ve ÅŸirket ekleniyorsa, onu varsayÄ±lan yap
+            if (prev.varsayilanSirketId === 0 && yeniSirketler.includes(sirketId)) {
+                yeniVarsayilan = sirketId;
+            }
+
+            return {
+                ...prev,
+                yetkiliSirketler: yeniSirketler,
+                varsayilanSirketId: yeniVarsayilan
+            };
+        });
+    };
+
     return (
         <Box>
-            <Typography variant="h4" fontWeight="bold" mb={3}>
-                {isEditMode ? 'Kullanýcý Düzenle' : 'Yeni Kullanýcý'}
-            </Typography>
+            <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
+                <Button
+                    startIcon={<ArrowBack />}
+                    onClick={() => navigate('/kullanici')}
+                    sx={{ mr: 2 }}
+                >
+                    Geri
+                </Button>
+                <Typography variant="h4" fontWeight="bold">
+                    {id ? 'KullanÄ±cÄ± DÃ¼zenle' : 'Yeni KullanÄ±cÄ±'}
+                </Typography>
+            </Box>
+
+            {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
 
             <Paper sx={{ p: 3 }}>
                 <form onSubmit={handleSubmit}>
                     <Grid container spacing={3}>
-                        {/* Kullanýcý Bilgileri */}
+                        {/* KullanÄ±cÄ± Bilgileri */}
                         <Grid item xs={12}>
-                            <Typography variant="h6" gutterBottom>Kullanýcý Bilgileri</Typography>
+                            <Typography variant="h6" gutterBottom>KullanÄ±cÄ± Bilgileri</Typography>
+                            <Divider sx={{ mb: 2 }} />
                         </Grid>
 
                         <Grid item xs={12} md={6}>
                             <TextField
                                 fullWidth
                                 required
-                                label="Kullanýcý Adý"
+                                label="KullanÄ±cÄ± AdÄ±"
                                 value={formData.kullaniciAdi}
                                 onChange={(e) => setFormData({ ...formData, kullaniciAdi: e.target.value })}
+                                disabled={!!id}
                             />
                         </Grid>
 
@@ -183,8 +229,8 @@ function KullaniciForm() {
                             <TextField
                                 fullWidth
                                 required
-                                type="email"
                                 label="Email"
+                                type="email"
                                 value={formData.email}
                                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                             />
@@ -211,34 +257,67 @@ function KullaniciForm() {
                         </Grid>
 
                         <Grid item xs={12} md={6}>
-                            <TextField
-                                fullWidth
-                                required={!isEditMode}
-                                type="password"
-                                label={isEditMode ? 'Yeni Þifre (boþ býrakýlýrsa deðiþmez)' : 'Þifre'}
-                                value={formData.sifre}
-                                onChange={(e) => setFormData({ ...formData, sifre: e.target.value })}
-                            />
-                        </Grid>
-
-                        <Grid item xs={12} md={6}>
                             <FormControl fullWidth required>
                                 <InputLabel>Rol</InputLabel>
                                 <Select
                                     value={formData.rolId}
-                                    label="Rol"
                                     onChange={(e) => setFormData({ ...formData, rolId: e.target.value })}
+                                    label="Rol"
                                 >
-                                    {roller.map((rol) => (
-                                        <MenuItem key={rol.id} value={rol.id}>
-                                            {rol.rolAdi}
+                                    <MenuItem value="">SeÃ§iniz</MenuItem>
+                                    {roller.map(rol => (
+                                        <MenuItem key={rol.id} value={rol.id}>{rol.rolAdi}</MenuItem>
+                                    ))}
+                                </Select>
+                            </FormControl>
+                        </Grid>
+
+                        {!id && (
+                            <Grid item xs={12} md={6}>
+                                <TextField
+                                    fullWidth
+                                    required
+                                    type="password"
+                                    label="Åžifre"
+                                    value={formData.sifre}
+                                    onChange={(e) => setFormData({ ...formData, sifre: e.target.value })}
+                                    helperText="En az 6 karakter"
+                                />
+                            </Grid>
+                        )}
+
+                        {id && (
+                            <Grid item xs={12} md={6}>
+                                <TextField
+                                    fullWidth
+                                    type="password"
+                                    label="Yeni Åžifre (Opsiyonel)"
+                                    value={formData.yeniSifre}
+                                    onChange={(e) => setFormData({ ...formData, yeniSifre: e.target.value })}
+                                    helperText="DeÄŸiÅŸtirmek istemiyorsanÄ±z boÅŸ bÄ±rakÄ±n"
+                                />
+                            </Grid>
+                        )}
+
+                        <Grid item xs={12} md={6}>
+                            <FormControl fullWidth>
+                                <InputLabel>Personel (Opsiyonel)</InputLabel>
+                                <Select
+                                    value={formData.personelId}
+                                    onChange={(e) => setFormData({ ...formData, personelId: e.target.value })}
+                                    label="Personel (Opsiyonel)"
+                                >
+                                    <MenuItem value="">SeÃ§iniz</MenuItem>
+                                    {personeller.map(personel => (
+                                        <MenuItem key={personel.id} value={personel.id}>
+                                            {personel.adSoyad}
                                         </MenuItem>
                                     ))}
                                 </Select>
                             </FormControl>
                         </Grid>
 
-                        <Grid item xs={12}>
+                        <Grid item xs={12} md={6}>
                             <FormControlLabel
                                 control={
                                     <Switch
@@ -250,60 +329,59 @@ function KullaniciForm() {
                             />
                         </Grid>
 
-                        {/* Þirket Yetkileri */}
+                        {/* Yetkili Åžirketler */}
                         <Grid item xs={12}>
-                            <Typography variant="h6" gutterBottom sx={{ mt: 2 }}>
-                                <Business sx={{ mr: 1, verticalAlign: 'middle' }} />
-                                Þirket Yetkileri
-                            </Typography>
-                            <Alert severity="info" sx={{ mb: 2 }}>
-                                Kullanýcýnýn eriþim yetkisi olacaðý þirketleri seçin ve varsayýlan þirketi belirleyin.
-                            </Alert>
+                            <Typography variant="h6" gutterBottom>Yetkili Åžirketler</Typography>
+                            <Divider sx={{ mb: 2 }} />
                         </Grid>
 
                         <Grid item xs={12}>
-                            <FormControl component="fieldset">
-                                <FormLabel component="legend">Yetkili Þirketler</FormLabel>
-                                <FormGroup>
-                                    {sirketler.map((sirket) => (
-                                        <Box key={sirket.id} sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                                            <FormControlLabel
-                                                control={
-                                                    <Checkbox
-                                                        checked={formData.yetkiliSirketIdler.includes(sirket.id)}
-                                                        onChange={() => handleSirketToggle(sirket.id)}
-                                                    />
-                                                }
-                                                label={sirket.unvan}
-                                            />
-                                            {formData.yetkiliSirketIdler.includes(sirket.id) && (
-                                                <FormControlLabel
-                                                    control={
-                                                        <Radio
-                                                            checked={formData.varsayilanSirketId === sirket.id}
-                                                            onChange={() => handleVarsayilanSirketChange(sirket.id)}
-                                                        />
-                                                    }
-                                                    label="Varsayýlan"
-                                                    sx={{ ml: 2 }}
-                                                />
-                                            )}
-                                        </Box>
-                                    ))}
-                                </FormGroup>
-                            </FormControl>
+                            <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                                Åžirketlere tÄ±klayarak yetkilendirin (en az 1 ÅŸirket zorunlu):
+                            </Typography>
+                            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                                {sirketler.length === 0 ? (
+                                    <Typography color="text.secondary">
+                                        HenÃ¼z tanÄ±mlÄ± ÅŸirket yok veya yÃ¼klenirken hata oluÅŸtu.
+                                    </Typography>
+                                ) : (
+                                    sirketler.map(sirket => (
+                                        <Chip
+                                            key={sirket.id}
+                                            label={sirket.unvan || sirket.sirketAdi || 'Ä°simsiz Åžirket'}
+                                            onClick={() => handleSirketToggle(sirket.id)}
+                                            color={formData.yetkiliSirketler.includes(sirket.id) ? 'primary' : 'default'}
+                                            variant={formData.yetkiliSirketler.includes(sirket.id) ? 'filled' : 'outlined'}
+                                        />
+                                    ))
+                                )}
+                            </Box>
                         </Grid>
+
+                        {formData.yetkiliSirketler.length > 0 && (
+                            <Grid item xs={12} md={6}>
+                                <FormControl fullWidth required>
+                                    <InputLabel>VarsayÄ±lan Åžirket</InputLabel>
+                                    <Select
+                                        value={formData.varsayilanSirketId}
+                                        onChange={(e) => setFormData({ ...formData, varsayilanSirketId: Number(e.target.value) })}
+                                        label="VarsayÄ±lan Åžirket"
+                                    >
+                                        {sirketler
+                                            .filter(s => formData.yetkiliSirketler.includes(s.id))
+                                            .map(sirket => (
+                                                <MenuItem key={sirket.id} value={sirket.id}>
+                                                    {sirket.unvan || sirket.sirketAdi}
+                                                </MenuItem>
+                                            ))}
+                                    </Select>
+                                </FormControl>
+                            </Grid>
+                        )}
 
                         {/* Butonlar */}
                         <Grid item xs={12}>
-                            <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
-                                <Button
-                                    variant="outlined"
-                                    startIcon={<Cancel />}
-                                    onClick={() => navigate('/kullanici')}
-                                >
-                                    Ýptal
-                                </Button>
+                            <Box sx={{ display: 'flex', gap: 2, mt: 2 }}>
                                 <Button
                                     type="submit"
                                     variant="contained"
@@ -311,6 +389,13 @@ function KullaniciForm() {
                                     disabled={loading}
                                 >
                                     {loading ? 'Kaydediliyor...' : 'Kaydet'}
+                                </Button>
+                                <Button
+                                    variant="outlined"
+                                    onClick={() => navigate('/kullanici')}
+                                    disabled={loading}
+                                >
+                                    Ä°ptal
                                 </Button>
                             </Box>
                         </Grid>

@@ -20,8 +20,15 @@ namespace PDKS.Data.Entities
         public string CihazAdi { get; set; }
 
         [MaxLength(50)]
+        [Column("cihaz_tipi")]
+        public string CihazTipi { get; set; }  // ← YENİ ALAN
+
+        [MaxLength(50)]
         [Column("ip_adres")]
         public string IPAdres { get; set; }
+
+        [Column("port")]
+        public int? Port { get; set; }  // ← YENİ ALAN
 
         [MaxLength(200)]
         [Column("lokasyon")]

@@ -37,6 +37,7 @@ interface MenuItemType {
 const menuItems: MenuItemType[] = [
     { text: 'Ana Sayfa', icon: <DashboardIcon />, path: '/' },
     { text: 'Personel Yönetimi', icon: <PeopleIcon />, path: '/personel' },
+    { text: 'Departmanlar', icon: <BusinessIcon />, path: '/departman', roles: ['Admin', 'IK', 'admin', 'ADMIN'] },
     {
         text: 'Giriş-Çıkış',
         icon: <LoginIcon />,

@@ -3,10 +3,13 @@ import { useNavigate } from 'react-router-dom';
 import { Box, Paper, Typography, TextField, Button, Grid, MenuItem } from '@mui/material';
 import { Save as SaveIcon, ArrowBack as ArrowBackIcon } from '@mui/icons-material';
 import izinService from '../../services/izinService';
+import { showError } from '../../utils/errorUtils';
 
 const izinTipleri = ['Yıllık İzin', 'Mazeret İzni', 'Ücretsiz İzin', 'Hastalık İzni'];
 
+
 function IzinTalepForm() {
+    const [error, setError] = useState('');
     const navigate = useNavigate();
     const [formData, setFormData] = useState({
         personelId: 1,
@@ -28,6 +31,7 @@ function IzinTalepForm() {
             navigate('/izin');
         } catch (error) {
             console.error('Hata:', error);
+            showError(error, setError);
             alert('İzin talebi oluşturulamadı!');
         }
     };
