@@ -9,22 +9,7 @@ using System.Threading.Tasks;
 
 namespace PDKS.Business.Services
 {
-    public interface IPuantajService
-    {
-        Task<IEnumerable<PuantajListDTO>> GetAllAsync(int sirketId, int yil, int ay);
-        Task<PuantajDetailDTO> GetByIdAsync(int id);
-        Task<PuantajDetailDTO> GetByPersonelAsync(int personelId, int yil, int ay);
-        Task<int> OlusturAsync(PuantajCreateDTO dto);
-        Task<List<int>> TopluOlusturAsync(PuantajTopluOlusturDTO dto);
-        Task YenidenHesaplaAsync(int puantajId);
-        Task OnaylaAsync(PuantajOnayDTO dto);
-        Task<PuantajIstatistikDTO> GetIstatistikAsync(int sirketId, int yil, int ay);
-        Task<IEnumerable<GecKalanlarRaporDTO>> GetGecKalanlarRaporuAsync(int sirketId, DateTime baslangic, DateTime bitis);
-        Task<IEnumerable<ErkenCikanlarRaporDTO>> GetErkenCikanlarRaporuAsync(int sirketId, DateTime baslangic, DateTime bitis);
-        Task<IEnumerable<FazlaMesaiRaporDTO>> GetFazlaMesaiRaporuAsync(int sirketId, DateTime baslangic, DateTime bitis);
-        Task<IEnumerable<DevamsizlikRaporDTO>> GetDevamsizlikRaporuAsync(int sirketId, DateTime baslangic, DateTime bitis);
-    }
-
+    // CLASS İÇİNDE INTERFACE TANIMLAMASI KALDIRILDI - AYRI DOSYADA ZATEN VAR
     public class PuantajService : IPuantajService
     {
         private readonly IUnitOfWork _unitOfWork;
@@ -34,90 +19,185 @@ namespace PDKS.Business.Services
             _unitOfWork = unitOfWork;
         }
 
-        public async Task<IEnumerable<PuantajListDTO>> GetAllAsync(int sirketId, int yil, int ay)
-        {
-            var puantajlar = await _unitOfWork.Puantajlar
-                .FindWithIncludesAsync(
-                    p => p.SirketId == sirketId && p.Yil == yil && p.Ay == ay,
-                    p => p.Personel,
-                    p => p.Personel.Departman
-                );
+        // ============================================
+        // INTERFACE METODLARI - IPuantajService.cs'den gelen
+        // ============================================
 
-            return puantajlar.Select(p => new PuantajListDTO
+        // Puantaj Hesaplama
+        public async Task<int> HesaplaPuantajAsync(PuantajHesaplaDTO dto)
+        {
+            // Mevcut puantaj kontrolü
+            var mevcutPuantaj = await _unitOfWork.Puantajlar
+                .FirstOrDefaultAsync(p => p.PersonelId == dto.PersonelId && p.Yil == dto.Yil && p.Ay == dto.Ay);
+
+            if (mevcutPuantaj != null && !dto.YenidenHesapla)
+                throw new Exception("Bu dönem için puantaj zaten mevcut");
+
+            if (mevcutPuantaj != null && dto.YenidenHesapla)
             {
-                Id = p.Id,
-                SirketId = p.SirketId,
-                PersonelId = p.PersonelId,
-                PersonelAdSoyad = p.Personel.AdSoyad,
-                SicilNo = p.Personel.SicilNo,
-                DepartmanAdi = p.Personel.Departman?.Ad ?? "-",
-                Yil = p.Yil,
-                Ay = p.Ay,
-                ToplamCalisilanGun = p.ToplamCalisilanGun,
-                ToplamCalismaSuresi = p.ToplamCalismaSuresi,
-                FazlaMesaiSuresi = p.FazlaMesaiSuresi,
-                DevamsizlikGunSayisi = p.DevamsizlikGunSayisi,
-                IzinGunSayisi = p.IzinGunSayisi,
-                Durum = p.Durum,
-                Onaylandi = p.Onaylandi,
-                OlusturmaTarihi = p.OlusturmaTarihi
-            }).OrderBy(p => p.PersonelAdSoyad);
+                await YenidenHesaplaAsync(mevcutPuantaj.Id);
+                return mevcutPuantaj.Id;
+            }
+
+            // Yeni puantaj oluştur
+            var personel = await _unitOfWork.Personeller.GetByIdAsync(dto.PersonelId);
+            if (personel == null)
+                throw new Exception("Personel bulunamadı");
+
+            var puantaj = new Puantaj
+            {
+                SirketId = personel.SirketId,
+                PersonelId = dto.PersonelId,
+                Yil = dto.Yil,
+                Ay = dto.Ay,
+                Durum = "Taslak",
+                Onaylandi = false,
+                OlusturmaTarihi = DateTime.UtcNow
+            };
+
+            await _unitOfWork.Puantajlar.AddAsync(puantaj);
+            await _unitOfWork.SaveChangesAsync();
+
+            // Puantaj hesaplama işlemi
+            await PuantajHesaplaAsync(puantaj.Id, personel, dto.Yil, dto.Ay);
+
+            return puantaj.Id;
         }
 
+        public async Task<List<int>> TopluPuantajHesaplaAsync(TopluPuantajHesaplaDTO dto)
+        {
+            var personeller = new List<Personel>();
+
+            if (dto.TumPersonel)
+            {
+                var tumPersoneller = await _unitOfWork.Personeller.FindAsync(p => p.SirketId == dto.SirketId && p.Durum == true);
+                personeller = tumPersoneller.ToList();
+            }
+            else if (dto.DepartmanId.HasValue)
+            {
+                var departmanPersonelleri = await _unitOfWork.Personeller
+                    .FindAsync(p => p.DepartmanId == dto.DepartmanId.Value && p.Durum == true);
+                personeller = departmanPersonelleri.ToList();
+            }
+            else if (dto.PersonelIdler != null && dto.PersonelIdler.Any())
+            {
+                foreach (var personelId in dto.PersonelIdler)
+                {
+                    var personel = await _unitOfWork.Personeller.GetByIdAsync(personelId);
+                    if (personel != null && personel.Durum == true)
+                        personeller.Add(personel);
+                }
+            }
+
+            var olusturulanIdler = new List<int>();
+
+            foreach (var personel in personeller)
+            {
+                try
+                {
+                    var mevcutPuantaj = await _unitOfWork.Puantajlar
+                        .FirstOrDefaultAsync(p => p.PersonelId == personel.Id && p.Yil == dto.Yil && p.Ay == dto.Ay);
+
+                    if (mevcutPuantaj != null)
+                        continue;
+
+                    var hesaplaDto = new PuantajHesaplaDTO
+                    {
+                        PersonelId = personel.Id,
+                        Yil = dto.Yil,
+                        Ay = dto.Ay
+                    };
+
+                    var puantajId = await HesaplaPuantajAsync(hesaplaDto);
+                    olusturulanIdler.Add(puantajId);
+                }
+                catch (Exception)
+                {
+                    continue;
+                }
+            }
+
+            return olusturulanIdler;
+        }
+
+        public async Task<PuantajDetailDTO> YenidenHesaplaAsync(int puantajId)
+        {
+            var puantaj = await _unitOfWork.Puantajlar.GetByIdAsync(puantajId);
+            if (puantaj == null)
+                throw new Exception("Puantaj bulunamadı");
+
+            if (puantaj.Onaylandi)
+                throw new Exception("Onaylanmış puantaj yeniden hesaplanamaz");
+
+            var personel = await _unitOfWork.Personeller.GetByIdAsync(puantaj.PersonelId);
+            await PuantajHesaplaAsync(puantajId, personel, puantaj.Yil, puantaj.Ay);
+
+            return await GetByIdAsync(puantajId);
+        }
+
+        // CRUD İşlemleri
         public async Task<PuantajDetailDTO> GetByIdAsync(int id)
         {
-            var puantaj = await _unitOfWork.Puantajlar
-                .FindWithIncludesAsync(
-                    p => p.Id == id,
-                    p => p.Personel,
-                    p => p.Personel.Departman,
-                    p => p.Personel.Vardiya,
-                    p => p.OnaylayanKullanici,
-                    p => p.PuantajDetaylari
-                );
+            var puantajlar = await _unitOfWork.Puantajlar
+                .FindAsync(p => p.Id == id);
 
-            var p = puantaj.FirstOrDefault();
-            if (p == null) return null;
+            var puantaj = puantajlar.FirstOrDefault();
+            if (puantaj == null) return null;
+
+            // İlişkili verileri manuel yükle
+            var personel = await _unitOfWork.Personeller.GetByIdAsync(puantaj.PersonelId);
+            var departman = personel?.DepartmanId != null
+                ? await _unitOfWork.Departmanlar.GetByIdAsync(personel.DepartmanId.Value)
+                : null;
+            var vardiya = personel?.VardiyaId != null
+                ? await _unitOfWork.Vardiyalar.GetByIdAsync(personel.VardiyaId.Value)
+                : null;
+            var onaylayan = puantaj.OnaylayanKullaniciId != null
+                ? await _unitOfWork.Kullanicilar.GetByIdAsync(puantaj.OnaylayanKullaniciId.Value)
+                : null;
+
+            // Detayları getir
+            var detaylar = await _unitOfWork.PuantajDetaylar.FindAsync(d => d.PuantajId == puantaj.Id);
 
             return new PuantajDetailDTO
             {
-                Id = p.Id,
-                SirketId = p.SirketId,
-                PersonelId = p.PersonelId,
-                PersonelAdSoyad = p.Personel.AdSoyad,
-                SicilNo = p.Personel.SicilNo,
-                DepartmanAdi = p.Personel.Departman?.Ad ?? "-",
-                VardiyaAdi = p.Personel.Vardiya?.Ad ?? "-",
-                Yil = p.Yil,
-                Ay = p.Ay,
-                ToplamCalismaSuresi = p.ToplamCalismaSuresi,
-                NormalMesaiSuresi = p.NormalMesaiSuresi,
-                FazlaMesaiSuresi = p.FazlaMesaiSuresi,
-                GeceMesaiSuresi = p.GeceMesaiSuresi,
-                HaftaTatiliCalismaSuresi = p.HaftaTatiliCalismaSuresi,
-                ResmiTatilCalismaSuresi = p.ResmiTatilCalismaSuresi,
-                ToplamCalisilanGun = p.ToplamCalisilanGun,
-                GecKalmaGunSayisi = p.GecKalmaGunSayisi,
-                ErkenCikisGunSayisi = p.ErkenCikisGunSayisi,
-                DevamsizlikGunSayisi = p.DevamsizlikGunSayisi,
-                IzinGunSayisi = p.IzinGunSayisi,
-                HastaTatiliGunSayisi = p.HastaTatiliGunSayisi,
-                MazeretliIzinGunSayisi = p.MazeretliIzinGunSayisi,
-                UcretsizIzinGunSayisi = p.UcretsizIzinGunSayisi,
-                HaftaTatiliGunSayisi = p.HaftaTatiliGunSayisi,
-                ResmiTatilGunSayisi = p.ResmiTatilGunSayisi,
-                ToplamGecKalmaSuresi = p.ToplamGecKalmaSuresi,
-                ToplamErkenCikisSuresi = p.ToplamErkenCikisSuresi,
-                ToplamEksikCalismaSuresi = p.ToplamEksikCalismaSuresi,
-                Durum = p.Durum,
-                Onaylandi = p.Onaylandi,
-                OnaylayanKullaniciId = p.OnaylayanKullaniciId,
-                OnaylayanAdSoyad = p.OnaylayanKullanici != null ? $"{p.OnaylayanKullanici.Ad} {p.OnaylayanKullanici.Soyad}" : null,
-                OnayTarihi = p.OnayTarihi,
-                Notlar = p.Notlar,
-                OlusturmaTarihi = p.OlusturmaTarihi,
-                GuncellemeTarihi = p.GuncellemeTarihi,
-                Detaylar = p.PuantajDetaylari.Select(d => new PuantajDetayItemDTO
+                Id = puantaj.Id,
+                SirketId = puantaj.SirketId,
+                PersonelId = puantaj.PersonelId,
+                PersonelAdSoyad = personel?.AdSoyad ?? "-",
+                SicilNo = personel?.SicilNo ?? "-",
+                DepartmanAdi = departman?.Ad ?? "-",
+                VardiyaAdi = vardiya?.Ad ?? "-",
+                Yil = puantaj.Yil,
+                Ay = puantaj.Ay,
+                ToplamCalismaSuresi = puantaj.ToplamCalismaSuresi,
+                NormalMesaiSuresi = puantaj.NormalMesaiSuresi,
+                FazlaMesaiSuresi = puantaj.FazlaMesaiSuresi,
+                GeceMesaiSuresi = puantaj.GeceMesaiSuresi,
+                HaftaTatiliCalismaSuresi = puantaj.HaftaTatiliCalismaSuresi,
+                ResmiTatilCalismaSuresi = puantaj.ResmiTatilCalismaSuresi,
+                ToplamCalisilanGun = puantaj.ToplamCalisilanGun,
+                GecKalmaGunSayisi = puantaj.GecKalmaGunSayisi,
+                ErkenCikisGunSayisi = puantaj.ErkenCikisGunSayisi,
+                DevamsizlikGunSayisi = puantaj.DevamsizlikGunSayisi,
+                IzinGunSayisi = puantaj.IzinGunSayisi,
+                HastaTatiliGunSayisi = puantaj.HastaTatiliGunSayisi,
+                MazeretliIzinGunSayisi = puantaj.MazeretliIzinGunSayisi,
+                UcretsizIzinGunSayisi = puantaj.UcretsizIzinGunSayisi,
+                HaftaTatiliGunSayisi = puantaj.HaftaTatiliGunSayisi,
+                ResmiTatilGunSayisi = puantaj.ResmiTatilGunSayisi,
+                ToplamGecKalmaSuresi = puantaj.ToplamGecKalmaSuresi,
+                ToplamErkenCikisSuresi = puantaj.ToplamErkenCikisSuresi,
+                ToplamEksikCalismaSuresi = puantaj.ToplamEksikCalismaSuresi,
+                Durum = puantaj.Durum,
+                Onaylandi = puantaj.Onaylandi,
+                OnaylayanKullaniciId = puantaj.OnaylayanKullaniciId,
+                OnaylayanAdSoyad = onaylayan != null ? $"{onaylayan.Ad} {onaylayan.Soyad}" : null,
+                OnayTarihi = puantaj.OnayTarihi,
+                Notlar = puantaj.Notlar,
+                OlusturmaTarihi = puantaj.OlusturmaTarihi,
+                GuncellemeTarihi = puantaj.GuncellemeTarihi,
+                Detaylar = detaylar.Select(d => new PuantajDetayItemDTO
                 {
                     Id = d.Id,
                     Tarih = d.Tarih,
@@ -142,128 +222,369 @@ namespace PDKS.Business.Services
             };
         }
 
-        public async Task<PuantajDetailDTO> GetByPersonelAsync(int personelId, int yil, int ay)
+        public async Task<PuantajDetailDTO> GetByPersonelVeDonemAsync(int personelId, int yil, int ay)
         {
-            var puantaj = await _unitOfWork.Puantajlar
-                .FindWithIncludesAsync(
-                    p => p.PersonelId == personelId && p.Yil == yil && p.Ay == ay,
-                    p => p.Personel,
-                    p => p.Personel.Departman,
-                    p => p.Personel.Vardiya,
-                    p => p.OnaylayanKullanici,
-                    p => p.PuantajDetaylari
-                );
+            var puantajlar = await _unitOfWork.Puantajlar
+                .FindAsync(p => p.PersonelId == personelId && p.Yil == yil && p.Ay == ay);
 
-            var p = puantaj.FirstOrDefault();
-            if (p == null) return null;
+            var puantaj = puantajlar.FirstOrDefault();
+            if (puantaj == null) return null;
 
-            return await GetByIdAsync(p.Id);
+            return await GetByIdAsync(puantaj.Id);
         }
 
-        public async Task<int> OlusturAsync(PuantajCreateDTO dto)
+        public async Task<IEnumerable<PuantajListDTO>> GetByDonemAsync(int yil, int ay, int? departmanId = null)
         {
-            // Mevcut puantaj kontrolü
-            var mevcutPuantaj = await _unitOfWork.Puantajlar
-                .FirstOrDefaultAsync(p => p.PersonelId == dto.PersonelId && p.Yil == dto.Yil && p.Ay == dto.Ay);
+            var puantajlar = await _unitOfWork.Puantajlar
+                .FindAsync(p => p.Yil == yil && p.Ay == ay);
 
-            if (mevcutPuantaj != null)
+            var liste = new List<PuantajListDTO>();
+
+            foreach (var p in puantajlar)
             {
-                throw new Exception("Bu dönem için zaten puantaj kaydı mevcut");
+                var personel = await _unitOfWork.Personeller.GetByIdAsync(p.PersonelId);
+                if (personel == null) continue;
+
+                if (departmanId.HasValue && personel.DepartmanId != departmanId.Value)
+                    continue;
+
+                var departman = personel.DepartmanId != null
+                    ? await _unitOfWork.Departmanlar.GetByIdAsync(personel.DepartmanId.Value)
+                    : null;
+
+                liste.Add(new PuantajListDTO
+                {
+                    Id = p.Id,
+                    SirketId = p.SirketId,
+                    PersonelId = p.PersonelId,
+                    PersonelAdSoyad = personel.AdSoyad,
+                    SicilNo = personel.SicilNo,
+                    DepartmanAdi = departman?.Ad ?? "-",
+                    Yil = p.Yil,
+                    Ay = p.Ay,
+                    ToplamCalisilanGun = p.ToplamCalisilanGun,
+                    ToplamCalismaSuresi = p.ToplamCalismaSuresi,
+                    FazlaMesaiSuresi = p.FazlaMesaiSuresi,
+                    DevamsizlikGunSayisi = p.DevamsizlikGunSayisi,
+                    IzinGunSayisi = p.IzinGunSayisi,
+                    Durum = p.Durum,
+                    Onaylandi = p.Onaylandi,
+                    OlusturmaTarihi = p.OlusturmaTarihi
+                });
             }
 
-            // Personel bilgilerini al
-            var personel = await _unitOfWork.Personeller.GetByIdAsync(dto.PersonelId);
-            if (personel == null)
-                throw new Exception("Personel bulunamadı");
+            return liste.OrderBy(p => p.PersonelAdSoyad);
+        }
 
-            // Yeni puantaj oluştur
-            var puantaj = new Puantaj
+        public async Task<IEnumerable<PuantajListDTO>> GetByPersonelAsync(int personelId)
+        {
+            var puantajlar = await _unitOfWork.Puantajlar
+                .FindAsync(p => p.PersonelId == personelId);
+
+            var personel = await _unitOfWork.Personeller.GetByIdAsync(personelId);
+            if (personel == null) return new List<PuantajListDTO>();
+
+            var departman = personel.DepartmanId != null
+                ? await _unitOfWork.Departmanlar.GetByIdAsync(personel.DepartmanId.Value)
+                : null;
+
+            return puantajlar.Select(p => new PuantajListDTO
             {
-                SirketId = dto.SirketId,
-                PersonelId = dto.PersonelId,
-                Yil = dto.Yil,
-                Ay = dto.Ay,
-                Durum = "Taslak",
-                Onaylandi = false,
-                Notlar = dto.Notlar,
-                OlusturmaTarihi = DateTime.UtcNow
-            };
+                Id = p.Id,
+                SirketId = p.SirketId,
+                PersonelId = p.PersonelId,
+                PersonelAdSoyad = personel.AdSoyad,
+                SicilNo = personel.SicilNo,
+                DepartmanAdi = departman?.Ad ?? "-",
+                Yil = p.Yil,
+                Ay = p.Ay,
+                ToplamCalisilanGun = p.ToplamCalisilanGun,
+                ToplamCalismaSuresi = p.ToplamCalismaSuresi,
+                FazlaMesaiSuresi = p.FazlaMesaiSuresi,
+                DevamsizlikGunSayisi = p.DevamsizlikGunSayisi,
+                IzinGunSayisi = p.IzinGunSayisi,
+                Durum = p.Durum,
+                Onaylandi = p.Onaylandi,
+                OlusturmaTarihi = p.OlusturmaTarihi
+            }).OrderByDescending(p => p.Yil).ThenByDescending(p => p.Ay);
+        }
 
-            await _unitOfWork.Puantajlar.AddAsync(puantaj);
+        public async Task<bool> OnaylaAsync(PuantajOnayDTO dto)
+        {
+            var puantaj = await _unitOfWork.Puantajlar.GetByIdAsync(dto.PuantajId);
+            if (puantaj == null)
+                throw new Exception("Puantaj bulunamadı");
+
+            if (puantaj.Onaylandi)
+                throw new Exception("Puantaj zaten onaylanmış");
+
+            puantaj.Onaylandi = true;
+            puantaj.Durum = "Onaylandı";
+            puantaj.OnayTarihi = DateTime.UtcNow;
+            // OnaylayanKullaniciId JWT'den alınmalı - şimdilik dto'dan
+            puantaj.Notlar = dto.Notlar;
+            puantaj.GuncellemeTarihi = DateTime.UtcNow;
+
+            _unitOfWork.Puantajlar.Update(puantaj);
             await _unitOfWork.SaveChangesAsync();
 
-            // Puantajı hesapla
-            await PuantajHesaplaAsync(puantaj.Id, personel, dto.Yil, dto.Ay);
-
-            return puantaj.Id;
+            return true;
         }
 
-        public async Task<List<int>> TopluOlusturAsync(PuantajTopluOlusturDTO dto)
-        {
-            var olusturulanIdler = new List<int>();
-
-            // Personel listesini belirle
-            IEnumerable<Personel> personeller;
-            if (dto.TumPersoneller)
-            {
-                personeller = await _unitOfWork.Personeller
-                    .FindAsync(p => p.SirketId == dto.SirketId && p.Durum == true);
-            }
-            else if (dto.DepartmanId.HasValue)
-            {
-                personeller = await _unitOfWork.Personeller
-                    .FindAsync(p => p.SirketId == dto.SirketId && p.DepartmanId == dto.DepartmanId && p.Durum == true);
-            }
-            else
-            {
-                personeller = await _unitOfWork.Personeller
-                    .FindAsync(p => dto.PersonelIdler.Contains(p.Id));
-            }
-
-            foreach (var personel in personeller)
-            {
-                try
-                {
-                    // Mevcut puantaj kontrolü
-                    var mevcutPuantaj = await _unitOfWork.Puantajlar
-                        .FirstOrDefaultAsync(p => p.PersonelId == personel.Id && p.Yil == dto.Yil && p.Ay == dto.Ay);
-
-                    if (mevcutPuantaj != null)
-                        continue;
-
-                    var createDto = new PuantajCreateDTO
-                    {
-                        SirketId = dto.SirketId,
-                        PersonelId = personel.Id,
-                        Yil = dto.Yil,
-                        Ay = dto.Ay
-                    };
-
-                    var puantajId = await OlusturAsync(createDto);
-                    olusturulanIdler.Add(puantajId);
-                }
-                catch (Exception)
-                {
-                    // Hata durumunda devam et
-                    continue;
-                }
-            }
-
-            return olusturulanIdler;
-        }
-
-        public async Task YenidenHesaplaAsync(int puantajId)
+        public async Task<bool> OnayIptalAsync(int puantajId)
         {
             var puantaj = await _unitOfWork.Puantajlar.GetByIdAsync(puantajId);
             if (puantaj == null)
                 throw new Exception("Puantaj bulunamadı");
 
-            if (puantaj.Onaylandi)
-                throw new Exception("Onaylanmış puantaj yeniden hesaplanamaz");
+            if (!puantaj.Onaylandi)
+                throw new Exception("Puantaj zaten onaysız durumda");
 
-            var personel = await _unitOfWork.Personeller.GetByIdAsync(puantaj.PersonelId);
-            await PuantajHesaplaAsync(puantajId, personel, puantaj.Yil, puantaj.Ay);
+            puantaj.Onaylandi = false;
+            puantaj.Durum = "Taslak";
+            puantaj.OnayTarihi = null;
+            puantaj.OnaylayanKullaniciId = null;
+            puantaj.GuncellemeTarihi = DateTime.UtcNow;
+
+            _unitOfWork.Puantajlar.Update(puantaj);
+            await _unitOfWork.SaveChangesAsync();
+
+            return true;
         }
+
+        public async Task<bool> DeleteAsync(int id)
+        {
+            var puantaj = await _unitOfWork.Puantajlar.GetByIdAsync(id);
+            if (puantaj == null)
+                return false;
+
+            if (puantaj.Onaylandi)
+                throw new Exception("Onaylanmış puantaj silinemez");
+
+            // Detayları sil - DeleteRange yerine foreach kullan
+            var detaylar = await _unitOfWork.PuantajDetaylar.FindAsync(d => d.PuantajId == id);
+            foreach (var detay in detaylar)
+            {
+                _unitOfWork.PuantajDetaylar.Delete(detay);
+            }
+
+            _unitOfWork.Puantajlar.Delete(puantaj);
+            await _unitOfWork.SaveChangesAsync();
+
+            return true;
+        }
+
+        // Günlük Detaylar
+        public async Task<List<PuantajDetayDTO>> GetGunlukDetaylarAsync(int puantajId)
+        {
+            var puantaj = await _unitOfWork.Puantajlar.GetByIdAsync(puantajId);
+            if (puantaj == null)
+                throw new Exception("Puantaj bulunamadı");
+
+            var detaylar = await _unitOfWork.PuantajDetaylar.FindAsync(d => d.PuantajId == puantajId);
+
+            var liste = new List<PuantajDetayDTO>();
+            foreach (var d in detaylar)
+            {
+                var vardiya = d.VardiyaId != null ? await _unitOfWork.Vardiyalar.GetByIdAsync(d.VardiyaId.Value) : null;
+                var izin = d.IzinId != null ? await _unitOfWork.Izinler.GetByIdAsync(d.IzinId.Value) : null;
+
+                liste.Add(new PuantajDetayDTO
+                {
+                    Id = d.Id,
+                    PuantajId = d.PuantajId,
+                    Tarih = d.Tarih,
+                    VardiyaAdi = vardiya?.Ad,
+                    PlanlananGirisSaati = d.VardiyaBaslangic,
+                    PlanlananCikisSaati = d.VardiyaBitis,
+                    GerceklesenGirisSaati = d.IlkGiris,
+                    GerceklesenCikisSaati = d.SonCikis,
+                    ToplamCalismaDakika = d.ToplamCalismaSuresi,
+                    NormalMesaiDakika = d.PlanlananCalismaSuresi,
+                    FazlaMesaiDakika = d.FazlaMesaiSuresi,
+                    GecKalmaDakika = d.GecKalmaSuresi,
+                    ErkenCikisDakika = d.ErkenCikisSuresi,
+                    Durum = d.CalismaDurumu,
+                    IzinTuru = izin?.IzinTipi,
+                    HaftaSonuMu = d.GunTipi == 2,
+                    ResmiTatilMi = d.GunTipi == 3,
+                    Notlar = d.Notlar
+                });
+            }
+
+            return liste.OrderBy(d => d.Tarih).ToList();
+        }
+
+        public async Task<PuantajDetayDTO> GetDetayByTarihAsync(int personelId, DateTime tarih)
+        {
+            var puantajlar = await _unitOfWork.Puantajlar.FindAsync(p =>
+                p.PersonelId == personelId &&
+                p.Yil == tarih.Year &&
+                p.Ay == tarih.Month);
+
+            var puantaj = puantajlar.FirstOrDefault();
+            if (puantaj == null)
+                return null;
+
+            var detaylar = await _unitOfWork.PuantajDetaylar.FindAsync(d =>
+                d.PuantajId == puantaj.Id &&
+                d.Tarih.Date == tarih.Date);
+
+            var detay = detaylar.FirstOrDefault();
+            if (detay == null)
+                return null;
+
+            var vardiya = detay.VardiyaId != null ? await _unitOfWork.Vardiyalar.GetByIdAsync(detay.VardiyaId.Value) : null;
+            var izin = detay.IzinId != null ? await _unitOfWork.Izinler.GetByIdAsync(detay.IzinId.Value) : null;
+
+            return new PuantajDetayDTO
+            {
+                Id = detay.Id,
+                PuantajId = detay.PuantajId,
+                Tarih = detay.Tarih,
+                VardiyaAdi = vardiya?.Ad,
+                PlanlananGirisSaati = detay.VardiyaBaslangic,
+                PlanlananCikisSaati = detay.VardiyaBitis,
+                GerceklesenGirisSaati = detay.IlkGiris,
+                GerceklesenCikisSaati = detay.SonCikis,
+                ToplamCalismaDakika = detay.ToplamCalismaSuresi,
+                NormalMesaiDakika = detay.PlanlananCalismaSuresi,
+                FazlaMesaiDakika = detay.FazlaMesaiSuresi,
+                GecKalmaDakika = detay.GecKalmaSuresi,
+                ErkenCikisDakika = detay.ErkenCikisSuresi,
+                Durum = detay.CalismaDurumu,
+                IzinTuru = izin?.IzinTipi,
+                HaftaSonuMu = detay.GunTipi == 2,
+                ResmiTatilMi = detay.GunTipi == 3,
+                Notlar = detay.Notlar
+            };
+        }
+
+        // Raporlama
+        public async Task<PuantajOzetRaporDTO> GetOzetRaporAsync(PuantajRaporParametreDTO parametre)
+        {
+            // Basit implementasyon - detaylı rapor için genişletilebilir
+            var puantajlar = await _unitOfWork.Puantajlar.FindAsync(p =>
+                p.Yil >= parametre.BaslangicYil &&
+                p.Yil <= parametre.BitisYil);
+
+            if (parametre.PersonelId.HasValue)
+            {
+                puantajlar = puantajlar.Where(p => p.PersonelId == parametre.PersonelId.Value);
+            }
+
+            if (parametre.DepartmanId.HasValue)
+            {
+                var departmanPersonelleri = await _unitOfWork.Personeller
+                    .FindAsync(p => p.DepartmanId == parametre.DepartmanId.Value);
+                var personelIdler = departmanPersonelleri.Select(p => p.Id).ToList();
+                puantajlar = puantajlar.Where(p => personelIdler.Contains(p.PersonelId));
+            }
+
+            return new PuantajOzetRaporDTO
+            {
+                ToplamPersonelSayisi = puantajlar.Select(p => p.PersonelId).Distinct().Count(),
+                ToplamCalismaSaati = puantajlar.Sum(p => p.ToplamCalismaSuresi) / 60.0m,
+                ToplamFazlaMesai = puantajlar.Sum(p => p.FazlaMesaiSuresi) / 60.0m,
+                ToplamDevamsizlik = puantajlar.Sum(p => p.DevamsizlikGunSayisi),
+                ToplamIzin = puantajlar.Sum(p => p.IzinGunSayisi)
+            };
+        }
+
+        public async Task<List<DepartmanPuantajOzetDTO>> GetDepartmanOzetAsync(int yil, int ay)
+        {
+            var departmanlar = await _unitOfWork.Departmanlar.GetAllAsync();
+            var liste = new List<DepartmanPuantajOzetDTO>();
+
+            foreach (var departman in departmanlar)
+            {
+                var personeller = await _unitOfWork.Personeller.FindAsync(p => p.DepartmanId == departman.Id);
+                var personelIdler = personeller.Select(p => p.Id).ToList();
+
+                var puantajlar = await _unitOfWork.Puantajlar.FindAsync(p =>
+                    p.Yil == yil &&
+                    p.Ay == ay &&
+                    personelIdler.Contains(p.PersonelId));
+
+                if (!puantajlar.Any())
+                    continue;
+
+                liste.Add(new DepartmanPuantajOzetDTO
+                {
+                    DepartmanId = departman.Id,
+                    DepartmanAdi = departman.Ad,
+                    PersonelSayisi = puantajlar.Count(),
+                    ToplamCalismaSaati = puantajlar.Sum(p => p.ToplamCalismaSuresi) / 60.0m,
+                    ToplamFazlaMesai = puantajlar.Sum(p => p.FazlaMesaiSuresi) / 60.0m,
+                    ToplamDevamsizlik = puantajlar.Sum(p => p.DevamsizlikGunSayisi),
+                    OrtalamaCalismaOrani = puantajlar.Any()
+                        ? (decimal)puantajlar.Average(p => p.ToplamCalisilanGun) / DateTime.DaysInMonth(yil, ay) * 100
+                        : 0
+                });
+            }
+
+            return liste.OrderBy(d => d.DepartmanAdi).ToList();
+        }
+
+        public async Task<byte[]> ExportToExcelAsync(PuantajRaporParametreDTO parametre)
+        {
+            // Excel export implementasyonu - OfficeOpenXml veya ClosedXML kullanılabilir
+            throw new NotImplementedException("Excel export özelliği henüz implement edilmedi");
+        }
+
+        // Yardımcı Metotlar
+        public async Task<bool> PuantajVarMiAsync(int personelId, int yil, int ay)
+        {
+            return await _unitOfWork.Puantajlar.AnyAsync(p =>
+                p.PersonelId == personelId &&
+                p.Yil == yil &&
+                p.Ay == ay);
+        }
+
+        public async Task<List<string>> ValidasyonKontrolAsync(int personelId, int yil, int ay)
+        {
+            var hatalar = new List<string>();
+
+            // Personel kontrolü
+            var personel = await _unitOfWork.Personeller.GetByIdAsync(personelId);
+            if (personel == null)
+            {
+                hatalar.Add("Personel bulunamadı");
+                return hatalar;
+            }
+
+            if (!personel.Durum)
+            {
+                hatalar.Add("Personel aktif değil");
+            }
+
+            // Vardiya kontrolü
+            if (personel.VardiyaId == null)
+            {
+                hatalar.Add("Personele atanmış vardiya bulunamadı");
+            }
+
+            // Dönem kontrolü
+            var baslangicTarihi = new DateTime(yil, ay, 1);
+            var bitisTarihi = baslangicTarihi.AddMonths(1).AddDays(-1);
+
+            // Giriş-Çıkış kayıtları kontrolü
+            var girisler = await _unitOfWork.GirisCikislar.FindAsync(g =>
+                g.PersonelId == personelId &&
+                g.GirisZamani >= baslangicTarihi &&
+                g.GirisZamani <= bitisTarihi);
+
+            if (!girisler.Any())
+            {
+                hatalar.Add("Bu dönem için giriş-çıkış kaydı bulunamadı");
+            }
+
+            return hatalar;
+        }
+
+        // ============================================
+        // PRIVATE HELPER METODLARI
+        // ============================================
 
         private async Task PuantajHesaplaAsync(int puantajId, Personel personel, int yil, int ay)
         {
@@ -273,359 +594,139 @@ namespace PDKS.Business.Services
             var baslangicTarihi = new DateTime(yil, ay, 1);
             var bitisTarihi = baslangicTarihi.AddMonths(1).AddDays(-1);
 
-            // Mevcut detayları sil
-            var mevcutDetaylar = await _unitOfWork.PuantajDetaylar
-                .FindAsync(d => d.PuantajId == puantajId);
-            _unitOfWork.PuantajDetaylar.DeleteRange(mevcutDetaylar);
+            // Mevcut detayları sil - DeleteRange yerine foreach
+            var mevcutDetaylar = await _unitOfWork.PuantajDetaylar.FindAsync(d => d.PuantajId == puantajId);
+            foreach (var detay in mevcutDetaylar)
+            {
+                _unitOfWork.PuantajDetaylar.Delete(detay);
+            }
             await _unitOfWork.SaveChangesAsync();
 
-            // Giriş-çıkış kayıtlarını al
-            var girisCikislar = await _unitOfWork.GirisCikislar
-                .FindAsync(g => g.PersonelId == personel.Id 
-                    && g.GirisZamani.HasValue 
-                    && g.GirisZamani.Value.Date >= baslangicTarihi 
-                    && g.GirisZamani.Value.Date <= bitisTarihi);
-
-            // İzinleri al
-            var izinler = await _unitOfWork.Izinler
-                .FindAsync(i => i.PersonelId == personel.Id 
-                    && i.OnayDurumu == "Onaylandı"
-                    && i.BaslangicTarihi <= bitisTarihi 
-                    && i.BitisTarihi >= baslangicTarihi);
-
-            // Tatil günlerini al
-            var tatiller = await _unitOfWork.Tatiller
-                .FindAsync(t => t.Tarih >= baslangicTarihi && t.Tarih <= bitisTarihi);
-
-            // Vardiya bilgilerini al
-            Vardiya vardiya = null;
-            if (personel.VardiyaId.HasValue)
-            {
-                vardiya = await _unitOfWork.Vardiyalar.GetByIdAsync(personel.VardiyaId.Value);
-            }
-
-            // İstatistik değişkenleri
-            int toplamCalismaSuresi = 0;
-            int normalMesaiSuresi = 0;
-            int fazlaMesaiSuresi = 0;
-            int geceMesaiSuresi = 0;
-            int haftaTatiliCalismaSuresi = 0;
-            int resmiTatilCalismaSuresi = 0;
-            int toplamCalisilanGun = 0;
-            int gecKalmaGunSayisi = 0;
-            int erkenCikisGunSayisi = 0;
-            int devamsizlikGunSayisi = 0;
-            int izinGunSayisi = 0;
-            int haftaTatiliGunSayisi = 0;
-            int resmiTatilGunSayisi = 0;
-            int toplamGecKalmaSuresi = 0;
-            int toplamErkenCikisSuresi = 0;
-            int toplamEksikCalismaSuresi = 0;
-
-            // Ay içindeki her gün için detay oluştur
+            // Günlük detayları oluştur
+            var gunlukDetaylar = new List<PuantajDetay>();
             for (var tarih = baslangicTarihi; tarih <= bitisTarihi; tarih = tarih.AddDays(1))
             {
+                var gunTipi = TarihGunTipiBelirle(tarih);
+                var girisler = await _unitOfWork.GirisCikislar.FindAsync(g =>
+                    g.PersonelId == personel.Id &&
+                    g.GirisZamani.Date == tarih.Date);
+
+                var izinler = await _unitOfWork.Izinler.FindAsync(i =>
+                    i.PersonelId == personel.Id &&
+                    i.BaslangicTarihi <= tarih &&
+                    i.BitisTarihi >= tarih &&
+                    i.OnayDurumu == "Onaylandı");
+
                 var detay = new PuantajDetay
                 {
                     PuantajId = puantajId,
                     Tarih = tarih,
+                    GunTipi = gunTipi,
                     VardiyaId = personel.VardiyaId,
-                    VardiyaBaslangic = vardiya?.BaslangicSaati,
-                    VardiyaBitis = vardiya?.BitisSaati,
                     OlusturmaTarihi = DateTime.UtcNow
                 };
 
-                // Gün tipini belirle
-                var tatil = tatiller.FirstOrDefault(t => t.Tarih.Date == tarih.Date);
-                if (tatil != null)
-                {
-                    detay.GunTipi = 3; // Resmi Tatil
-                    resmiTatilGunSayisi++;
-                }
-                else if (tarih.DayOfWeek == DayOfWeek.Sunday || tarih.DayOfWeek == DayOfWeek.Saturday)
-                {
-                    detay.GunTipi = 2; // Hafta Tatili
-                    haftaTatiliGunSayisi++;
-                }
-                else
-                {
-                    detay.GunTipi = 1; // Hafta İçi
-                }
-
                 // İzin kontrolü
-                var izin = izinler.FirstOrDefault(i => i.BaslangicTarihi.Date <= tarih.Date && i.BitisTarihi.Date >= tarih.Date);
+                var izin = izinler.FirstOrDefault();
                 if (izin != null)
                 {
                     detay.IzinliMi = true;
                     detay.IzinId = izin.Id;
-                    detay.IzinTuru = izin.IzinTipi;
+                    detay.IzinTuru = izin.IzinTuru;
                     detay.CalismaDurumu = "Izinli";
-                    izinGunSayisi++;
                 }
-                else
+                else if (girisler.Any())
                 {
-                    // Giriş-çıkış kontrolü
-                    var gunGirisCikislar = girisCikislar.Where(g => g.GirisZamani.Value.Date == tarih.Date).OrderBy(g => g.GirisZamani).ToList();
+                    var ilkGiris = girisler.OrderBy(g => g.GirisZamani).First();
+                    var sonCikis = girisler.OrderByDescending(g => g.GirisZamani).First();
 
-                    if (gunGirisCikislar.Any())
+                    detay.IlkGiris = ilkGiris.Tarih;
+                    detay.SonCikis = sonCikis.Tarih;
+
+                    // Çalışma süresi hesapla (basit)
+                    if (detay.IlkGiris.HasValue && detay.SonCikis.HasValue)
                     {
-                        detay.IlkGiris = gunGirisCikislar.First().GirisZamani;
-                        detay.SonCikis = gunGirisCikislar.Last().CikisZamani;
+                        detay.ToplamCalismaSuresi = (int)(detay.SonCikis.Value - detay.IlkGiris.Value).TotalMinutes;
+                    }
 
-                        // Toplam çalışma süresini hesapla
-                        if (detay.SonCikis.HasValue)
-                        {
-                            detay.ToplamCalismaSuresi = (int)(detay.SonCikis.Value - detay.IlkGiris.Value).TotalMinutes;
-                            toplamCalismaSuresi += detay.ToplamCalismaSuresi.Value;
-                            toplamCalisilanGun++;
-                        }
-
-                        // Vardiya bazlı değerlendirme
+                    // Vardiya bilgilerine göre geç kalma/erken çıkış hesapla
+                    if (personel.VardiyaId.HasValue)
+                    {
+                        var vardiya = await _unitOfWork.Vardiyalar.GetByIdAsync(personel.VardiyaId.Value);
                         if (vardiya != null)
                         {
-                            var vardiyaBaslangicZaman = tarih.Date.Add(vardiya.BaslangicSaati);
-                            var vardiyaBitisZaman = tarih.Date.Add(vardiya.BitisSaati);
-
-                            // Gece vardiyası kontrolü
-                            if (vardiya.GeceVardiyasiMi && vardiya.BitisSaati < vardiya.BaslangicSaati)
-                            {
-                                vardiyaBitisZaman = vardiyaBitisZaman.AddDays(1);
-                            }
-
-                            var planlananSure = (int)(vardiyaBitisZaman - vardiyaBaslangicZaman).TotalMinutes;
-                            detay.PlanlananCalismaSuresi = planlananSure;
+                            detay.VardiyaBaslangic = vardiya.BaslangicSaati;
+                            detay.VardiyaBitis = vardiya.BitisSaati;
+                            detay.PlanlananCalismaSuresi = (int)(vardiya.BitisSaati - vardiya.BaslangicSaati).TotalMinutes;
 
                             // Geç kalma kontrolü
-                            var toleransDakika = vardiya.ToleransSuresiDakika;
-                            if (detay.IlkGiris > vardiyaBaslangicZaman.AddMinutes(toleransDakika))
+                            var vardiyaBaslangicDateTime = tarih.Date + vardiya.BaslangicSaati;
+                            if (detay.IlkGiris > vardiyaBaslangicDateTime)
                             {
-                                detay.GecKalmaSuresi = (int)(detay.IlkGiris.Value - vardiyaBaslangicZaman).TotalMinutes;
-                                toplamGecKalmaSuresi += detay.GecKalmaSuresi.Value;
-                                gecKalmaGunSayisi++;
+                                detay.GecKalmaSuresi = (int)(detay.IlkGiris.Value - vardiyaBaslangicDateTime).TotalMinutes;
                             }
 
                             // Erken çıkış kontrolü
-                            if (detay.SonCikis.HasValue && detay.SonCikis < vardiyaBitisZaman.AddMinutes(-toleransDakika))
+                            var vardiyaBitisDateTime = tarih.Date + vardiya.BitisSaati;
+                            if (detay.SonCikis < vardiyaBitisDateTime)
                             {
-                                detay.ErkenCikisSuresi = (int)(vardiyaBitisZaman - detay.SonCikis.Value).TotalMinutes;
-                                toplamErkenCikisSuresi += detay.ErkenCikisSuresi.Value;
-                                erkenCikisGunSayisi++;
+                                detay.ErkenCikisSuresi = (int)(vardiyaBitisDateTime - detay.SonCikis.Value).TotalMinutes;
                             }
 
                             // Fazla mesai kontrolü
-                            if (detay.SonCikis.HasValue && detay.SonCikis > vardiyaBitisZaman)
+                            if (detay.SonCikis > vardiyaBitisDateTime)
                             {
-                                detay.FazlaMesaiSuresi = (int)(detay.SonCikis.Value - vardiyaBitisZaman).TotalMinutes;
-                                fazlaMesaiSuresi += detay.FazlaMesaiSuresi.Value;
-
-                                // Hafta tatili veya resmi tatil fazla mesai
-                                if (detay.GunTipi == 2)
-                                    haftaTatiliCalismaSuresi += detay.ToplamCalismaSuresi.Value;
-                                else if (detay.GunTipi == 3)
-                                    resmiTatilCalismaSuresi += detay.ToplamCalismaSuresi.Value;
+                                detay.FazlaMesaiSuresi = (int)(detay.SonCikis.Value - vardiyaBitisDateTime).TotalMinutes;
                             }
-
-                            // Eksik çalışma kontrolü
-                            if (detay.ToplamCalismaSuresi < planlananSure)
-                            {
-                                detay.EksikCalismaSuresi = planlananSure - detay.ToplamCalismaSuresi.Value;
-                                toplamEksikCalismaSuresi += detay.EksikCalismaSuresi.Value;
-                            }
-
-                            // Normal mesai hesapla
-                            var normalSure = Math.Min(detay.ToplamCalismaSuresi.Value, planlananSure);
-                            normalMesaiSuresi += normalSure;
-
-                            // Çalışma durumunu belirle
-                            if (detay.GecKalmaSuresi > 0 && detay.ErkenCikisSuresi > 0)
-                                detay.CalismaDurumu = "GecKalmisErkenCikmis";
-                            else if (detay.GecKalmaSuresi > 0)
-                                detay.CalismaDurumu = "GecKalmis";
-                            else if (detay.ErkenCikisSuresi > 0)
-                                detay.CalismaDurumu = "ErkenCikmis";
-                            else if (detay.FazlaMesaiSuresi > 0)
-                                detay.CalismaDurumu = "FazlaMesai";
-                            else
-                                detay.CalismaDurumu = "Normal";
                         }
                     }
-                    else if (detay.GunTipi == 1) // Hafta içi ve çalışmamış
-                    {
-                        detay.CalismaDurumu = "Devamsiz";
-                        devamsizlikGunSayisi++;
-                    }
+
+                    detay.CalismaDurumu = "Normal";
+                }
+                else
+                {
+                    if (gunTipi == 2)
+                        detay.CalismaDurumu = "HaftaTatili";
+                    else if (gunTipi == 3)
+                        detay.CalismaDurumu = "ResmiTatil";
                     else
-                    {
-                        detay.CalismaDurumu = detay.GunTipi == 2 ? "HaftaTatili" : "ResmiTatil";
-                    }
+                        detay.CalismaDurumu = "Devamsiz";
                 }
 
-                await _unitOfWork.PuantajDetaylar.AddAsync(detay);
+                gunlukDetaylar.Add(detay);
             }
 
+            // Detayları kaydet
+            await _unitOfWork.PuantajDetaylar.AddRangeAsync(gunlukDetaylar);
+            await _unitOfWork.SaveChangesAsync();
+
             // Puantaj özetini güncelle
-            puantaj.ToplamCalismaSuresi = toplamCalismaSuresi;
-            puantaj.NormalMesaiSuresi = normalMesaiSuresi;
-            puantaj.FazlaMesaiSuresi = fazlaMesaiSuresi;
-            puantaj.GeceMesaiSuresi = geceMesaiSuresi;
-            puantaj.HaftaTatiliCalismaSuresi = haftaTatiliCalismaSuresi;
-            puantaj.ResmiTatilCalismaSuresi = resmiTatilCalismaSuresi;
-            puantaj.ToplamCalisilanGun = toplamCalisilanGun;
-            puantaj.GecKalmaGunSayisi = gecKalmaGunSayisi;
-            puantaj.ErkenCikisGunSayisi = erkenCikisGunSayisi;
-            puantaj.DevamsizlikGunSayisi = devamsizlikGunSayisi;
-            puantaj.IzinGunSayisi = izinGunSayisi;
-            puantaj.HaftaTatiliGunSayisi = haftaTatiliGunSayisi;
-            puantaj.ResmiTatilGunSayisi = resmiTatilGunSayisi;
-            puantaj.ToplamGecKalmaSuresi = toplamGecKalmaSuresi;
-            puantaj.ToplamErkenCikisSuresi = toplamErkenCikisSuresi;
-            puantaj.ToplamEksikCalismaSuresi = toplamEksikCalismaSuresi;
+            puantaj.ToplamCalismaSuresi = gunlukDetaylar.Sum(d => d.ToplamCalismaSuresi ?? 0);
+            puantaj.ToplamCalisilanGun = gunlukDetaylar.Count(d => d.ToplamCalismaSuresi.HasValue && d.ToplamCalismaSuresi > 0);
+            puantaj.FazlaMesaiSuresi = gunlukDetaylar.Sum(d => d.FazlaMesaiSuresi ?? 0);
+            puantaj.ToplamGecKalmaSuresi = gunlukDetaylar.Sum(d => d.GecKalmaSuresi ?? 0);
+            puantaj.ToplamErkenCikisSuresi = gunlukDetaylar.Sum(d => d.ErkenCikisSuresi ?? 0);
+            puantaj.GecKalmaGunSayisi = gunlukDetaylar.Count(d => d.GecKalmaSuresi.HasValue && d.GecKalmaSuresi > 0);
+            puantaj.ErkenCikisGunSayisi = gunlukDetaylar.Count(d => d.ErkenCikisSuresi.HasValue && d.ErkenCikisSuresi > 0);
+            puantaj.DevamsizlikGunSayisi = gunlukDetaylar.Count(d => d.CalismaDurumu == "Devamsiz");
+            puantaj.IzinGunSayisi = gunlukDetaylar.Count(d => d.IzinliMi);
+            puantaj.HaftaTatiliGunSayisi = gunlukDetaylar.Count(d => d.GunTipi == 2);
+            puantaj.ResmiTatilGunSayisi = gunlukDetaylar.Count(d => d.GunTipi == 3);
+
             puantaj.GuncellemeTarihi = DateTime.UtcNow;
 
             _unitOfWork.Puantajlar.Update(puantaj);
             await _unitOfWork.SaveChangesAsync();
         }
 
-        public async Task OnaylaAsync(PuantajOnayDTO dto)
+        private int TarihGunTipiBelirle(DateTime tarih)
         {
-            var puantaj = await _unitOfWork.Puantajlar.GetByIdAsync(dto.PuantajId);
-            if (puantaj == null)
-                throw new Exception("Puantaj bulunamadı");
+            // 1: Hafta İçi, 2: Hafta Tatili, 3: Resmi Tatil
+            if (tarih.DayOfWeek == DayOfWeek.Saturday || tarih.DayOfWeek == DayOfWeek.Sunday)
+                return 2;
 
-            puantaj.Onaylandi = dto.Onayla;
-            puantaj.Durum = dto.Onayla ? "Onaylandi" : "Taslak";
-            puantaj.OnayTarihi = dto.Onayla ? DateTime.UtcNow : null;
-            // OnaylayanKullaniciId JWT'den alınmalı
-            puantaj.Notlar = dto.Notlar;
-            puantaj.GuncellemeTarihi = DateTime.UtcNow;
-
-            _unitOfWork.Puantajlar.Update(puantaj);
-            await _unitOfWork.SaveChangesAsync();
-        }
-
-        public async Task<PuantajIstatistikDTO> GetIstatistikAsync(int sirketId, int yil, int ay)
-        {
-            var puantajlar = await _unitOfWork.Puantajlar
-                .FindAsync(p => p.SirketId == sirketId && p.Yil == yil && p.Ay == ay);
-
-            var aktifPersoneller = await _unitOfWork.Personeller
-                .FindAsync(p => p.SirketId == sirketId && p.Durum == true);
-
-            return new PuantajIstatistikDTO
-            {
-                SirketId = sirketId,
-                Yil = yil,
-                Ay = ay,
-                ToplamPersonelSayisi = aktifPersoneller.Count(),
-                PuantajHesaplananSayisi = puantajlar.Count(),
-                PuantajOnaylananSayisi = puantajlar.Count(p => p.Onaylandi),
-                ToplamCalismaSuresi = puantajlar.Sum(p => p.ToplamCalismaSuresi),
-                ToplamFazlaMesaiSuresi = puantajlar.Sum(p => p.FazlaMesaiSuresi),
-                ToplamDevamsizlikGunSayisi = puantajlar.Sum(p => p.DevamsizlikGunSayisi),
-                ToplamIzinGunSayisi = puantajlar.Sum(p => p.IzinGunSayisi)
-            };
-        }
-
-        public async Task<IEnumerable<GecKalanlarRaporDTO>> GetGecKalanlarRaporuAsync(int sirketId, DateTime baslangic, DateTime bitis)
-        {
-            var puantajDetaylar = await _unitOfWork.PuantajDetaylar
-                .FindWithIncludesAsync(
-                    d => d.Puantaj.SirketId == sirketId 
-                        && d.Tarih >= baslangic 
-                        && d.Tarih <= bitis 
-                        && d.GecKalmaSuresi > 0,
-                    d => d.Puantaj,
-                    d => d.Puantaj.Personel,
-                    d => d.Puantaj.Personel.Departman
-                );
-
-            return puantajDetaylar.Select(d => new GecKalanlarRaporDTO
-            {
-                Tarih = d.Tarih,
-                PersonelId = d.Puantaj.PersonelId,
-                PersonelAdSoyad = d.Puantaj.Personel.AdSoyad,
-                SicilNo = d.Puantaj.Personel.SicilNo,
-                DepartmanAdi = d.Puantaj.Personel.Departman?.Ad ?? "-",
-                VardiyaBaslangic = d.VardiyaBaslangic ?? TimeSpan.Zero,
-                GirisSaati = d.IlkGiris,
-                GecKalmaSuresi = d.GecKalmaSuresi ?? 0
-            }).OrderBy(r => r.Tarih).ThenBy(r => r.PersonelAdSoyad);
-        }
-
-        public async Task<IEnumerable<ErkenCikanlarRaporDTO>> GetErkenCikanlarRaporuAsync(int sirketId, DateTime baslangic, DateTime bitis)
-        {
-            var puantajDetaylar = await _unitOfWork.PuantajDetaylar
-                .FindWithIncludesAsync(
-                    d => d.Puantaj.SirketId == sirketId 
-                        && d.Tarih >= baslangic 
-                        && d.Tarih <= bitis 
-                        && d.ErkenCikisSuresi > 0,
-                    d => d.Puantaj,
-                    d => d.Puantaj.Personel,
-                    d => d.Puantaj.Personel.Departman
-                );
-
-            return puantajDetaylar.Select(d => new ErkenCikanlarRaporDTO
-            {
-                Tarih = d.Tarih,
-                PersonelId = d.Puantaj.PersonelId,
-                PersonelAdSoyad = d.Puantaj.Personel.AdSoyad,
-                SicilNo = d.Puantaj.Personel.SicilNo,
-                DepartmanAdi = d.Puantaj.Personel.Departman?.Ad ?? "-",
-                VardiyaBitis = d.VardiyaBitis ?? TimeSpan.Zero,
-                CikisSaati = d.SonCikis,
-                ErkenCikisSuresi = d.ErkenCikisSuresi ?? 0
-            }).OrderBy(r => r.Tarih).ThenBy(r => r.PersonelAdSoyad);
-        }
-
-        public async Task<IEnumerable<FazlaMesaiRaporDTO>> GetFazlaMesaiRaporuAsync(int sirketId, DateTime baslangic, DateTime bitis)
-        {
-            var puantajDetaylar = await _unitOfWork.PuantajDetaylar
-                .FindWithIncludesAsync(
-                    d => d.Puantaj.SirketId == sirketId 
-                        && d.Tarih >= baslangic 
-                        && d.Tarih <= bitis 
-                        && d.FazlaMesaiSuresi > 0,
-                    d => d.Puantaj,
-                    d => d.Puantaj.Personel,
-                    d => d.Puantaj.Personel.Departman
-                );
-
-            return puantajDetaylar.Select(d => new FazlaMesaiRaporDTO
-            {
-                Tarih = d.Tarih,
-                PersonelId = d.Puantaj.PersonelId,
-                PersonelAdSoyad = d.Puantaj.Personel.AdSoyad,
-                SicilNo = d.Puantaj.Personel.SicilNo,
-                DepartmanAdi = d.Puantaj.Personel.Departman?.Ad ?? "-",
-                FazlaMesaiSuresi = d.FazlaMesaiSuresi ?? 0,
-                HaftaTatiliMi = d.GunTipi == 2,
-                ResmiTatilMi = d.GunTipi == 3
-            }).OrderBy(r => r.Tarih).ThenBy(r => r.PersonelAdSoyad);
-        }
-
-        public async Task<IEnumerable<DevamsizlikRaporDTO>> GetDevamsizlikRaporuAsync(int sirketId, DateTime baslangic, DateTime bitis)
-        {
-            var puantajDetaylar = await _unitOfWork.PuantajDetaylar
-                .FindWithIncludesAsync(
-                    d => d.Puantaj.SirketId == sirketId 
-                        && d.Tarih >= baslangic 
-                        && d.Tarih <= bitis 
-                        && d.CalismaDurumu == "Devamsiz",
-                    d => d.Puantaj,
-                    d => d.Puantaj.Personel,
-                    d => d.Puantaj.Personel.Departman
-                );
-
-            return puantajDetaylar.Select(d => new DevamsizlikRaporDTO
-            {
-                Tarih = d.Tarih,
-                PersonelId = d.Puantaj.PersonelId,
-                PersonelAdSoyad = d.Puantaj.Personel.AdSoyad,
-                SicilNo = d.Puantaj.Personel.SicilNo,
-                DepartmanAdi = d.Puantaj.Personel.Departman?.Ad ?? "-",
-                DevamsizlikNedeni = d.Notlar ?? "Belirtilmemiş"
-            }).OrderBy(r => r.Tarih).ThenBy(r => r.PersonelAdSoyad);
+            // Resmi tatil kontrolü yapılabilir
+            return 1;
         }
     }
 }

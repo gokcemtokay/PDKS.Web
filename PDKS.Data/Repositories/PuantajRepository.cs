@@ -16,7 +16,7 @@ namespace PDKS.Data.Repositories
                 .Include(p => p.Personel)
                     .ThenInclude(p => p.Departman)
                 .Include(p => p.OnaylayanKullanici)
-                .Include(p => p.Detaylar)
+                .Include(p => p.PuantajDetaylari) // ✅ FIXED: Detaylar → PuantajDetaylari
                 .FirstOrDefaultAsync(p => p.Id == id);
         }
 
@@ -82,9 +82,9 @@ namespace PDKS.Data.Repositories
                 .Include(p => p.Personel)
                     .ThenInclude(p => p.Departman)
                 .Include(p => p.OnaylayanKullanici)
-                .Where(p => p.Durum == "Onaylandı" 
-                    && p.OnayTarihi.HasValue 
-                    && p.OnayTarihi.Value >= baslangic 
+                .Where(p => p.Durum == "Onaylandı"
+                    && p.OnayTarihi.HasValue
+                    && p.OnayTarihi.Value >= baslangic
                     && p.OnayTarihi.Value <= bitis)
                 .OrderBy(p => p.OnayTarihi)
                 .ToListAsync();
@@ -100,18 +100,22 @@ namespace PDKS.Data.Repositories
         public override async Task<PuantajDetay?> GetByIdAsync(int id)
         {
             return await _dbSet
-                .Include(pd => pd.Personel)
+                // ✅ FIXED: Personel navigation property yok, Puantaj üzerinden erişilmeli
+                .Include(pd => pd.Puantaj)
+                    .ThenInclude(p => p.Personel)
                 .Include(pd => pd.Vardiya)
-                .Include(pd => pd.GirisCikis)
+                // ❌ REMOVED: GirisCikis navigation property yok
                 .FirstOrDefaultAsync(pd => pd.Id == id);
         }
 
         public async Task<IEnumerable<PuantajDetay>> GetByPuantajAsync(int puantajId)
         {
             return await _dbSet
-                .Include(pd => pd.Personel)
+                // ✅ FIXED: Manuel Personel yükleme yerine Puantaj üzerinden
+                .Include(pd => pd.Puantaj)
+                    .ThenInclude(p => p.Personel)
                 .Include(pd => pd.Vardiya)
-                .Include(pd => pd.GirisCikis)
+                // ❌ REMOVED: GirisCikis navigation property yok
                 .Where(pd => pd.PuantajId == puantajId)
                 .OrderBy(pd => pd.Tarih)
                 .ToListAsync();
@@ -122,9 +126,11 @@ namespace PDKS.Data.Repositories
         {
             return await _dbSet
                 .Include(pd => pd.Vardiya)
-                .Include(pd => pd.GirisCikis)
-                .Where(pd => pd.PersonelId == personelId 
-                    && pd.Tarih >= baslangic 
+                // ❌ REMOVED: GirisCikis navigation property yok
+                // ✅ PersonelId ile filtrele (Puantaj üzerinden)
+                .Include(pd => pd.Puantaj)
+                .Where(pd => pd.Puantaj.PersonelId == personelId
+                    && pd.Tarih >= baslangic
                     && pd.Tarih <= bitis)
                 .OrderBy(pd => pd.Tarih)
                 .ToListAsync();
@@ -133,36 +139,42 @@ namespace PDKS.Data.Repositories
         public async Task<PuantajDetay?> GetByPersonelVeTarihAsync(int personelId, DateTime tarih)
         {
             return await _dbSet
-                .Include(pd => pd.Personel)
+                // ✅ FIXED: Puantaj üzerinden Personel'e eriş
+                .Include(pd => pd.Puantaj)
+                    .ThenInclude(p => p.Personel)
                 .Include(pd => pd.Vardiya)
-                .Include(pd => pd.GirisCikis)
-                .FirstOrDefaultAsync(pd => pd.PersonelId == personelId && pd.Tarih.Date == tarih.Date);
+                // ❌ REMOVED: GirisCikis navigation property yok
+                .FirstOrDefaultAsync(pd => pd.Puantaj.PersonelId == personelId && pd.Tarih.Date == tarih.Date);
         }
 
         public async Task<IEnumerable<PuantajDetay>> GetDevamsizlarAsync(DateTime baslangic, DateTime bitis)
         {
             return await _dbSet
-                .Include(pd => pd.Personel)
-                    .ThenInclude(p => p.Departman)
-                .Where(pd => pd.DevamsizMi 
-                    && pd.Tarih >= baslangic 
+                // ✅ FIXED: Puantaj üzerinden Personel ve Departman'a eriş
+                .Include(pd => pd.Puantaj)
+                    .ThenInclude(p => p.Personel)
+                        .ThenInclude(per => per.Departman)
+                .Where(pd => pd.DevamsizMi
+                    && pd.Tarih >= baslangic
                     && pd.Tarih <= bitis)
                 .OrderBy(pd => pd.Tarih)
-                .ThenBy(pd => pd.Personel.AdSoyad)
+                .ThenBy(pd => pd.Puantaj.Personel.AdSoyad)
                 .ToListAsync();
         }
 
         public async Task<IEnumerable<PuantajDetay>> GetGecKalmaErkencilanlarAsync(DateTime baslangic, DateTime bitis)
         {
             return await _dbSet
-                .Include(pd => pd.Personel)
-                    .ThenInclude(p => p.Departman)
+                // ✅ FIXED: Puantaj üzerinden Personel ve Departman'a eriş
+                .Include(pd => pd.Puantaj)
+                    .ThenInclude(p => p.Personel)
+                        .ThenInclude(per => per.Departman)
                 .Include(pd => pd.Vardiya)
                 .Where(pd => (pd.GecKaldiMi || pd.ErkenCiktiMi)
-                    && pd.Tarih >= baslangic 
+                    && pd.Tarih >= baslangic
                     && pd.Tarih <= bitis)
                 .OrderBy(pd => pd.Tarih)
-                .ThenBy(pd => pd.Personel.AdSoyad)
+                .ThenBy(pd => pd.Puantaj.Personel.AdSoyad)
                 .ToListAsync();
         }
     }

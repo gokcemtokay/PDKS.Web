@@ -21,12 +21,12 @@ namespace PDKS.Business.Services
         // Günlük Detaylar
         Task<List<PuantajDetayDTO>> GetGunlukDetaylarAsync(int puantajId);
         Task<PuantajDetayDTO> GetDetayByTarihAsync(int personelId, DateTime tarih);
-        
+
         // Raporlama
         Task<PuantajOzetRaporDTO> GetOzetRaporAsync(PuantajRaporParametreDTO parametre);
         Task<List<DepartmanPuantajOzetDTO>> GetDepartmanOzetAsync(int yil, int ay);
         Task<byte[]> ExportToExcelAsync(PuantajRaporParametreDTO parametre);
-        
+
         // Yardımcı Metotlar
         Task<bool> PuantajVarMiAsync(int personelId, int yil, int ay);
         Task<List<string>> ValidasyonKontrolAsync(int personelId, int yil, int ay);

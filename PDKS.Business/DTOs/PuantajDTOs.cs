@@ -3,6 +3,10 @@ using System.Collections.Generic;
 
 namespace PDKS.Business.DTOs
 {
+    // ============================================
+    // PUANTAJ LİSTE VE DETAY DTO'LARI
+    // ============================================
+
     // Puantaj Listesi DTO
     public class PuantajListDTO
     {
@@ -118,6 +122,122 @@ namespace PDKS.Business.DTOs
         public string Notlar { get; set; }
     }
 
+    // ============================================
+    // PUANTAJ İŞLEM DTO'LARI
+    // ============================================
+
+    // Puantaj Hesaplama DTO
+    public class PuantajHesaplaDTO
+    {
+        public int PersonelId { get; set; }
+        public int Yil { get; set; }
+        public int Ay { get; set; }
+        public bool YenidenHesapla { get; set; } = false;
+    }
+
+    // Toplu Puantaj Hesaplama DTO
+    public class TopluPuantajHesaplaDTO
+    {
+        public int SirketId { get; set; }
+        public int Yil { get; set; }
+        public int Ay { get; set; }
+        public List<int> PersonelIdler { get; set; }
+        public bool TumPersonel { get; set; }
+        public int? DepartmanId { get; set; }
+    }
+
+    // Puantaj Onay DTO
+    public class PuantajOnayDTO
+    {
+        public int PuantajId { get; set; }
+        public bool Onayla { get; set; }
+        public string Notlar { get; set; }
+    }
+
+    // ============================================
+    // PUANTAJ DETAY DTO (Günlük bazda)
+    // ============================================
+
+    public class PuantajDetayDTO
+    {
+        public int Id { get; set; }
+        public int PuantajId { get; set; }
+        public DateTime Tarih { get; set; }
+        public string VardiyaAdi { get; set; }
+        public TimeSpan? PlanlananGirisSaati { get; set; }
+        public TimeSpan? PlanlananCikisSaati { get; set; }
+        public DateTime? GerceklesenGirisSaati { get; set; }
+        public DateTime? GerceklesenCikisSaati { get; set; }
+        public int? ToplamCalismaDakika { get; set; }
+        public int? NormalMesaiDakika { get; set; }
+        public int? FazlaMesaiDakika { get; set; }
+        public int? GecKalmaDakika { get; set; }
+        public int? ErkenCikisDakika { get; set; }
+        public string Durum { get; set; }
+        public string IzinTuru { get; set; }
+        public bool HaftaSonuMu { get; set; }
+        public bool ResmiTatilMi { get; set; }
+        public string Notlar { get; set; }
+    }
+
+    // ============================================
+    // PUANTAJ RAPOR DTO'LARI
+    // ============================================
+
+    // Puantaj İstatistik DTO
+    public class PuantajIstatistikDTO
+    {
+        public int SirketId { get; set; }
+        public int Yil { get; set; }
+        public int Ay { get; set; }
+        public int ToplamPersonelSayisi { get; set; }
+        public int PuantajHesaplananSayisi { get; set; }
+        public int PuantajOnaylananSayisi { get; set; } // TYPO DÜZELTİLDİ
+        public int ToplamCalismaSuresi { get; set; }
+        public int ToplamFazlaMesaiSuresi { get; set; }
+        public int ToplamDevamsizlikGunSayisi { get; set; }
+        public int ToplamIzinGunSayisi { get; set; }
+    }
+
+    // Puantaj Rapor Parametre DTO
+    public class PuantajRaporParametreDTO
+    {
+        public int? SirketId { get; set; }
+        public int BaslangicYil { get; set; }
+        public int BaslangicAy { get; set; }
+        public int BitisYil { get; set; }
+        public int BitisAy { get; set; }
+        public int? DepartmanId { get; set; }
+        public int? PersonelId { get; set; }
+        public string RaporTuru { get; set; } // Ozet, Detayli, FazlaMesai, Devamsizlik
+    }
+
+    // Puantaj Özet Rapor DTO
+    public class PuantajOzetRaporDTO
+    {
+        public int ToplamPersonelSayisi { get; set; }
+        public decimal ToplamCalismaSaati { get; set; }
+        public decimal ToplamFazlaMesai { get; set; }
+        public int ToplamDevamsizlik { get; set; }
+        public int ToplamIzin { get; set; }
+    }
+
+    // Departman Puantaj Özet DTO
+    public class DepartmanPuantajOzetDTO
+    {
+        public int DepartmanId { get; set; }
+        public string DepartmanAdi { get; set; }
+        public int PersonelSayisi { get; set; }
+        public decimal ToplamCalismaSaati { get; set; }
+        public decimal ToplamFazlaMesai { get; set; }
+        public int ToplamDevamsizlik { get; set; }
+        public decimal OrtalamaCalismaOrani { get; set; }
+    }
+
+    // ============================================
+    // ESKİ DTO'LAR (Geriye dönük uyumluluk için)
+    // ============================================
+
     // Puantaj Oluşturma DTO
     public class PuantajCreateDTO
     {
@@ -137,41 +257,6 @@ namespace PDKS.Business.DTOs
         public List<int> PersonelIdler { get; set; }
         public bool TumPersoneller { get; set; }
         public int? DepartmanId { get; set; }
-    }
-
-    // Puantaj Onay DTO
-    public class PuantajOnayDTO
-    {
-        public int PuantajId { get; set; }
-        public bool Onayla { get; set; }
-        public string Notlar { get; set; }
-    }
-
-    // Puantaj İstatistik DTO
-    public class PuantajIstatistikDTO
-    {
-        public int SirketId { get; set; }
-        public int Yil { get; set; }
-        public int Ay { get; set; }
-        public int ToplamPersonelSayisi { get; set; }
-        public int PuantajHesaplananSayisi { get; set; }
-        public int PuantajOnayl ananSayisi { get; set; }
-        public int ToplamCalismaSuresi { get; set; }
-        public int ToplamFazlaMesaiSuresi { get; set; }
-        public int ToplamDevamsizlikGunSayisi { get; set; }
-        public int ToplamIzinGunSayisi { get; set; }
-    }
-
-    // Puantaj Rapor Filtre DTO
-    public class PuantajRaporFiltreDTO
-    {
-        public int SirketId { get; set; }
-        public int Yil { get; set; }
-        public int Ay { get; set; }
-        public int? DepartmanId { get; set; }
-        public int? PersonelId { get; set; }
-        public bool? SadeceOnaylanan { get; set; }
-        public string RaporTipi { get; set; } // Ozet, Detayli, FazlaMesai, Devamsizlik, vb.
     }
 
     // Geç Kalanlar Rapor DTO
@@ -212,8 +297,6 @@ namespace PDKS.Business.DTOs
         public string DepartmanAdi { get; set; }
         public int FazlaMesaiSuresi { get; set; }
         public string FazlaMesaiSuresiStr => $"{FazlaMesaiSuresi / 60}:{FazlaMesaiSuresi % 60:00}";
-        public bool HaftaTatiliMi { get; set; }
-        public bool ResmiTatilMi { get; set; }
     }
 
     // Devamsızlık Rapor DTO
@@ -225,5 +308,17 @@ namespace PDKS.Business.DTOs
         public string SicilNo { get; set; }
         public string DepartmanAdi { get; set; }
         public string DevamsizlikNedeni { get; set; }
+    }
+
+    // Puantaj Rapor Filtre DTO
+    public class PuantajRaporFiltreDTO
+    {
+        public int SirketId { get; set; }
+        public int Yil { get; set; }
+        public int Ay { get; set; }
+        public int? DepartmanId { get; set; }
+        public int? PersonelId { get; set; }
+        public bool? SadeceOnaylanan { get; set; }
+        public string RaporTipi { get; set; } // Ozet, Detayli, FazlaMesai, Devamsizlik, vb.
     }
 }
