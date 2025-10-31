@@ -12,6 +12,7 @@ import {
   TableBody,
   TableRow,
   TableCell,
+  TableContainer,
   Chip,
   IconButton,
   CircularProgress,
@@ -25,6 +26,7 @@ import {
   MenuItem as MuiMenuItem,
   Snackbar,
   Alert,
+  Grid,
 } from '@mui/material';
 import {
   Visibility as VisibilityIcon,
@@ -35,6 +37,7 @@ import {
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import puantajService from '../../services/puantajService';
+import departmanService from '../../services/departmanService';
 import { PuantajList } from '../../types/puantaj.types';
 import {
   formatDakika,
@@ -55,6 +58,7 @@ const PuantajListesi: React.FC = () => {
   });
 
   const [puantajlar, setPuantajlar] = useState<PuantajList[]>([]);
+  const [departmanlar, setDepartmanlar] = useState<any[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [yil, setYil] = useState<number>(new Date().getFullYear());
   const [ay, setAy] = useState<number>(new Date().getMonth() + 1);
@@ -66,18 +70,37 @@ const PuantajListesi: React.FC = () => {
   const yilListesi = getYilListesi();
 
   useEffect(() => {
+    loadDepartmanlar();
+  }, []);
+
+  useEffect(() => {
     loadPuantajlar();
   }, [yil, ay, departmanId]);
+
+  const loadDepartmanlar = async () => {
+    try {
+      const data = await departmanService.getAll();
+      setDepartmanlar(data);
+    } catch (error: any) {
+      console.error('Departmanlar yüklenemedi:', error);
+    }
+  };
 
   const loadPuantajlar = async () => {
     setLoading(true);
     try {
       const data = await puantajService.getByDonem(yil, ay, departmanId);
       setPuantajlar(data);
+      
+      // Hata mesajını kaldır
+      if (snackbar.message === 'Puantajlar yüklenemedi') {
+        setSnackbar({ open: false, message: '', severity: 'success' });
+      }
     } catch (error: any) {
+      console.error('Puantaj yükleme hatası:', error);
       setSnackbar({
         open: true,
-        message: 'Puantajlar yüklenemedi',
+        message: error.response?.data?.message || 'Puantajlar yüklenemedi',
         severity: 'error',
       });
     } finally {
@@ -167,6 +190,70 @@ const PuantajListesi: React.FC = () => {
           </Button>
         </Box>
 
+        {/* İstatistikler */}
+        <Grid container spacing={2}>
+          <Grid item xs={12} sm={6} md={2.4}>
+            <Card>
+              <CardContent>
+                <Typography color="text.secondary" variant="body2" gutterBottom>
+                  Toplam Çalışma
+                </Typography>
+                <Typography variant="h5" fontWeight="bold">
+                  {formatDakika(stats.toplamCalismaSaati)}
+                </Typography>
+              </CardContent>
+            </Card>
+          </Grid>
+          <Grid item xs={12} sm={6} md={2.4}>
+            <Card>
+              <CardContent>
+                <Typography color="text.secondary" variant="body2" gutterBottom>
+                  Fazla Mesai
+                </Typography>
+                <Typography variant="h5" fontWeight="bold" color="primary">
+                  {formatDakika(stats.toplamFazlaMesai)}
+                </Typography>
+              </CardContent>
+            </Card>
+          </Grid>
+          <Grid item xs={12} sm={6} md={2.4}>
+            <Card>
+              <CardContent>
+                <Typography color="text.secondary" variant="body2" gutterBottom>
+                  Onay Bekleyen
+                </Typography>
+                <Typography variant="h5" fontWeight="bold" color="warning.main">
+                  {stats.onayBekleyen}
+                </Typography>
+              </CardContent>
+            </Card>
+          </Grid>
+          <Grid item xs={12} sm={6} md={2.4}>
+            <Card>
+              <CardContent>
+                <Typography color="text.secondary" variant="body2" gutterBottom>
+                  Devamsızlık
+                </Typography>
+                <Typography variant="h5" fontWeight="bold" color="error">
+                  {stats.toplamDevamsizlik}
+                </Typography>
+              </CardContent>
+            </Card>
+          </Grid>
+          <Grid item xs={12} sm={6} md={2.4}>
+            <Card>
+              <CardContent>
+                <Typography color="text.secondary" variant="body2" gutterBottom>
+                  Toplam Personel
+                </Typography>
+                <Typography variant="h5" fontWeight="bold">
+                  {stats.toplamPersonel}
+                </Typography>
+              </CardContent>
+            </Card>
+          </Grid>
+        </Grid>
+
         {/* Filters */}
         <Card>
           <CardContent>
@@ -208,124 +295,79 @@ const PuantajListesi: React.FC = () => {
                   onChange={(e) =>
                     setDepartmanId(e.target.value ? Number(e.target.value) : undefined)
                   }
-                  displayEmpty
                   size="small"
+                  displayEmpty
                 >
                   <MenuItem value="">Tüm Departmanlar</MenuItem>
-                  {/* Departmanlar buraya eklenecek */}
+                  {departmanlar.map((dept) => (
+                    <MenuItem key={dept.id} value={dept.id}>
+                      {dept.departmanAdi}
+                    </MenuItem>
+                  ))}
                 </Select>
               </FormControl>
 
-              <IconButton
+              <Button
+                variant="outlined"
+                startIcon={<RefreshIcon />}
                 onClick={loadPuantajlar}
                 disabled={loading}
-                color="primary"
               >
-                <RefreshIcon />
-              </IconButton>
+                Yenile
+              </Button>
             </Stack>
           </CardContent>
         </Card>
 
-        {/* Statistics */}
-        <Stack direction="row" spacing={2}>
-          <Card sx={{ flex: 1 }}>
-            <CardContent>
-              <Typography variant="body2" color="text.secondary">
-                Toplam Personel
-              </Typography>
-              <Typography variant="h4" color="primary" fontWeight="bold">
-                {stats.toplamPersonel}
-              </Typography>
-            </CardContent>
-          </Card>
+        {/* Loading */}
+        {loading && (
+          <Box display="flex" justifyContent="center" py={4}>
+            <CircularProgress />
+          </Box>
+        )}
 
-          <Card sx={{ flex: 1 }}>
-            <CardContent>
-              <Typography variant="body2" color="text.secondary">
-                Toplam Çalışma
-              </Typography>
-              <Typography variant="h4" color="success.main" fontWeight="bold">
-                {formatDakika(stats.toplamCalismaSaati)}
-              </Typography>
-            </CardContent>
-          </Card>
-
-          <Card sx={{ flex: 1 }}>
-            <CardContent>
-              <Typography variant="body2" color="text.secondary">
-                Fazla Mesai
-              </Typography>
-              <Typography variant="h4" sx={{ color: 'purple' }} fontWeight="bold">
-                {formatDakika(stats.toplamFazlaMesai)}
-              </Typography>
-            </CardContent>
-          </Card>
-
-          <Card sx={{ flex: 1 }}>
-            <CardContent>
-              <Typography variant="body2" color="text.secondary">
-                Onay Bekleyen
-              </Typography>
-              <Typography variant="h4" color="warning.main" fontWeight="bold">
-                {stats.onayBekleyen}
-              </Typography>
-            </CardContent>
-          </Card>
-        </Stack>
-
-        {/* Table */}
-        <Card>
-          <CardContent>
-            {loading ? (
-              <Box display="flex" justifyContent="center" alignItems="center" minHeight={200}>
-                <CircularProgress />
-              </Box>
-            ) : (
-              <Box sx={{ overflowX: 'auto' }}>
-                <Table>
-                  <TableHead>
+        {/* Tablo */}
+        {!loading && (
+          <Paper>
+            <TableContainer>
+              <Table>
+                <TableHead>
+                  <TableRow sx={{ bgcolor: 'grey.100' }}>
+                    <TableCell><strong>Sicil No</strong></TableCell>
+                    <TableCell><strong>Personel</strong></TableCell>
+                    <TableCell><strong>Departman</strong></TableCell>
+                    <TableCell><strong>Çalışma Saati</strong></TableCell>
+                    <TableCell><strong>Çalışılan Gün</strong></TableCell>
+                    <TableCell><strong>Fazla Mesai</strong></TableCell>
+                    <TableCell><strong>Devamsızlık</strong></TableCell>
+                    <TableCell><strong>Durum</strong></TableCell>
+                    <TableCell align="center"><strong>İşlemler</strong></TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {puantajlar.length === 0 ? (
                     <TableRow>
-                      <TableCell>Sicil No</TableCell>
-                      <TableCell>Personel</TableCell>
-                      <TableCell>Departman</TableCell>
-                      <TableCell align="center">Çalışma Saati</TableCell>
-                      <TableCell align="center">Çalışma Günü</TableCell>
-                      <TableCell align="center">Fazla Mesai</TableCell>
-                      <TableCell align="center">Devamsızlık</TableCell>
-                      <TableCell align="center">Durum</TableCell>
-                      <TableCell align="center">İşlemler</TableCell>
+                      <TableCell colSpan={9} align="center">
+                        <Typography variant="body2" color="text.secondary" py={4}>
+                          {getTurkceAyAdi(ay)} {yil} için puantaj bulunamadı
+                        </Typography>
+                      </TableCell>
                     </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {puantajlar.map((puantaj) => (
+                  ) : (
+                    puantajlar.map((puantaj) => (
                       <TableRow key={puantaj.id} hover>
-                        <TableCell sx={{ fontWeight: 'medium' }}>{puantaj.sicilNo}</TableCell>
+                        <TableCell>{puantaj.sicilNo}</TableCell>
                         <TableCell>{puantaj.personelAdi}</TableCell>
                         <TableCell>{puantaj.departman}</TableCell>
-                        <TableCell align="center">
-                          {formatDakika(puantaj.toplamCalismaSaati)}
+                        <TableCell>{formatDakika(puantaj.toplamCalismaSaati)}</TableCell>
+                        <TableCell>{puantaj.toplamCalisilanGun} gün</TableCell>
+                        <TableCell>
+                          {puantaj.fazlaMesaiSaati > 0 ? formatDakika(puantaj.fazlaMesaiSaati) : '-'}
                         </TableCell>
-                        <TableCell align="center">{puantaj.toplamCalisilanGun} gün</TableCell>
-                        <TableCell align="center">
-                          {puantaj.fazlaMesaiSaati > 0 ? (
-                            <Typography color="success.main" fontWeight="medium">
-                              {formatDakika(puantaj.fazlaMesaiSaati)}
-                            </Typography>
-                          ) : (
-                            '-'
-                          )}
+                        <TableCell>
+                          {puantaj.devamsizlikGunu > 0 ? `${puantaj.devamsizlikGunu} gün` : '-'}
                         </TableCell>
-                        <TableCell align="center">
-                          {puantaj.devamsizlikGunu > 0 ? (
-                            <Typography color="error.main" fontWeight="medium">
-                              {puantaj.devamsizlikGunu} gün
-                            </Typography>
-                          ) : (
-                            '-'
-                          )}
-                        </TableCell>
-                        <TableCell align="center">
+                        <TableCell>
                           <Chip
                             label={puantaj.durum}
                             color={getBadgeColor(puantaj.durum)}
@@ -333,38 +375,28 @@ const PuantajListesi: React.FC = () => {
                           />
                         </TableCell>
                         <TableCell align="center">
-                          <Stack direction="row" spacing={1} justifyContent="center">
-                            <IconButton
-                              size="small"
-                              onClick={() => handleDetayGor(puantaj.id)}
-                              color="primary"
-                            >
-                              <VisibilityIcon fontSize="small" />
-                            </IconButton>
-                            <IconButton
-                              size="small"
-                              onClick={(e) => handleMenuOpen(e, puantaj.id)}
-                            >
-                              <MoreVertIcon fontSize="small" />
-                            </IconButton>
-                          </Stack>
+                          <IconButton
+                            size="small"
+                            color="primary"
+                            onClick={() => handleDetayGor(puantaj.id)}
+                          >
+                            <VisibilityIcon />
+                          </IconButton>
+                          <IconButton
+                            size="small"
+                            onClick={(e) => handleMenuOpen(e, puantaj.id)}
+                          >
+                            <MoreVertIcon />
+                          </IconButton>
                         </TableCell>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-
-                {puantajlar.length === 0 && (
-                  <Box p={4} textAlign="center">
-                    <Typography color="text.secondary">
-                      {getTurkceAyAdi(ay)} {yil} için puantaj bulunamadı
-                    </Typography>
-                  </Box>
-                )}
-              </Box>
-            )}
-          </CardContent>
-        </Card>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          </Paper>
+        )}
       </Stack>
 
       {/* Context Menu */}
@@ -385,9 +417,15 @@ const PuantajListesi: React.FC = () => {
 
       {/* Modal */}
       <TopluPuantajHesaplaModal
-        isOpen={modalOpen}
+        open={modalOpen}
         onClose={() => setModalOpen(false)}
-        onSuccess={loadPuantajlar}
+        onSuccess={() => {
+          setModalOpen(false);
+          loadPuantajlar();
+        }}
+        defaultYil={yil}
+        defaultAy={ay}
+        departmanlar={departmanlar}
       />
 
       {/* Snackbar */}

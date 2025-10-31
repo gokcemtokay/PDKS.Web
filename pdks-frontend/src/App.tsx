@@ -32,6 +32,9 @@ import KullaniciForm from './pages/Kullanici/KullaniciForm';
 import RolYetkiAtama from './pages/Rol/RolYetkiAtama';
 import PuantajListesi from './pages/Puantaj/PuantajListesi';
 import PuantajDetay from './pages/Puantaj/PuantajDetay';
+import PuantajGecKalanlar from './pages/Puantaj/PuantajGecKalanlar';
+import PuantajErkenCikanlar from './pages/Puantaj/PuantajErkenCikanlar';
+import GirisCikis from './pages/GirisCikis/GirisCikisList';
 
 
 const theme = createTheme({
@@ -74,8 +77,11 @@ function App() {
                                         <Route path="/onay" element={<OnayList />} />
                                         <Route path="/gorev" element={<GorevList />} />
                                         <Route path="/rapor" element={<RaporPage />} />
+                                        <Route path="/giriscikis" element={<GirisCikis />} />
                                         <Route path="/puantaj" element={<PuantajListesi />} />
                                         <Route path="/puantaj/:id" element={<PuantajDetay />} />
+                                        <Route path="/puantaj/gec-kalanlar" element={<PuantajGecKalanlar />} />
+                                        <Route path="/puantaj/erken-cikanlar" element={<PuantajErkenCikanlar />} />
 
                                         {/* Yönetim Modülü */}
                                         <Route path="/sirket" element={<SirketList />} />

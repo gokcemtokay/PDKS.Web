@@ -135,6 +135,32 @@ export interface PuantajKontrol {
   hazir: boolean;
 }
 
+export interface GecKalanRapor {
+  personelId: number;
+  sicilNo: string;
+  adSoyad: string;
+  departman: string;
+  tarih: string;
+  vardiya: string;
+  planlananGiris: string;
+  gerceklesenGiris: string;
+  gecKalmaSuresi: number;
+  gecKalmaSuresiFormatli: string;
+}
+
+export interface ErkenCikanRapor {
+  personelId: number;
+  sicilNo: string;
+  adSoyad: string;
+  departman: string;
+  tarih: string;
+  vardiya: string;
+  planlananCikis: string;
+  gerceklesenCikis: string;
+  erkenCikisSuresi: number;
+  erkenCikisSuresiFormatli: string;
+}
+
 // Utility Types
 export type PuantajDurumu = 'Taslak' | 'Onaylandı' | 'Kapalı';
 export type GunDurumu = 'Normal' | 'Tatil' | 'Izin' | 'Rapor' | 'Devamsiz' | 'HaftaSonu' | 'ResmiTatil';
