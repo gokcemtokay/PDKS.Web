@@ -13,6 +13,7 @@ namespace PDKS.Business.DTOs
         public int PersonelId { get; set; }
         public int Yil { get; set; }
         public int Ay { get; set; }
+        public bool YenidenHesapla { get; set; }
         public string Notlar { get; set; }
     }
 }

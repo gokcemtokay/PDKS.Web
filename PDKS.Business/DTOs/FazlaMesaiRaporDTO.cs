@@ -12,9 +12,12 @@ namespace PDKS.Business.DTOs
         public DateTime Tarih { get; set; }
         public int PersonelId { get; set; }
         public string PersonelAdSoyad { get; set; }
+        public string PersonelAdi { get; set; } // ReportService için eklendi
         public string SicilNo { get; set; }
         public string DepartmanAdi { get; set; }
+        public string Departman { get; set; } // ReportService için eklendi
         public int FazlaMesaiSuresi { get; set; }
+        public decimal FazlaMesaiUcreti { get; set; } // ReportService için eklendi
         public string FazlaMesaiSuresiStr => $"{FazlaMesaiSuresi / 60}:{FazlaMesaiSuresi % 60:00}";
     }
 }

@@ -13,7 +13,7 @@ namespace PDKS.Business.DTOs
         public int Yil { get; set; }
         public int Ay { get; set; }
         public List<int> PersonelIdler { get; set; }
-        public bool TumPersoneller { get; set; }
+        public bool TumPersonel { get; set; }
         public int? DepartmanId { get; set; }
     }
 }

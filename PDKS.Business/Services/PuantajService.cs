@@ -728,5 +728,305 @@ namespace PDKS.Business.Services
             // Resmi tatil kontrolü yapılabilir
             return 1;
         }
+
+        public async Task<IEnumerable<PuantajListDTO>> GetAllAsync(int sirketId, int yil, int ay)
+        {
+            var puantajlar = await _unitOfWork.Puantajlar.FindAsync(p =>
+                p.SirketId == sirketId &&
+                p.Yil == yil &&
+                p.Ay == ay);
+
+            var liste = new List<PuantajListDTO>();
+
+            foreach (var p in puantajlar)
+            {
+                var personel = await _unitOfWork.Personeller.GetByIdAsync(p.PersonelId);
+                if (personel == null) continue;
+
+                var departman = personel.DepartmanId != null
+                    ? await _unitOfWork.Departmanlar.GetByIdAsync(personel.DepartmanId.Value)
+                    : null;
+
+                liste.Add(new PuantajListDTO
+                {
+                    Id = p.Id,
+                    SirketId = p.SirketId,
+                    PersonelId = p.PersonelId,
+                    PersonelAdSoyad = personel.AdSoyad,
+                    SicilNo = personel.SicilNo,
+                    DepartmanAdi = departman?.Ad ?? "-",
+                    Yil = p.Yil,
+                    Ay = p.Ay,
+                    ToplamCalisilanGun = p.ToplamCalisilanGun,
+                    ToplamCalismaSuresi = p.ToplamCalismaSuresi,
+                    FazlaMesaiSuresi = p.FazlaMesaiSuresi,
+                    DevamsizlikGunSayisi = p.DevamsizlikGunSayisi,
+                    IzinGunSayisi = p.IzinGunSayisi,
+                    Durum = p.Durum,
+                    Onaylandi = p.Onaylandi,
+                    OlusturmaTarihi = p.OlusturmaTarihi
+                });
+            }
+
+            return liste.OrderBy(p => p.PersonelAdSoyad);
+        }
+
+        /// <summary>
+        /// Personel ve dönem bazlı puantaj detayı getirir (3 parametreli overload)
+        /// </summary>
+        public async Task<PuantajDetailDTO> GetByPersonelAsync(int personelId, int yil, int ay)
+        {
+            return await GetByPersonelVeDonemAsync(personelId, yil, ay);
+        }
+
+        /// <summary>
+        /// Tek puantaj oluşturur
+        /// </summary>
+        public async Task<int> OlusturAsync(PuantajCreateDTO dto)
+        {
+            var hesaplaDto = new PuantajHesaplaDTO
+            {
+                PersonelId = dto.PersonelId,
+                Yil = dto.Yil,
+                Ay = dto.Ay,
+                YenidenHesapla = dto.YenidenHesapla
+            };
+
+            return await HesaplaPuantajAsync(hesaplaDto);
+        }
+
+        /// <summary>
+        /// Toplu puantaj oluşturur
+        /// </summary>
+        public async Task<List<int>> TopluOlusturAsync(PuantajTopluOlusturDTO dto)
+        {
+            var topluHesaplaDto = new TopluPuantajHesaplaDTO
+            {
+                SirketId = dto.SirketId,
+                Yil = dto.Yil,
+                Ay = dto.Ay,
+                TumPersonel = dto.TumPersonel,
+                DepartmanId = dto.DepartmanId,
+                PersonelIdler = dto.PersonelIdler
+            };
+
+            return await TopluPuantajHesaplaAsync(topluHesaplaDto);
+        }
+
+        /// <summary>
+        /// Puantaj istatistiklerini getirir
+        /// </summary>
+        public async Task<object> GetIstatistikAsync(int sirketId, int yil, int ay)
+        {
+            var puantajlar = await _unitOfWork.Puantajlar.FindAsync(p =>
+                p.SirketId == sirketId &&
+                p.Yil == yil &&
+                p.Ay == ay);
+
+            var puantajList = puantajlar.ToList();
+
+            return new
+            {
+                ToplamPersonel = puantajList.Count,
+                OnaylananSayisi = puantajList.Count(p => p.Onaylandi),
+                OnayBekleyenSayisi = puantajList.Count(p => !p.Onaylandi),
+                ToplamCalismaSaati = puantajList.Sum(p => p.ToplamCalismaSuresi) / 60.0m,
+                ToplamFazlaMesai = puantajList.Sum(p => p.FazlaMesaiSuresi) / 60.0m,
+                ToplamDevamsizlik = puantajList.Sum(p => p.DevamsizlikGunSayisi),
+                ToplamIzin = puantajList.Sum(p => p.IzinGunSayisi),
+                OrtalamaCalismaGunu = puantajList.Count > 0 ? puantajList.Average(p => p.ToplamCalisilanGun) : 0
+            };
+        }
+
+        /// <summary>
+        /// Geç kalanlar raporunu getirir
+        /// </summary>
+        public async Task<List<GecKalanlarRaporDTO>> GetGecKalanlarRaporuAsync(int sirketId, DateTime baslangic, DateTime bitis)
+        {
+            var kayitlar = await _unitOfWork.GirisCikislar.FindAsync(g =>
+                g.Personel.SirketId == sirketId &&
+                g.GirisZamani >= baslangic &&
+                g.GirisZamani <= bitis &&
+                g.GecKalmaSuresi > 0);
+
+            var result = new List<GecKalanlarRaporDTO>();
+
+            foreach (var kayit in kayitlar)
+            {
+                var personel = await _unitOfWork.Personeller.GetByIdAsync(kayit.PersonelId);
+                if (personel == null) continue;
+
+                result.Add(new GecKalanlarRaporDTO
+                {
+                    Tarih = kayit.GirisZamani?.Date ?? DateTime.UtcNow,
+                    PersonelId = personel.Id,
+                    PersonelAdSoyad = personel.AdSoyad,
+                    PersonelAdi = personel.AdSoyad,
+                    SicilNo = personel.SicilNo,
+                    DepartmanAdi = personel.Departman?.Ad ?? "-",
+                    Departman = personel.Departman?.Ad ?? "-",
+                    VardiyaBaslangic = personel.Vardiya?.BaslangicSaati ?? TimeSpan.Zero,
+                    BeklenenGiris = personel.Vardiya?.BaslangicSaati.ToString(@"hh\:mm") ?? "",
+                    GirisSaati = kayit.GirisZamani,
+                    GercekGiris = kayit.GirisZamani?.ToString("HH:mm") ?? "",
+                    GecKalmaSuresi = kayit.GecKalmaSuresi ?? 0
+                });
+            }
+
+            return result.OrderByDescending(r => r.GecKalmaSuresi).ToList();
+        }
+
+        /// <summary>
+        /// Erken çıkanlar raporunu getirir
+        /// </summary>
+        public async Task<List<ErkenCikanlarRaporDTO>> GetErkenCikanlarRaporuAsync(int sirketId, DateTime baslangic, DateTime bitis)
+        {
+            var kayitlar = await _unitOfWork.GirisCikislar.FindAsync(g =>
+                g.Personel.SirketId == sirketId &&
+                g.GirisZamani >= baslangic &&
+                g.GirisZamani <= bitis &&
+                g.ErkenCikisSuresi > 0);
+
+            var result = new List<ErkenCikanlarRaporDTO>();
+
+            foreach (var kayit in kayitlar)
+            {
+                var personel = await _unitOfWork.Personeller.GetByIdAsync(kayit.PersonelId);
+                if (personel == null) continue;
+
+                result.Add(new ErkenCikanlarRaporDTO
+                {
+                    Tarih = kayit.GirisZamani?.Date ?? DateTime.UtcNow,
+                    PersonelId = personel.Id,
+                    PersonelAdSoyad = personel.AdSoyad,
+                    PersonelAdi = personel.AdSoyad,
+                    SicilNo = personel.SicilNo,
+                    DepartmanAdi = personel.Departman?.Ad ?? "-",
+                    Departman = personel.Departman?.Ad ?? "-",
+                    VardiyaBitis = personel.Vardiya?.BitisSaati ?? TimeSpan.Zero,
+                    BeklenenCikis = personel.Vardiya?.BitisSaati.ToString(@"hh\:mm") ?? "",
+                    CikisSaati = kayit.CikisZamani,
+                    GercekCikis = kayit.CikisZamani?.ToString("HH:mm") ?? "",
+                    ErkenCikisSuresi = kayit.ErkenCikisSuresi ?? 0
+                });
+            }
+
+            return result.OrderByDescending(r => r.ErkenCikisSuresi).ToList();
+        }
+
+        /// <summary>
+        /// Fazla mesai raporunu getirir
+        /// </summary>
+        public async Task<List<FazlaMesaiRaporDTO>> GetFazlaMesaiRaporuAsync(int sirketId, DateTime baslangic, DateTime bitis)
+        {
+            var kayitlar = await _unitOfWork.GirisCikislar.FindAsync(g =>
+                g.Personel.SirketId == sirketId &&
+                g.GirisZamani >= baslangic &&
+                g.GirisZamani <= bitis &&
+                g.FazlaMesaiSuresi > 0);
+
+            var result = new List<FazlaMesaiRaporDTO>();
+
+            foreach (var kayit in kayitlar)
+            {
+                var personel = await _unitOfWork.Personeller.GetByIdAsync(kayit.PersonelId);
+                if (personel == null) continue;
+
+                var fazlaMesaiUcreti = CalculateOvertimePay(personel.Maas ?? 0m, kayit.FazlaMesaiSuresi ?? 0);
+
+                result.Add(new FazlaMesaiRaporDTO
+                {
+                    Tarih = kayit.GirisZamani?.Date ?? DateTime.UtcNow,
+                    PersonelId = personel.Id,
+                    PersonelAdSoyad = personel.AdSoyad,
+                    PersonelAdi = personel.AdSoyad,
+                    SicilNo = personel.SicilNo,
+                    DepartmanAdi = personel.Departman?.Ad ?? "-",
+                    Departman = personel.Departman?.Ad ?? "-",
+                    FazlaMesaiSuresi = kayit.FazlaMesaiSuresi ?? 0,
+                    FazlaMesaiUcreti = fazlaMesaiUcreti
+                });
+            }
+
+            return result.OrderByDescending(r => r.FazlaMesaiSuresi).ToList();
+        }
+
+        /// <summary>
+        /// Devamsızlık raporunu getirir
+        /// </summary>
+        public async Task<List<DevamsizlarRaporDTO>> GetDevamsizlikRaporuAsync(int sirketId, DateTime baslangic, DateTime bitis)
+        {
+            var aktifPersoneller = await _unitOfWork.Personeller.FindAsync(p =>
+                p.SirketId == sirketId &&
+                p.Durum);
+
+            var result = new List<DevamsizlarRaporDTO>();
+
+            foreach (var personel in aktifPersoneller)
+            {
+                for (var tarih = baslangic; tarih <= bitis; tarih = tarih.AddDays(1))
+                {
+                    // Hafta sonu kontrolü
+                    if (tarih.DayOfWeek == DayOfWeek.Saturday || tarih.DayOfWeek == DayOfWeek.Sunday)
+                        continue;
+
+                    // Tatil kontrolü
+                    var tatil = await _unitOfWork.Tatiller.FirstOrDefaultAsync(t => t.Tarih.Date == tarih.Date);
+                    if (tatil != null)
+                        continue;
+
+                    // İzin kontrolü
+                    var izin = await _unitOfWork.Izinler.FirstOrDefaultAsync(i =>
+                        i.PersonelId == personel.Id &&
+                        i.BaslangicTarihi <= tarih &&
+                        i.BitisTarihi >= tarih &&
+                        i.OnayDurumu == "Onaylandi");
+
+                    if (izin != null)
+                        continue;
+
+                    // Giriş-çıkış kaydı kontrolü
+                    var giris = await _unitOfWork.GirisCikislar.FirstOrDefaultAsync(g =>
+                        g.PersonelId == personel.Id &&
+                        g.GirisZamani.HasValue &&
+                        g.GirisZamani.Value.Date == tarih.Date);
+
+                    if (giris == null)
+                    {
+                        result.Add(new DevamsizlarRaporDTO
+                        {
+                            Tarih = tarih,
+                            PersonelId = personel.Id,
+                            PersonelAdi = personel.AdSoyad,
+                            SicilNo = personel.SicilNo,
+                            Departman = personel.Departman?.Ad ?? "-",
+                            DevamsizlikSebep = "Giriş kaydı yok"
+                        });
+                    }
+                }
+            }
+
+            return result.OrderBy(r => r.Tarih).ThenBy(r => r.PersonelAdi).ToList();
+        }
+
+        /// <summary>
+        /// Fazla mesai ücretini hesaplar
+        /// </summary>
+        private decimal CalculateOvertimePay(decimal monthlyGrossSalary, int overtimeMinutes)
+        {
+            if (monthlyGrossSalary <= 0 || overtimeMinutes <= 0)
+                return 0;
+
+            // Aylık çalışma saati: 225 saat (standart)
+            decimal hourlyRate = monthlyGrossSalary / 225m;
+
+            // Fazla mesai çarpanı: 1.5
+            decimal overtimeRate = hourlyRate * 1.5m;
+
+            // Dakikayı saate çevir ve ücret hesapla
+            decimal overtimeHours = overtimeMinutes / 60m;
+
+            return overtimeHours * overtimeRate;
+        }
     }
 }
