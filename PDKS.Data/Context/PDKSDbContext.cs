@@ -87,6 +87,8 @@ namespace PDKS.Data.Context
         public DbSet<MenuRol> MenuRoller { get; set; }
         public DbSet<IslemYetki> IslemYetkiler { get; set; }
         public DbSet<RolIslemYetki> RolIslemYetkiler { get; set; }
+        public DbSet<Puantaj> Puantajlar { get; set; }
+        public DbSet<PuantajDetay> PuantajDetaylar { get; set; }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             // Bu ValueConverter hem DateTime hem de DateTime? tipleri için çalışacak.

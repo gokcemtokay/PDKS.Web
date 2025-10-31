@@ -15,7 +15,6 @@ import MasrafList from './pages/Masraf/MasrafList';
 import ZimmetList from './pages/Zimmet/ZimmetList';
 import AracList from './pages/Arac/AracList';
 import SeyahatList from './pages/Seyahat/SeyahatList';
-import PuantajList from './pages/Puantaj/PuantajList';
 import OnayList from './pages/Onay/OnayList';
 import RaporPage from './pages/Rapor/RaporPage';
 import CihazList from './pages/Cihaz/CihazList';
@@ -31,6 +30,9 @@ import SirketList from './pages/Sirket/SirketList';
 import KullaniciList from './pages/Kullanici/KullaniciList';
 import KullaniciForm from './pages/Kullanici/KullaniciForm';
 import RolYetkiAtama from './pages/Rol/RolYetkiAtama';
+import PuantajListesi from './pages/Puantaj/PuantajListesi';
+import PuantajDetay from './pages/Puantaj/PuantajDetay';
+
 
 const theme = createTheme({
     palette: {
@@ -69,10 +71,11 @@ function App() {
                                         <Route path="/zimmet" element={<ZimmetList />} />
                                         <Route path="/arac" element={<AracList />} />
                                         <Route path="/seyahat" element={<SeyahatList />} />
-                                        <Route path="/puantaj" element={<PuantajList />} />
                                         <Route path="/onay" element={<OnayList />} />
                                         <Route path="/gorev" element={<GorevList />} />
                                         <Route path="/rapor" element={<RaporPage />} />
+                                        <Route path="/puantaj" element={<PuantajListesi />} />
+                                        <Route path="/puantaj/:id" element={<PuantajDetay />} />
 
                                         {/* Yönetim Modülü */}
                                         <Route path="/sirket" element={<SirketList />} />

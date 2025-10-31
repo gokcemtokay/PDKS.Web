@@ -54,6 +54,8 @@ namespace PDKS.Data.Repositories
         private IMenuRolRepository? _menuRoller;
         private IIslemYetkiRepository? _islemYetkiler;
         private IRolIslemYetkiRepository? _rolIslemYetkiler;
+        private IRepository<Puantaj> _puantajlar;
+        private IRepository<PuantajDetay> _puantajDetaylar;
         public UnitOfWork(PDKSDbContext context)
         {
             _context = context;
@@ -436,6 +438,25 @@ namespace PDKS.Data.Repositories
         public IRolIslemYetkiRepository RolIslemYetkiler =>
             _rolIslemYetkiler ??= new RolIslemYetkiRepository(_context);
 
+        public IRepository<Puantaj> Puantajlar
+        {
+            get
+            {
+                if (_puantajlar == null)
+                    _puantajlar = new PuantajRepository(_context);
+                return _puantajlar;
+            }
+        }
+
+        public IRepository<PuantajDetay> PuantajDetaylar
+        {
+            get
+            {
+                if (_puantajDetaylar == null)
+                    _puantajDetaylar = new PuantajDetayRepository(_context);
+                return _puantajDetaylar;
+            }
+        }
         public async Task<int> SaveChangesAsync()
         {
             return await _context.SaveChangesAsync();

@@ -26,6 +26,10 @@ namespace PDKS.Data.Repositories
         IGenericRepository<PersonelTransferGecmisi> PersonelTransferGecmisleri { get; }
         IGenericRepository<Prim> Primler { get; }
         IGenericRepository<KullaniciSirket> KullaniciSirketler { get; }
+
+        IRepository<Puantaj> Puantajlar { get; }
+        IRepository<PuantajDetay> PuantajDetaylar { get; }
+
         // ============================================
         // PERSONEL ÖZLÜK REPOSITORY'LERİ - ÖZEL TİPLER!
         // ============================================

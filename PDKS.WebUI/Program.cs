@@ -124,6 +124,8 @@ builder.Services.AddScoped<PDKS.Business.Services.IPushNotificationService, PDKS
 builder.Services.AddScoped<IOnayAkisiService, OnayAkisiService>();
 builder.Services.AddScoped<IDashboardService, DashboardService>();
 builder.Services.AddScoped<IPersonelOzlukService, PersonelOzlukService>();
+builder.Services.AddScoped<IPuantajService, PuantajService>();
+
 // API Versioning ekle (builder.Services kısmına)
 builder.Services.AddApiVersioning(options =>
 {

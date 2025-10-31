@@ -1,31 +1,107 @@
 import api from './api';
-
-export interface GirisCikis {
-  id: number;
-  personelId: number;
-  personelAdi: string;
-  girisZamani?: string;
-  cikisZamani?: string;
-  durum: string;
-}
+import {
+  PuantajList,
+  PuantajDetail,
+  PuantajDetay,
+  PuantajHesaplaRequest,
+  TopluPuantajHesaplaRequest,
+  PuantajOnayRequest,
+  PuantajRaporParametre,
+  PuantajOzetRapor,
+  DepartmanPuantajOzet,
+  PuantajKontrol
+} from '../types/puantaj.types';
 
 const puantajService = {
-  async getAll(): Promise<GirisCikis[]> {
-    const response = await api.get('/giriscikis');
+  // Puantaj Sorgulama
+  async getById(id: number): Promise<PuantajDetail> {
+    const response = await api.get(`/puantaj/${id}`);
     return response.data;
   },
 
-  async create(data: Partial<GirisCikis>): Promise<number> {
-      const response = await api.post('/giriscikis', data);
+  async getByPersonel(personelId: number): Promise<PuantajList[]> {
+    const response = await api.get(`/puantaj/personel/${personelId}`);
     return response.data;
   },
 
-  async update(id: number, data: Partial<GirisCikis>): Promise<void> {
-      await api.put(`/giriscikis/${id}`, data);
+  async getByDonem(yil: number, ay: number, departmanId?: number): Promise<PuantajList[]> {
+    const params: any = { yil, ay };
+    if (departmanId) params.departmanId = departmanId;
+    
+    const response = await api.get('/puantaj/donem', { params });
+    return response.data;
+  },
+
+  async getByPersonelVeDonem(personelId: number, yil: number, ay: number): Promise<PuantajDetail> {
+    const response = await api.get(`/puantaj/personel/${personelId}/donem`, {
+      params: { yil, ay }
+    });
+    return response.data;
+  },
+
+  // Puantaj Hesaplama
+  async hesaplaPuantaj(data: PuantajHesaplaRequest): Promise<PuantajDetail> {
+    const response = await api.post('/puantaj/hesapla', data);
+    return response.data;
+  },
+
+  async topluPuantajHesapla(data: TopluPuantajHesaplaRequest): Promise<{ message: string; puantajIdler: number[] }> {
+    const response = await api.post('/puantaj/toplu-hesapla', data);
+    return response.data;
+  },
+
+  async yenidenHesapla(id: number): Promise<PuantajDetail> {
+    const response = await api.put(`/puantaj/${id}/yeniden-hesapla`);
+    return response.data;
+  },
+
+  // Onaylama
+  async onayla(data: PuantajOnayRequest): Promise<{ message: string }> {
+    const response = await api.put('/puantaj/onayla', data);
+    return response.data;
+  },
+
+  async onayIptal(id: number): Promise<{ message: string }> {
+    const response = await api.put(`/puantaj/${id}/onay-iptal`);
+    return response.data;
+  },
+
+  // Detaylar
+  async getGunlukDetaylar(puantajId: number): Promise<PuantajDetay[]> {
+    const response = await api.get(`/puantaj/${puantajId}/detaylar`);
+    return response.data;
+  },
+
+  async getDetayByTarih(personelId: number, tarih: string): Promise<PuantajDetay> {
+    const response = await api.get(`/puantaj/personel/${personelId}/detay`, {
+      params: { tarih }
+    });
+    return response.data;
+  },
+
+  // Raporlar
+  async getOzetRapor(parametre: PuantajRaporParametre): Promise<PuantajOzetRapor> {
+    const response = await api.post('/puantaj/rapor/ozet', parametre);
+    return response.data;
+  },
+
+  async getDepartmanOzet(yil: number, ay: number): Promise<DepartmanPuantajOzet[]> {
+    const response = await api.get('/puantaj/rapor/departman', {
+      params: { yil, ay }
+    });
+    return response.data;
+  },
+
+  // Yardımcı
+  async kontrolEt(personelId: number, yil: number, ay: number): Promise<PuantajKontrol> {
+    const response = await api.get('/puantaj/kontrol', {
+      params: { personelId, yil, ay }
+    });
+    return response.data;
   },
 
   async delete(id: number): Promise<void> {
-      await api.delete(`/giriscikis/${id}`);
+    await api.delete(`/puantaj/${id}`);
   },
 };
 

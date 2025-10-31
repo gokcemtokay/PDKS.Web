@@ -65,7 +65,7 @@ const menuItems: MenuItemType[] = [
             { text: 'Rapor Merkezi', icon: <DashboardIcon />, path: '/rapor' },
             { text: 'Personel Raporları', icon: <PeopleIcon />, path: '/rapor/personel' },
             { text: 'İzin Raporları', icon: <BeachAccessIcon />, path: '/rapor/izin' },
-            { text: 'Puantaj Raporları', icon: <AccessTimeIcon />, path: '/rapor/puantaj' },
+            { text: 'Puantaj Raporları', icon: <AccessTimeIcon />, path: '/puantaj' },
             { text: 'Masraf Raporları', icon: <ReceiptIcon />, path: '/rapor/masraf' },
         ],
     },
