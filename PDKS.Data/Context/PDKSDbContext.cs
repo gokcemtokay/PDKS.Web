@@ -889,6 +889,57 @@ namespace PDKS.Data.Context
                 entity.HasIndex(e => new { e.RolId, e.IslemYetkiId }).IsUnique();
             });
 
+            // Puantaj - Sirket (Many-to-One)
+            modelBuilder.Entity<Puantaj>()
+                .HasOne(p => p.Sirket)
+                .WithMany()
+                .HasForeignKey(p => p.SirketId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Puantaj - Personel (Many-to-One)
+            modelBuilder.Entity<Puantaj>()
+                .HasOne(p => p.Personel)
+                .WithMany()
+                .HasForeignKey(p => p.PersonelId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // Puantaj - OnaylayanKullanici (Many-to-One)
+            modelBuilder.Entity<Puantaj>()
+                .HasOne(p => p.OnaylayanKullanici)
+                .WithMany()
+                .HasForeignKey(p => p.OnaylayanKullaniciId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // PuantajDetay - Puantaj (Many-to-One)
+            modelBuilder.Entity<PuantajDetay>()
+                .HasOne(pd => pd.Puantaj)
+                .WithMany(p => p.PuantajDetaylari)
+                .HasForeignKey(pd => pd.PuantajId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // PuantajDetay - Vardiya (Many-to-One)
+            modelBuilder.Entity<PuantajDetay>()
+                .HasOne(pd => pd.Vardiya)
+                .WithMany()
+                .HasForeignKey(pd => pd.VardiyaId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // PuantajDetay - Izin (Many-to-One)
+            modelBuilder.Entity<PuantajDetay>()
+                .HasOne(pd => pd.Izin)
+                .WithMany()
+                .HasForeignKey(pd => pd.IzinId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Index'ler
+            modelBuilder.Entity<Puantaj>()
+                .HasIndex(p => new { p.PersonelId, p.Yil, p.Ay })
+                .IsUnique();
+
+            modelBuilder.Entity<PuantajDetay>()
+                .HasIndex(pd => new { pd.PuantajId, pd.Tarih });
+
+
             // ============== SEED DATA - ROLLER ==============
 
             modelBuilder.Entity<Rol>().HasData(

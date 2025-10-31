@@ -1,3 +1,4 @@
+using System;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
@@ -13,62 +14,52 @@ namespace PDKS.Data.Entities
         public int PuantajId { get; set; }
 
         [Required]
-        public int PersonelId { get; set; }
-
-        [Required]
         public DateTime Tarih { get; set; }
 
+        public int? GunTipi { get; set; } // 1: Hafta İçi, 2: Hafta Tatili, 3: Resmi Tatil
+
+        // Giriş-Çıkış Bilgileri
+        public DateTime? IlkGiris { get; set; }
+        public DateTime? SonCikis { get; set; }
+        public int? ToplamCalismaSuresi { get; set; } // dakika
+
+        // Vardiya Bilgileri
         public int? VardiyaId { get; set; }
-        public int? GirisCikisId { get; set; }
+        public TimeSpan? VardiyaBaslangic { get; set; }
+        public TimeSpan? VardiyaBitis { get; set; }
+        public int? PlanlananCalismaSuresi { get; set; } // dakika
 
-        // Planlanan Saatler (Vardiya bazlı)
-        public TimeSpan? PlanlananGiris { get; set; }
-        public TimeSpan? PlanlananCikis { get; set; }
-        public int PlanlananSure { get; set; } // dakika
-
-        // Gerçekleşen Saatler
-        public DateTime? GerceklesenGiris { get; set; }
-        public DateTime? GerceklesenCikis { get; set; }
-        public int? GerceklesenSure { get; set; } // dakika
-
-        // Hesaplamalar
-        public int? NormalMesai { get; set; } // dakika
-        public int? FazlaMesai { get; set; } // dakika
-        public int? GeceMesai { get; set; } // dakika
+        // Durum Analizi
+        public string CalismaDurumu { get; set; } // Normal, GecKalmis, ErkenCikmis, DevamsizExamiz, Izinli, HaftaTatili, ResmiTatil
         public int? GecKalmaSuresi { get; set; } // dakika
         public int? ErkenCikisSuresi { get; set; } // dakika
-        public int? EksikSure { get; set; } // dakika
+        public int? FazlaMesaiSuresi { get; set; } // dakika
+        public int? EksikCalismaSuresi { get; set; } // dakika
 
-        // Durum Bilgileri
-        [StringLength(50)]
-        public string GunDurumu { get; set; } // Normal, Tatil, Izin, Rapor, Devamsiz, HaftaSonu, ResmiTatil
-        
-        [StringLength(100)]
-        public string? IzinTuru { get; set; } // Yıllık, Mazeret, Ücretsiz, vb.
-        
-        public bool HaftaSonuMu { get; set; } = false;
-        public bool ResmiTatilMi { get; set; } = false;
-        public bool GecKaldiMi { get; set; } = false;
-        public bool ErkenCiktiMi { get; set; } = false;
-        public bool DevamsizMi { get; set; } = false;
+        // İzin Bilgileri
+        public bool IzinliMi { get; set; }
+        public int? IzinId { get; set; }
+        public string IzinTuru { get; set; }
 
-        [StringLength(500)]
-        public string? Notlar { get; set; }
+        // Mola Bilgileri
+        public int? ToplamMolaSuresi { get; set; } // dakika
+        public int? MolaAdedi { get; set; }
 
-        public DateTime OlusturmaTarihi { get; set; } = DateTime.UtcNow;
+        // Ek Bilgiler
+        public bool ElleGirildiMi { get; set; }
+        public bool DuzeltmeYapildiMi { get; set; }
+        public string Notlar { get; set; }
+        public DateTime OlusturmaTarihi { get; set; }
         public DateTime? GuncellemeTarihi { get; set; }
 
         // Navigation Properties
         [ForeignKey("PuantajId")]
         public virtual Puantaj Puantaj { get; set; }
 
-        [ForeignKey("PersonelId")]
-        public virtual Personel Personel { get; set; }
-
         [ForeignKey("VardiyaId")]
-        public virtual Vardiya? Vardiya { get; set; }
+        public virtual Vardiya Vardiya { get; set; }
 
-        [ForeignKey("GirisCikisId")]
-        public virtual GirisCikis? GirisCikis { get; set; }
+        [ForeignKey("IzinId")]
+        public virtual Izin Izin { get; set; }
     }
 }

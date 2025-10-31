@@ -60,7 +60,7 @@ namespace PDKS.Data.Repositories
                 .Include(p => p.Personel)
                     .ThenInclude(p => p.Departman)
                 .Include(p => p.OnaylayanKullanici)
-                .Include(p => p.Detaylar)
+                .Include(p => p.PuantajDetaylari)
                 .FirstOrDefaultAsync(p => p.PersonelId == personelId && p.Yil == yil && p.Ay == ay);
         }
 

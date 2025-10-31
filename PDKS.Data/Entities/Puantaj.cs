@@ -1,3 +1,4 @@
+using System;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
@@ -22,40 +23,38 @@ namespace PDKS.Data.Entities
         public int Ay { get; set; }
 
         // Çalışma İstatistikleri
-        public int ToplamCalismaSaati { get; set; } // dakika
-        public int NormalMesaiSaati { get; set; } // dakika
-        public int FazlaMesaiSaati { get; set; } // dakika
-        public int GeceMesaiSaati { get; set; } // dakika
-        public int HaftaSonuMesaiSaati { get; set; } // dakika
-        
-        // Devamsızlık ve İzin
+        public int ToplamCalismaSuresi { get; set; } // dakika
+        public int NormalMesaiSuresi { get; set; } // dakika
+        public int FazlaMesaiSuresi { get; set; } // dakika
+        public int GeceMesaiSuresi { get; set; } // dakika
+        public int HaftaTatiliCalismaSuresi { get; set; } // dakika
+        public int ResmiTatilCalismaSuresi { get; set; } // dakika
+
+        // Gün Sayıları
         public int ToplamCalisilanGun { get; set; }
-        public int DevamsizlikGunu { get; set; }
-        public int IzinGunu { get; set; }
-        public int RaporluGun { get; set; }
-        public int HaftaTatiliGunu { get; set; }
-        public int ResmiTatilGunu { get; set; }
-        
-        // Geç Kalma ve Erken Çıkış
-        public int GecKalmaGunu { get; set; }
-        public int GecKalmaSuresi { get; set; } // dakika
-        public int ErkenCikisGunu { get; set; }
-        public int ErkenCikisSuresi { get; set; } // dakika
-        
-        // Eksik Çalışma
-        public int EksikCalismaSaati { get; set; } // dakika
-        
-        // Durum ve Tarihler
-        [StringLength(50)]
-        public string Durum { get; set; } = "Taslak"; // Taslak, Onaylandı, Kapalı
-        
-        public DateTime? OnayTarihi { get; set; }
+        public int GecKalmaGunSayisi { get; set; }
+        public int ErkenCikisGunSayisi { get; set; }
+        public int DevamsizlikGunSayisi { get; set; }
+        public int IzinGunSayisi { get; set; }
+        public int HastaTatiliGunSayisi { get; set; }
+        public int MazeretliIzinGunSayisi { get; set; }
+        public int UcretsizIzinGunSayisi { get; set; }
+        public int HaftaTatiliGunSayisi { get; set; }
+        public int ResmiTatilGunSayisi { get; set; }
+
+        // Süre Detayları
+        public int ToplamGecKalmaSuresi { get; set; } // dakika
+        public int ToplamErkenCikisSuresi { get; set; } // dakika
+        public int ToplamEksikCalismaSuresi { get; set; } // dakika
+
+        // Durum
+        public string Durum { get; set; } // Taslak, Onaylandı, Kapalı
+        public bool Onaylandi { get; set; }
         public int? OnaylayanKullaniciId { get; set; }
-        
-        [StringLength(1000)]
-        public string? Notlar { get; set; }
-        
-        public DateTime OlusturmaTarihi { get; set; } = DateTime.UtcNow;
+        public DateTime? OnayTarihi { get; set; }
+
+        public string Notlar { get; set; }
+        public DateTime OlusturmaTarihi { get; set; }
         public DateTime? GuncellemeTarihi { get; set; }
 
         // Navigation Properties
@@ -66,8 +65,8 @@ namespace PDKS.Data.Entities
         public virtual Personel Personel { get; set; }
 
         [ForeignKey("OnaylayanKullaniciId")]
-        public virtual Kullanici? OnaylayanKullanici { get; set; }
+        public virtual Kullanici OnaylayanKullanici { get; set; }
 
-        public virtual ICollection<PuantajDetay> Detaylar { get; set; } = new List<PuantajDetay>();
+        public virtual ICollection<PuantajDetay> PuantajDetaylari { get; set; }
     }
 }
