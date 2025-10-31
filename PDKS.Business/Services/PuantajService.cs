@@ -365,10 +365,10 @@ namespace PDKS.Business.Services
             var detaylar = await _unitOfWork.PuantajDetaylar.FindAsync(d => d.PuantajId == id);
             foreach (var detay in detaylar)
             {
-                _unitOfWork.PuantajDetaylar.Delete(detay);
+                _unitOfWork.PuantajDetaylar.Remove(detay);
             }
 
-            _unitOfWork.Puantajlar.Delete(puantaj);
+            _unitOfWork.Puantajlar.Remove(puantaj);
             await _unitOfWork.SaveChangesAsync();
 
             return true;
@@ -598,7 +598,7 @@ namespace PDKS.Business.Services
             var mevcutDetaylar = await _unitOfWork.PuantajDetaylar.FindAsync(d => d.PuantajId == puantajId);
             foreach (var detay in mevcutDetaylar)
             {
-                _unitOfWork.PuantajDetaylar.Delete(detay);
+                _unitOfWork.PuantajDetaylar.Remove(detay);
             }
             await _unitOfWork.SaveChangesAsync();
 
@@ -609,7 +609,7 @@ namespace PDKS.Business.Services
                 var gunTipi = TarihGunTipiBelirle(tarih);
                 var girisler = await _unitOfWork.GirisCikislar.FindAsync(g =>
                     g.PersonelId == personel.Id &&
-                    g.GirisZamani.Date == tarih.Date);
+                    g.GirisZamani.Value.Date == tarih.Date);
 
                 var izinler = await _unitOfWork.Izinler.FindAsync(i =>
                     i.PersonelId == personel.Id &&
@@ -632,7 +632,7 @@ namespace PDKS.Business.Services
                 {
                     detay.IzinliMi = true;
                     detay.IzinId = izin.Id;
-                    detay.IzinTuru = izin.IzinTuru;
+                    detay.IzinTuru = izin.IzinTipi;
                     detay.CalismaDurumu = "Izinli";
                 }
                 else if (girisler.Any())
@@ -640,8 +640,8 @@ namespace PDKS.Business.Services
                     var ilkGiris = girisler.OrderBy(g => g.GirisZamani).First();
                     var sonCikis = girisler.OrderByDescending(g => g.GirisZamani).First();
 
-                    detay.IlkGiris = ilkGiris.Tarih;
-                    detay.SonCikis = sonCikis.Tarih;
+                    detay.IlkGiris = ilkGiris.GirisZamani;
+                    detay.SonCikis = sonCikis.CikisZamani;
 
                     // Çalışma süresi hesapla (basit)
                     if (detay.IlkGiris.HasValue && detay.SonCikis.HasValue)

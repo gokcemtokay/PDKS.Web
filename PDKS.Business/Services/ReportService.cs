@@ -129,7 +129,7 @@ namespace PDKS.Business.Services
                 Tarih = k.GirisZamani?.Date ?? DateTime.UtcNow,
                 PersonelAdi = personel.AdSoyad,
                 SicilNo = personel.SicilNo,
-                Departman = personel.Departman?.Ad,  // ✅ DÜZELTILDI
+                Departman = personel.Departman?.Ad,  
                 BeklenenCikis = personel.Vardiya?.BitisSaati.ToString(@"hh\:mm") ?? "",
                 GercekCikis = k.CikisZamani?.ToString("HH:mm") ?? "",
                 ErkenCikisSuresi = k.ErkenCikisSuresi ?? 0

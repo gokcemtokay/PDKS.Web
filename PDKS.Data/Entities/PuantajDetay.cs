@@ -51,7 +51,9 @@ namespace PDKS.Data.Entities
         public string Notlar { get; set; }
         public DateTime OlusturmaTarihi { get; set; }
         public DateTime? GuncellemeTarihi { get; set; }
-
+        public bool DevamsizMi { get; set; }
+        public bool ErkenCiktiMi { get; set; }
+        public bool GecKaldiMi { get; set; }
         // Navigation Properties
         [ForeignKey("PuantajId")]
         public virtual Puantaj Puantaj { get; set; }
